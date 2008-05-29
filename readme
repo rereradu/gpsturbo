@@ -1,0 +1,18 @@
+#
+# gpsturbo - documentation
+#
+
+
+1) gpsturbo uses the kgui library so you need to compile and build it first. The kgui library
+   needs to be at the same level in the directory for example "/source/gpsturbo" and "/source/kgui"
+
+2) build kgui by following the directions in the readme file in the kgui directory
+
+
+Follow these steps to build gpsturbo
+
+3a) For building using the GNU compiler launch a shell ( use MSYS/Mingw for windows ) and type make
+
+3b) There is also a visual studio solution called "gpsturbo" that you can compile with visual studio.
+Note the last build step copies the gpsturbo.exe file to "c:/gpsturbo/gpsturbo.exe" as
+it should be run from that directory.
