@@ -221,7 +221,7 @@ public:
 	void SetName(kGUIString *name) {m_name.SetString(name);}
 	void UpdateFontSize(void);
 	void UpdateLabelName(void);
-	void SetDist(double dist) {m_dist.Sprintf("%f",dist);m_distval=dist;}
+	void SetDist(double dist) {m_dist.Sprintf("%.02f",dist);m_distval=dist;}
 	double GetDist(void) {return m_distval;}
 	void SetNumNear(int n)  {m_numnear.Sprintf("%d",n);m_nearval=n;}
 	GPXCoord *GetCoord(void) {return &m_llcoord;}
