@@ -28,7 +28,7 @@
 #if defined(WIN32) || defined(MINGW)
 #define BABELCODE "gpsbabel.exe"
 #elif defined(LINUX) || defined(MACINTOSH)
-#define BABELCODE "./gpsbabel.exe"
+#define BABELCODE "./gpsbabel"
 #else
 #error
 #endif

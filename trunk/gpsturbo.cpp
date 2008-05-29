@@ -2663,7 +2663,7 @@ void Credits::GetCreditString(kGUIString *s)
 
 
 	s->ASprintf("\r\nSpecial thanks to:\r\n\r\n");
-	s->ASprintf("Robert Lipe and the restof the GPSBabel team.\r\n");
+	s->ASprintf("Robert Lipe and the rest of the GPSBabel team.\r\n");
 	s->ASprintf("John Mechalas for his Garmin IMG format documentation.\r\n");
 	s->ASprintf("Google Maps\r\n");
 	s->ASprintf("Center for Topographic Information Canada\r\n");
