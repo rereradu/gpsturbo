@@ -89,6 +89,12 @@ public:
 	bool GetSearchable(void) {return true;}
 	void SearchMap(kGUIString *text) {}
 	void BrowseMap(void) {}
+
+	/* leave these public since they are displayed in the credit screen */
+	static kGUIString m_mapver;
+	static kGUIString m_satmapver;
+	static kGUIString m_overlayver;
+	static kGUIString m_terver;
 private:
 	int m_type;
 	double m_pixelsPerLonDegree[MAXGZOOM];
@@ -102,9 +108,5 @@ private:
 
 	//current Version numbers for google maps
 	static kGUIThread m_checkthread;
-	static kGUIString m_mapver;
-	static kGUIString m_satmapver;
-	static kGUIString m_overlayver;
-	static kGUIString m_terver;
 };
 #endif

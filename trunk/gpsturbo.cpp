@@ -189,6 +189,7 @@ const char *shapenames[]={
 	 "cica.gif",
 	 "pape.gif",
 	 "wigo.gif",
+	 "maze.gif",
 	 "othr.gif",
 	 "marker.png",
 	 "loadingimage.gif",
@@ -210,6 +211,7 @@ const char *cachetypenames[CACHETYPE_NUM]={
 	"Cache In Trash Out Event",
 	"Project APE Cache",
 	"Wherigo Cache",
+	"GPS Adventures Exhibit",
 	"Other"};
 
 const char *containernames[CONTAINERTYPE_NUM]={
@@ -618,8 +620,19 @@ void GPXRow::Load(kGUIString *ld,kGUIXMLItem *wp)
 		m_owner.SetString(gc->Locate("groundspeak:owner")->GetValue());
 		m_placedby.SetString(gc->Locate("groundspeak:placed_by")->GetValue());
 		SetName(gc->Locate("groundspeak:name")->GetValue());
-		SetType(GPX::GetIndex(gc->Locate("groundspeak:type")->GetValueString(),CACHETYPE_NUM,cachetypenames));
 
+		{
+			int type;
+
+			type=GPX::GetIndexz(gc->Locate("groundspeak:type")->GetValueString(),CACHETYPE_NUM,cachetypenames,-1);
+			if(type==-1)
+			{
+				type=CACHETYPE_OTHER;
+				gpx->m_badtype=true;
+				gpx->m_badtypename.SetString(gc->Locate("groundspeak:type")->GetValue());
+			}
+			SetType(type);
+		}
 		if(gc->Locate("groundspeak:short_description"))
 			SetShortDesc(gc->Locate("groundspeak:short_description")->GetValue());
 		/* webpage text */
@@ -2609,6 +2622,14 @@ Credits::Credits()
 	m_desc.SetFontSize(14);
 	m_desc.SetPos(0,m_name.GetHeight());
 	GetCreditString(&m_desc);
+
+	/* append current goole map tile info */
+	m_desc.ASprintf("\nCurrent Google Tiles (Map=%s,Sat=%s,Overlay=%s,Ter=%s)",
+		GGPXMap::m_mapver.GetString(),
+		GGPXMap::m_satmapver.GetString(),
+		GGPXMap::m_overlayver.GetString(),
+		GGPXMap::m_terver.GetString());
+
 	m_desc.CalcLineList(warea);
 	dh=m_desc.CalcHeight(warea);
 	m_desc.SetSize(warea,dh);
@@ -3808,7 +3829,7 @@ void GPX::DoLoad(kGUIXML *xml,const char *dbname,const char *filename)
 	busy=new kGUIBusy(600);
 	busy->GetTitle()->SetString("Importing GPX File");
 
-
+	m_badtype=false;
 	numwp=0;
 	numwploaded=0;
 	xmlitem=xml->GetRootItem()->Locate("gpx");
@@ -3910,10 +3931,18 @@ void GPX::DoLoad(kGUIXML *xml,const char *dbname,const char *filename)
 	UpdateDBList();
 	UpdateWPRender();
 	ReFilter();
-	if(numwploaded==numwp)
-		box=new kGUIMsgBoxReq(MSGBOX_OK,true,"%d Waypoints loaded",numwploaded);
+
+	if(m_badtype)
+	{
+		box=new kGUIMsgBoxReq(MSGBOX_OK,true,"A Cache with the unknown type '%s' was loaded.\n This type is not known by GPSTurbo so you probably need to get a newer version.",m_badtypename.GetString());
+	}
 	else
-		box=new kGUIMsgBoxReq(MSGBOX_OK,true,"%d of %d Waypoints loaded ( older Waypoints ignored )",numwploaded,numwp);
+	{
+		if(numwploaded==numwp)
+			box=new kGUIMsgBoxReq(MSGBOX_OK,true,"%d Waypoints loaded",numwploaded);
+		else
+			box=new kGUIMsgBoxReq(MSGBOX_OK,true,"%d of %d Waypoints loaded ( older Waypoints ignored )",numwploaded,numwp);
+	}
 }
 
 /* save gpx file */
@@ -6549,9 +6578,7 @@ void AppInit(void)
 	kGUI::SetDefReportFontSize(11);
 	assert((sizeof(shapenames)/sizeof(char *))==SHAPE_NUMSHAPES,"Shapes table and defines list not sync'd!");
 
-#if HANDLECOOKIES
 	kGUI::SetCookieJar(new kGUICookieJar());
-#endif
 
 //	GPXCoord::Init();
 	gpx=new GPX();
@@ -6566,9 +6593,7 @@ void AppClose(void)
 	MSGPXMap::Purge();
 	kGUIXMLCODES::Purge();
 
-#if HANDLECOOKIES
 	delete kGUI::GetCookieJar();
-#endif	
 }
 
 #define MAXDEBUGLEN 1024

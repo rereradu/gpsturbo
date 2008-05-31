@@ -93,6 +93,7 @@ CACHETYPE_WEBCAM,
 CACHETYPE_CITO,
 CACHETYPE_PROJECTAPE,
 CACHETYPE_WHERIGO,
+CACHETYPE_MAZE,
 CACHETYPE_OTHER,
 CACHETYPE_NUM};	
 
@@ -346,7 +347,8 @@ SHAPE_LBCA, /* letterbox hybrid */
 SHAPE_WCCA, /* webcam */
 SHAPE_CICA,	/* cache in trash out event */
 SHAPE_PAPE,	/* project APE */
-SHAPE_WIGO,	/* project APE */
+SHAPE_WIGO,	/* WheriGo */
+SHAPE_MAZE,	/* GPS Adventures Maze Exhibit */
 SHAPE_OTHR,	/* other */
 SHAPE_MARKER,	/* marker shape */
 SHAPE_LOADINGIMAGE,
@@ -539,6 +541,10 @@ public:
 	CALLBACKGLUEVAL(GPX,LoadTracks,int)
 	void LoadTracks(int pressed);
 	void BSPDirty(void) {m_rebuildbsp=true;MapDirty();}
+
+	/* if an unknown type was loaded then this gets set to true */
+	bool m_badtype;
+	kGUIString m_badtypename;
 
 	/* this is the realtime tracking connection to GPSbabel */
 	kGUIComboBoxObj m_realtimegps;
