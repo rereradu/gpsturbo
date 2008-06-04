@@ -83,9 +83,9 @@ bool BabelGlue::GetInputFormats(unsigned int index,const char **name,const char 
 
 	if(index<m_filetypes.GetNumRows())
 	{
-		*(name)=m_filetypes.GetFieldPtr(index,0);
-		*(ext)=m_filetypes.GetFieldPtr(index,1);
-		*(desc)=m_filetypes.GetFieldPtr(index,2);
+		*(name)=m_filetypes.GetFieldPtr(index,0)->GetString();
+		*(ext)=m_filetypes.GetFieldPtr(index,1)->GetString();
+		*(desc)=m_filetypes.GetFieldPtr(index,2)->GetString();
 		return(true);
 	}
 	return(false);

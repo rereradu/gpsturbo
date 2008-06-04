@@ -175,6 +175,7 @@ private:
 	void SetLevelShift(int l,int b);
 	void DrawSub(MSSUBDIV *sub);
 	void AddSubPolys(MSSUBDIV *sub);
+	void AddSubPolyLines(MSSUBDIV *sub);
 	void DrawPoly(POLYSORT_DEF *ps);
 	void DrawPolyLabel(POLYSORT_DEF *ps);
 	void CalcSubRegions(MSSUBDIV *sub);
@@ -221,6 +222,10 @@ private:
 
 	static unsigned int m_numsortpolys;
 	static Array<POLYSORT_DEF>m_sortpolys;
+
+	static unsigned int m_numsortpolylines;
+	static Array<POLYSORT_DEF>m_sortpolylines;
+
 	static Heap m_sortpolysheap;
 	static int SortPolygons(const void *v1,const void *v2);
 

@@ -24,7 +24,7 @@ ifeq ($(SYS),-DMINGW)
 
 RESOBJ=$(OBJDIR)/gpsturbores.o
 
-$(RESOBJ): gpsturbo.rc
+$(RESOBJ): gpsturbo.rc gpsturbo.ico
 	windres gpsturbo.rc $(RESOBJ)
 
 endif
