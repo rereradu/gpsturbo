@@ -84,6 +84,7 @@ CACHETYPE_TRADITIONAL,
 CACHETYPE_MULTI,
 CACHETYPE_VIRTUAL,
 CACHETYPE_EVENT,
+CACHETYPE_MEGAEVENT,
 CACHETYPE_UNKNOWN,
 CACHETYPE_REVERSE,
 CACHETYPE_EARTH,
@@ -339,6 +340,7 @@ SHAPE_TRCA,	/* tranditional */
 SHAPE_MUCA, /* multi */
 SHAPE_VICA, /* virtual */
 SHAPE_EVCA, /* event */
+SHAPE_MECA, /* mega-event */
 SHAPE_UNCA, /* unknown */
 SHAPE_RVCA, /* locationless / reverse */
 SHAPE_EACA, /* earth caches */

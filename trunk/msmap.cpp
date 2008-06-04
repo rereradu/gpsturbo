@@ -43,6 +43,10 @@ kGUIPoint2 MSGPXMap::m_ppoints[MAXPP];
 
 unsigned int MSGPXMap::m_numsortpolys;
 Array<POLYSORT_DEF>MSGPXMap::m_sortpolys;
+
+unsigned int MSGPXMap::m_numsortpolylines;
+Array<POLYSORT_DEF>MSGPXMap::m_sortpolylines;
+
 Heap MSGPXMap::m_sortpolysheap;
 
 kGUIDrawSurface *MSGPXMap::m_lcwindow=0;	/* label collision window */
@@ -92,6 +96,7 @@ void MSGPXMap::Init(void)
 	m_drawsubdivs.Init(50,25);
 	m_drawmaps.Init(50,25);
 	m_sortpolys.Init(1024,256);
+	m_sortpolylines.Init(1024,256);
 	m_sortpolysheap.SetBlockSize(65536);
 
 	m_icons.Alloc(6);	/* 0x2a to 0x2f */
@@ -942,55 +947,62 @@ PL_TRAINTRACKS
 
 typedef struct
 {
-	int thickness;
+	int thickindex;
 	int drawlabel;
 	int type;
 	kGUIColor colour;
 }POLYLINEINFO_DEF;
 
+/* thickness for roads */
+static int thickinfo[4][MAXMSZOOM]={
+	{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},				/* always a line */
+	{2,2,2,2,2,2,2,2,2,2,2, 2, 3, 4, 6, 8, 9,10,12,14},		/* side street */
+	{2,2,2,2,2,2,2,2,2,2,2, 5, 7, 9,10,11,12,14,16,17},		/* artery */
+	{2,2,2,2,2,2,2,2,2,3,4,10,12,14,15,16,17,18,19,20}};	/* highway, onramp/offramp */
+
 static POLYLINEINFO_DEF polylineinfo[]={
-	{1,1,PL_NORMAL,DrawColor(0,0,255)},	//0 
-	{5,1,PL_NORMAL,DrawColor(255,0,0)},	//1 highway
-	{5,1,PL_NORMAL,DrawColor(255,0,0)},	//2 highway
-	{1,1,PL_NORMAL,DrawColor(0,0,0)},		//3 
-	{3,1,PL_NORMAL,DrawColor(0,0,0)},		//4 artiery
-	{3,1,PL_NORMAL,DrawColor(192,64,64)},	//5 artiery
-	{1,1,PL_NORMAL,DrawColor(32,32,32)},	//6 street
-	{1,1,PL_NORMAL,DrawColor(0,0,0)},		//7 
-	{1,1,PL_NORMAL,DrawColor(0,0,0)},		//8 
-	{1,1,PL_NORMAL,DrawColor(0,0,0)},		//9 on ramp
-	{1,1,PL_NORMAL,DrawColor(0,0,0)},		//10 rural street
-	{1,1,PL_NORMAL,DrawColor(0,255,0)},		//11
-	{1,1,PL_NORMAL,DrawColor(0,255,0)},		//12
-	{1,1,PL_NORMAL,DrawColor(0,255,0)},		//13
-	{1,1,PL_NORMAL,DrawColor(192,192,192)},//14 
-	{1,1,PL_NORMAL,DrawColor(0,255,0)},		//15 
-	{1,1,PL_NORMAL,DrawColor(0,255,0)},		//16 
-	{1,1,PL_NORMAL,DrawColor(0,255,0)},		//17 
-	{1,1,PL_NORMAL,DrawColor(0,255,0)},		//18 
-	{1,1,PL_NORMAL,DrawColor(0,255,0)},		//19 
-	{1,1,PL_TRAINTRACKS,DrawColor(128,255,128)},	//20 train tracks
-	{1,1,PL_NORMAL,DrawColor(128,255,128)},	//21 
-	{1,1,PL_NORMAL,DrawColor(0,0,0)},		//22 small street? 
-	{1,1,PL_NORMAL,DrawColor(64,255,64)},	//23 
-	{1,1,PL_NORMAL,DrawColor(0,0,255)},		//24  creek
-	{1,1,PL_NORMAL,DrawColor(0,255,0)},		//25  
-	{1,1,PL_NORMAL,DrawColor(0,255,0)},		//26  
-	{1,1,PL_NORMAL,DrawColor(255,255,255)},	//27 ferry route  
-	{1,1,PL_NORMAL,DrawColor(0,255,0)},		//28  
-	{1,1,PL_NORMAL,DrawColor(0,255,0)},		//29  
-	{1,1,PL_NORMAL,DrawColor(0,255,0)},		//30  
-	{1,1,PL_NORMAL,DrawColor(128,128,128)},	//31  topo line
-	{1,0,PL_NORMAL,DrawColor(134,134,134)},	//32  topo line
-	{1,0,PL_NORMAL,DrawColor(140,140,140)},	//33  topo line
-	{1,0,PL_NORMAL,DrawColor(146,146,146)},	//34  topo line
-	{1,1,PL_NORMAL,DrawColor(0,255,0)},		//35  
-	{1,1,PL_NORMAL,DrawColor(0,255,0)},		//36  
-	{1,1,PL_NORMAL,DrawColor(0,255,0)},		//37  
-	{1,1,PL_NORMAL,DrawColor(0,255,0)},		//38  
-	{1,1,PL_NORMAL,DrawColor(0,255,0)},		//39  
-	{1,1,PL_NORMAL,DrawColor(0,255,0)},		//40  
-	{1,1,PL_NORMAL,DrawColor(255,0,0)}};	//41 power line  
+	{0,1,PL_NORMAL,DrawColor(0,0,255)},	//0 
+	{3,1,PL_NORMAL,DrawColor(242,191,36)},	//1 highway
+	{3,1,PL_NORMAL,DrawColor(242,181,36)},	//2 highway
+	{1,1,PL_NORMAL,DrawColor(255,250,112)}, //3 artiery
+	{2,1,PL_NORMAL,DrawColor(255,250,112)},	//4 artiery
+	{2,1,PL_NORMAL,DrawColor(255,250,112)},	//5 artiery
+	{1,1,PL_NORMAL,DrawColor(255,255,255)},	//6 street
+	{1,1,PL_NORMAL,DrawColor(255,255,255)},		//7 
+	{1,1,PL_NORMAL,DrawColor(255,255,255)},		//8 
+	{1,1,PL_NORMAL,DrawColor(249,222,77)},	//9 on ramp
+	{1,1,PL_NORMAL,DrawColor(255,255,255)},		//10 rural street
+	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//11
+	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//12
+	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//13
+	{0,1,PL_NORMAL,DrawColor(192,192,192)},//14 
+	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//15 
+	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//16 
+	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//17 
+	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//18 
+	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//19 
+	{0,1,PL_TRAINTRACKS,DrawColor(128,255,128)},	//20 train tracks
+	{0,1,PL_NORMAL,DrawColor(128,255,128)},	//21 
+	{0,1,PL_NORMAL,DrawColor(0,0,0)},		//22 small street? 
+	{0,1,PL_NORMAL,DrawColor(64,255,64)},	//23 
+	{0,1,PL_NORMAL,DrawColor(0,0,255)},		//24  creek
+	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//25  
+	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//26  
+	{0,1,PL_NORMAL,DrawColor(255,255,255)},	//27 ferry route  
+	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//28  
+	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//29  
+	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//30  
+	{0,1,PL_NORMAL,DrawColor(128,128,128)},	//31  topo line
+	{0,0,PL_NORMAL,DrawColor(134,134,134)},	//32  topo line
+	{0,0,PL_NORMAL,DrawColor(140,140,140)},	//33  topo line
+	{0,0,PL_NORMAL,DrawColor(146,146,146)},	//34  topo line
+	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//35  
+	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//36  
+	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//37  
+	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//38  
+	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//39  
+	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//40  
+	{0,1,PL_NORMAL,DrawColor(255,0,0)}};	//41 power line  
 
 	static int mlevels[MAXMSZOOM]={
 		0,0,0,0,1,
@@ -1031,12 +1043,17 @@ int MSGPXMap::DrawTile(int tx,int ty)
 
 	/* add all polys that overlap the tile to the draw list */
 	m_numsortpolys=0;
+	m_numsortpolylines=0;
 	m_sortpolysheap.Reset();
+
 	for(i=0;i<m_numdrawsubs;++i)
 	{
 		sub=m_drawsubdivs.GetEntry(i);
 		map=m_drawmaps.GetEntry(i);
 		map->AddSubPolys(sub);
+#if 0
+		map->AddSubPolyLines(sub);
+#endif
 	}
 
 	if(m_numsortpolys>1)
@@ -1060,6 +1077,13 @@ int MSGPXMap::DrawTile(int tx,int ty)
 		if(ps.numlabels)
 			ps.map->DrawPolyLabel(&ps);
 	}
+
+	/* @todo draw sorted and colliated polylines */
+#if 0
+	if(m_numsortpolylines>1)
+		m_sortpolylines.Sort(m_numsortpolylines,SortPolygons);
+
+#endif
 
 	/* now draw all labels and lines */
 	for(i=0;i<m_numdrawsubs;++i)
@@ -1437,7 +1461,7 @@ void MSGPXMap::AddSubPolys(MSSUBDIV *sub)
 	const char *rend;
 	POLYSORT_DEF ps;
 
-	/* draw polygon */
+	/* save polygon */
 	if(sub->elements&ELEM_POLYGON)
 	{
 		rstart=sub->m_polystart;
@@ -1472,6 +1496,45 @@ void MSGPXMap::AddSubPolys(MSSUBDIV *sub)
 		}
 	}
 }
+
+/* collect all poly lines and then sort, merge all >1 wide ones */
+#if 0
+void MSGPXMap::AddSubPolyLines(MSSUBDIV *sub)
+{
+	const char *rstart;
+	const char *rend;
+	POLYSORT_DEF ps;
+
+	/* save polyline*/
+	rstart=sub->m_linestart;
+	rend=sub->m_lineend;
+	while(rstart<rend && rstart)
+	{
+		POLYLINEINFO_DEF *pi;
+		int thickness;
+
+		rstart=ReadPoly(sub,rstart);
+		if(rstart && kGUI::Overlap(&m_tilecorners,&m_polycorners))
+		{
+			ps.map=this;
+			ps.polytype=m_polytype;
+			ps.corners=m_polycorners;
+
+			/* copy decompressed points to a temporary heap so we don't need to */
+			/* decompress them again, this is a speed optimization! */
+			ps.numpoints=m_numpoints;
+			ps.points=(kGUIPoint2 *)m_sortpolysheap.Alloc(m_numpoints*sizeof(kGUIPoint2));
+			memcpy(ps.points,m_ppoints,m_numpoints*sizeof(kGUIPoint2));
+
+			/* save labels associated with this polyline */
+			ps.numlabels=m_numlabels;
+			memcpy(ps.curlabels,m_curlabels,sizeof(m_curlabels));
+
+			m_sortpolylines.SetEntry(m_numsortpolylines++,ps);
+		}
+	}
+}
+#endif
 
 void MSGPXMap::DrawPoly(POLYSORT_DEF *ps)
 {
@@ -1575,9 +1638,15 @@ void MSGPXMap::DrawSub(MSSUBDIV *sub)
 				switch(pi->type)
 				{
 				case PL_NORMAL:
-					thickness=(pi->thickness*GetZoom())/MAXMSZOOM;
+//					thickness=(pi->thickness*GetZoom())/MAXMSZOOM;
+					thickness=thickinfo[pi->thickindex][GetZoom()];
 					if(thickness>1)
+					{
+						/*! @todo add all fat polys to 1 large merged poly (using tpc ) and then draw it, then draw merged outline all at one, outside and holes */ 
+						/*! @also draw lower level to higher level 1,2,3 */
 						kGUI::DrawFatPolyLine(m_numpoints,m_ppoints,pi->colour,thickness);
+						kGUI::DrawFatPolyOutLine(m_numpoints,m_ppoints,DrawColor(128,128,128),thickness);
+					}
 					else
 						kGUI::DrawPolyLine(m_numpoints,m_ppoints,pi->colour);
 				break;
@@ -1596,7 +1665,7 @@ void MSGPXMap::DrawSub(MSSUBDIV *sub)
 						ReadLabel(m_curlabels[l],&m_t);
 						if(m_t.GetLen())
 						{
-						//	m_t.ASprintf("<%d>",m_polytype);
+//							m_t.ASprintf("<%d>",m_polytype);
 							if(m_labelicon>=0)
 								m_t.SetFontSize(11);
 							else

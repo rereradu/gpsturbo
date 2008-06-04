@@ -28,6 +28,7 @@
 #include "kguitsp.h"
 #include "babelglue.h"
 
+/*! @todo load gpx files from inside zip file automatically */
 //zlib is used by the oziexplorer format and is only included here to get the version
 //number for the credit screen.
 #include "zlib/zlib.h"
@@ -180,6 +181,7 @@ const char *shapenames[]={
 	 "muca.gif",
 	 "vica.gif",
 	 "evca.gif",
+	 "meca.gif",
 	 "unca.gif",
 	 "rvca.gif",
 	 "eaca.gif",
@@ -202,6 +204,7 @@ const char *cachetypenames[CACHETYPE_NUM]={
 	"Multi-cache",
 	"Virtual Cache",
 	"Event Cache",
+	"Mega-Event Cache",
 	"Unknown Cache",
 	"Locationless (Reverse) Cache",
 	"Earthcache",
