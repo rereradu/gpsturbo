@@ -332,8 +332,8 @@ void BabelGlue::StopTracking(void)
 
 bool BabelGlue::GetChunk(const char *tag,const char *file,kGUIString *s)
 {
-	char *sp;
-	char *ep;
+	const char *sp;
+	const char *ep;
 
 	sp=strstr(file,tag);
 	if(!sp)
