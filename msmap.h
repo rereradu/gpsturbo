@@ -39,11 +39,19 @@ typedef struct
 	const char *rstart;
 	unsigned int polytype;
 	unsigned int numpoints;
-	kGUIPoint2 *points;
+	double thickness;
+	int pixlen;
+	kGUIDPoint2 *points;
 	kGUICorners corners;
 	int numlabels;				/* 0 to 4 */
 	const char *curlabels[4];	/* pointer to current label */
 }POLYSORT_DEF;
+
+typedef struct
+{
+	int x,y;
+	int icon;
+}ICON_POS;
 
 #if 0
 typedef struct
@@ -143,6 +151,15 @@ public:
 	GPXCoord m_se;
 };
 
+enum
+{
+ROADGROUP_CREEK,
+ROADGROUP_STREET,
+ROADGROUP_RAMPS,
+ROADGROUP_COLLECTOR,
+ROADGROUP_HIGHWAY,
+ROADGROUP_NUM};
+
 /* Garmin mapsource map */
 class MSGPXMap : public GPXMap
 {
@@ -150,6 +167,7 @@ public:
 	MSGPXMap(const char *fn);
 	~MSGPXMap();
 	void ToMap(class GPXCoord *c,int *sx,int *sy);
+	void ToMap(class GPXCoord *c,double *sx,double *sy);
 	void FromMap(int sx,int sy,class GPXCoord *c);
 	int DrawTile(int tx,int ty);			/* draw the tile to the current display */
 	bool DrawTile(int level);
@@ -177,18 +195,19 @@ private:
 	void AddSubPolys(MSSUBDIV *sub);
 	void AddSubPolyLines(MSSUBDIV *sub);
 	void DrawPoly(POLYSORT_DEF *ps);
+	void DrawRoadGroupLabels(POLYSORT_DEF *ps);
 	void DrawPolyLabel(POLYSORT_DEF *ps);
 	void CalcSubRegions(MSSUBDIV *sub);
 	double ToDegrees(int mapunit) {return (double) mapunit * UNIT_TO_DEG;}
 	const char *ReadPoint(MSSUBDIV *sub,const char *rstart);
 	const char *ReadPoly(MSSUBDIV *sub,const char *rstart);
 	int GetPoint(kGUIBitStream *bs,int nbits,int sign);
-	void DrawTrainTracks(int nvert,kGUIPoint2 *point);
+	void DrawTrainTracks(int nvert,kGUIDPoint2 *point);
 	
 	kGUIText m_t;	/* temp used in drawing */
 	void ReadLabel(const char *enc,kGUIString *s);
 	static void DrawLabel(kGUIText *t,int lx,int ly,int lw,int lh,double heading);
-	void DrawLineLabel(kGUIText *s,int nvert,kGUIPoint2 *point,bool root);
+	void DrawLineLabel(kGUIText *s,int nvert,kGUIDPoint2 *point,int over,bool root);
 	void DrawPolyLabel(kGUIText *s,int nvert,kGUIPoint2 *point);
 
 	const char *m_filedata;
@@ -223,11 +242,15 @@ private:
 	static unsigned int m_numsortpolys;
 	static Array<POLYSORT_DEF>m_sortpolys;
 
-	static unsigned int m_numsortpolylines;
-	static Array<POLYSORT_DEF>m_sortpolylines;
+	static unsigned int m_roadgroupspolys[ROADGROUP_NUM];
+	static Array<POLYSORT_DEF>m_roadgroups[ROADGROUP_NUM];
+//	static PolyGroup m_roadgroups[ROADGROUP_NUM];
 
 	static Heap m_sortpolysheap;
 	static int SortPolygons(const void *v1,const void *v2);
+
+	static int m_numiconsdrawn;
+	static Array<ICON_POS> m_iconpos;
 
 	int m_numchildren;
 	MSGPXChild *m_children;	/* array of children classes */
@@ -264,7 +287,7 @@ private:
 	static kGUICorners m_lcbounds;
 
 	static MSCOORD m_points[MAXPP];
-	static kGUIPoint2 m_ppoints[MAXPP];
+	static kGUIDPoint2 m_ppoints[MAXPP];
 
 	static int m_labelicon;				/* icon for last read label */
 	static Array<kGUIImage *>m_icons;
