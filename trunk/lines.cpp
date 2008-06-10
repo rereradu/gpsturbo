@@ -1200,16 +1200,7 @@ void LinesPage::ProcessLine(kGUICorners *c,GPXBounds *bounds,int type,kGUIString
 			if(m_thickness<=1)
 				kGUI::DrawLine(x1,y1,x2,y2,m_col);
 			else
-			{
-				kGUIPoint2 points[2];
-
-				points[0].x=x1;
-				points[1].x=x2;
-				points[0].y=y1;
-				points[1].y=y2;
-
-				kGUI::DrawFatPolyLine(2,points,m_col,m_thickness);
-			}
+				kGUI::DrawFatLine(x1,y1,x2,y2,m_col,m_thickness>>1);
 		}
 	break;
 	case LINEPRIM_ARC:

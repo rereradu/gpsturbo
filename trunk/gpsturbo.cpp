@@ -5462,16 +5462,8 @@ void GPXLabel::Draw(int cxpix,int cypix)
 	/* if label has moved, then draw a line between the old position and the new location */
 	if((m_origx!=m_c.lx) || (m_origy!=m_c.ty))
 	{
-		kGUIPoint2 lpoints[2];
-
-		lpoints[0].x=m_origx-cxpix;
-		lpoints[0].y=m_origy-cypix;
-		lpoints[1].x=px+16;
-		lpoints[1].y=py;
-
-		kGUI::DrawFatPolyLine(2,lpoints,DrawColor(0,0,0),9,0.5f);
-		kGUI::DrawFatPolyLine(2,lpoints,m_colour,5,0.8f);
-//		kGUI::DrawLine(lpoints[0].x,lpoints[0].y,lpoints[1].x,lpoints[1].y,DrawColor(0,0,0));
+		kGUI::DrawFatLine(m_origx-cxpix,m_origy-cypix,px+16,py,DrawColor(0,0,0),3.2f,0.5f);
+		kGUI::DrawFatLine(m_origx-cxpix,m_origy-cypix,px+16,py,m_colour,2.0f,0.5f);
 	}
 
 	if(m_icon<0)
