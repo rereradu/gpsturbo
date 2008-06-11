@@ -349,7 +349,7 @@ bool BabelGlue::GetChunk(const char *tag,const char *file,kGUIString *s)
 bool BabelGlue::GetPos(GPXCoord *pos)
 {
 	const char *file;
-	long fs;
+	unsigned long fs;
 	int num;
 	long crc;
 	kGUIString created;

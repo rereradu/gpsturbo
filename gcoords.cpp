@@ -226,20 +226,20 @@ void GPXLL::get_grid_zone(char grid_zone[GRID_ZONE_LENGTH], double *lambda0)
 
   if (m_latitude < -80) {
     if (m_longitude < 0) {
-      sprintf (grid_zone, "30A");
+      strcpy (grid_zone, "30A");
       *lambda0 = 0 * M_PI / 180.0;
     } else {
-      sprintf (grid_zone, "31B");
+      strcpy (grid_zone, "31B");
       *lambda0 = 0 * M_PI / 180.0;
     }
     return;
 
   } else if (m_latitude > 84) {
     if (m_longitude < 0) {
-      sprintf (grid_zone, "30Y");
+      strcpy (grid_zone, "30Y");
       *lambda0 = 0 * M_PI / 180.0;
     } else {
-      sprintf (grid_zone, "31Z");
+      strcpy (grid_zone, "31Z");
       *lambda0 = 0 * M_PI / 180.0;
     }
     return;
@@ -250,16 +250,16 @@ void GPXLL::get_grid_zone(char grid_zone[GRID_ZONE_LENGTH], double *lambda0)
   if (m_latitude > 72 && m_longitude > 0 && m_longitude < 42) {
     if (m_longitude < 9) {
       *lambda0 = 4.5;
-      sprintf (grid_zone, "31X");
+      strcpy (grid_zone, "31X");
     } else if (m_longitude < 21) {
       *lambda0 = 15 * M_PI / 180.0;
-      sprintf (grid_zone, "33X");
+      strcpy (grid_zone, "33X");
     } else if (m_longitude < 33) {
       *lambda0 = 27 * M_PI / 180.0;
-      sprintf (grid_zone, "35X");
+      strcpy (grid_zone, "35X");
     } else if (m_longitude < 42) {
       *lambda0 = 37.5 * M_PI / 180.0;
-      sprintf (grid_zone, "37X");
+      strcpy (grid_zone, "37X");
     }
   
     return;
@@ -271,10 +271,10 @@ void GPXLL::get_grid_zone(char grid_zone[GRID_ZONE_LENGTH], double *lambda0)
       m_longitude > 0 && m_longitude < 12) {
     if (m_longitude < 3) {
       *lambda0 = 1.5 * M_PI / 180.0;
-      sprintf (grid_zone, "31V");
+      strcpy (grid_zone, "31V");
     } else if (m_longitude < 12) {
       *lambda0 = 7.5 * M_PI / 180.0;
-      sprintf (grid_zone, "32V");
+      strcpy (grid_zone, "32V");
     }
       
     return;

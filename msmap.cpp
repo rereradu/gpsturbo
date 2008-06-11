@@ -192,7 +192,7 @@ const char *MSGPXFName::GetFName(int mapnum)
 /* static function */
 void MSGPXMap::GetLongName(const char *fn,kGUIString *longname)
 {
-	long filesize;
+	unsigned long filesize;
 	char *fp;
 	kGUIString tdbfn;
 
@@ -239,7 +239,7 @@ MSGPXMap::MSGPXMap(const char *fn)
 	double c;
 	long offset;
 	long fatend;
-	long filesize;
+	unsigned long filesize;
 	char *fp;
 	int copyrightoffset,copyrightsize,copyrightrecsize;
 	MSFAT *labfat;
@@ -275,8 +275,8 @@ MSGPXMap::MSGPXMap(const char *fn)
 	if(fp[0])
 	{
 		char xorchar=fp[0];
-		for(i=0;i<filesize;++i)
-			fp[i]^=xorchar;
+		for(unsigned long ii=0;ii<filesize;++ii)
+			fp[ii]^=xorchar;
 	}
 
 #if 0
@@ -910,8 +910,8 @@ static kGUIColor polycolours[]={
 	DrawColor(255,255,192),		//7 !airport (yellow)
 	DrawColor(0,0,255),		//8  shopping center
 	DrawColor(0,0,255),		//9 marina
-	DrawColor(0,0,0),		//10 !college or university
-	DrawColor(0,0,0),		//11 hospital
+	DrawColor(128,128,128),		//10 !college or university
+	DrawColor(128,128,128),		//11 hospital
 	DrawColor(0,0,255),		//12 industrial
 	DrawColor(255,225,225),		//13 !reservation (brown)
 	DrawColor(192,192,192),	//14 airport runway
@@ -2147,6 +2147,7 @@ void MSGPXMap::DrawLineLabel(kGUIText *t,int nvert,kGUIDPoint2 *point,int over,b
 /* draw label but first check too make sure it doesn't */
 /* overlap and previously drawn labels */
 
+/* todo change positions to double from int */
 void MSGPXMap::DrawLabel(kGUIText *t,int lx,int ly,int lw,int lh,double heading)
 {
 	int hx,hy,i;
