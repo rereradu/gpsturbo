@@ -64,7 +64,7 @@ OZF2GPXMap::OZF2GPXMap(const char *fn)
 	int z;
 	int nf;
 	unsigned char *fp;
-	long filesize;
+	unsigned long filesize;
 	OZ2FHEADER_DEF *oh;
 	double maxlat,maxlon;
 	double maxx,maxy;

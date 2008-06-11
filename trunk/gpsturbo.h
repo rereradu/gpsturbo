@@ -1205,10 +1205,6 @@ SOLVERHEAD_NUMTYPES};
 
 extern void DebugPrint(const char *message,...);
 
-#ifndef PI
-#define PI 3.1415926535f
-#endif
-
 #define sgn(x) (x)==0?0:(x>0?1:-1)
 #define sgnd(x) (x)==0.0f?0:(x>0.0f?1:-1)
 
