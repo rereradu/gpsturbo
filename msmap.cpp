@@ -910,8 +910,8 @@ static kGUIColor polycolours[]={
 	DrawColor(255,255,192),		//7 !airport (yellow)
 	DrawColor(0,0,255),		//8  shopping center
 	DrawColor(0,0,255),		//9 marina
-	DrawColor(128,128,128),		//10 !college or university
-	DrawColor(128,128,128),		//11 hospital
+	DrawColor(0,0,0),		//10 !college or university
+	DrawColor(0,0,0),		//11 hospital
 	DrawColor(0,0,255),		//12 industrial
 	DrawColor(255,225,225),		//13 !reservation (brown)
 	DrawColor(192,192,192),	//14 airport runway
@@ -919,7 +919,7 @@ static kGUIColor polycolours[]={
 	DrawColor(0,0,0),		//16 
 	DrawColor(0,0,0),		//17 
 	DrawColor(0,0,0),		//18 
-	DrawColor(128,128,128),		//19 !man made area, hi rise buildings
+	DrawColor(0,0,0),		//19 !man made area, hi rise buildings
 	DrawColor(128,255,128),	//20 national park
 	DrawColor(128,255,128),	//21 national park
 	DrawColor(128,255,128),	//22 national park
@@ -1117,10 +1117,6 @@ int MSGPXMap::DrawTile(int tx,int ty)
 	/* reset roadgroups to empty */
 	for(i=0;i<ROADGROUP_NUM;++i)
 		m_roadgroupspolys[i]=0;
-//	{
-//		m_roadgroups[i].Init();
-//		m_roadgroups[i].SetClip(0,256,0,256);
-//	}
 
 	/* now draw all labels and lines */
 	for(i=0;i<m_numdrawsubs;++i)
@@ -1598,35 +1594,54 @@ void MSGPXMap::DrawPoly(POLYSORT_DEF *ps)
 void MSGPXMap::DrawPolyLabel(POLYSORT_DEF *ps)
 {
 	int l;
-	int ah=ps->corners.by-ps->corners.ty; /* height of poly area */
-	int lgh;	/* label group height */
-	int lx,ly,lw,lh;
+	double ah=ps->corners.by-ps->corners.ty; /* height of poly area */
+	double lgh;	/* label group height */
+	double lx,ly,lw,lh;
 
 	m_t.SetFontSize(12);
 	m_t.Clear();
 	lh=m_t.GetHeight();			/* height of 1 line of text */
 	lgh=lh*ps->numlabels;		/* height of all labels on this polygon */
-	if(lgh<ah)					/* is there room over the poly for these lines? */
+
+	if(ps->numpoints==1)
 	{
-		int aw=ps->corners.rx-ps->corners.lx;	/* with of poly area */
-
-		ly=(ps->corners.ty-m_ty)+(ah>>1)-(lgh<<1);	/* y for first line */
-
-		/* draw polygon labels */
+		lx=ps->points->x;
+		ly=ps->points->y;
 		for(l=0;l<ps->numlabels;++l)
 		{
 			ReadLabel(ps->curlabels[l],&m_t);
-#if 0
-			m_t.ASprintf("<%d>",ps->polytype);
-#endif
 			if(m_t.GetLen())
 			{
 				lw=m_t.GetWidth();
-				if(lw<aw)
+				DrawLabel(&m_t,lx,ly,lw,lh,0.0f);
+				ly+=lh;
+			}
+		}
+	}
+	else
+	{
+		if(lgh<ah)					/* is there room over the poly for these lines? */
+		{
+			int aw=ps->corners.rx-ps->corners.lx;	/* with of poly area */
+
+			ly=(ps->corners.ty-m_ty)+(ah/2.0f)-(lgh*2.0f);	/* y for first line */
+
+			/* draw polygon labels */
+			for(l=0;l<ps->numlabels;++l)
+			{
+				ReadLabel(ps->curlabels[l],&m_t);
+#if 0
+				m_t.ASprintf("<%d>",ps->polytype);
+#endif
+				if(m_t.GetLen())
 				{
-					lx=(ps->corners.lx-m_tx)+(aw>>1)-(lw>>1);
-					DrawLabel(&m_t,lx,ly,lw,lh,0.0f);
-					ly+=lh;
+					lw=m_t.GetWidth();
+					if(lw<aw)
+					{
+						lx=(ps->corners.lx-m_tx)+(aw/2.0f)-(lw/2.0f);
+						DrawLabel(&m_t,lx,ly,lw,lh,0.0f);
+						ly+=lh;
+					}
 				}
 			}
 		}
@@ -1824,15 +1839,25 @@ void MSGPXMap::DrawSub(MSSUBDIV *sub)
 			rstart=ReadPoint(sub,rstart);
 			kGUI::DrawRect((int)m_ppoints[0].x,(int)m_ppoints[0].y,(int)m_ppoints[0].x+2,(int)m_ppoints[0].y+2,DrawColor(0,64,192));
 
-			/* todo: draw more than 1 label if applicable */
 			if(m_numlabels)
 			{
-				ReadLabel(m_curlabels[0],&m_t);
-				if(m_t.GetLen())
-				{
-					m_t.SetFontSize(12);
-					DrawLabel(&m_t,(int)m_ppoints[0].x,(int)m_ppoints[0].y,m_t.GetWidth(),m_t.GetHeight(),0.0f);
-				}
+				//save text to be drawn after roads etc.
+				ps.map=this;
+				ps.polytype=m_polytype;
+				ps.corners=m_polycorners;
+
+				/* copy decompressed point to a temporary heap so we don't need to */
+				/* decompress it again, this is a speed optimization! */
+
+				ps.numpoints=1;
+				ps.points=(kGUIDPoint2 *)m_sortpolysheap.Alloc(sizeof(kGUIDPoint2));
+				memcpy(ps.points,m_ppoints,sizeof(kGUIDPoint2));
+
+				/* save labels associated with this point */
+				ps.numlabels=m_numlabels;
+				memcpy(ps.curlabels,m_curlabels,sizeof(m_curlabels));
+
+				m_sortpolys.SetEntry(m_numsortpolys++,ps);
 			}
 		}
 	}
@@ -1845,15 +1870,25 @@ void MSGPXMap::DrawSub(MSSUBDIV *sub)
 			rstart=ReadPoint(sub,rstart);
 			kGUI::DrawRect((int)m_ppoints[0].x,(int)m_ppoints[0].y,(int)m_ppoints[0].x+2,(int)m_ppoints[0].y+2,DrawColor(0,96,224));
 
-			/* todo: draw more than 1 label if applicable */
 			if(m_numlabels)
 			{
-				ReadLabel(m_curlabels[0],&m_t);
-				if(m_t.GetLen())
-				{
-					m_t.SetFontSize(12);
-					DrawLabel(&m_t,(int)m_ppoints[0].x,(int)m_ppoints[0].y,m_t.GetWidth(),m_t.GetHeight(),0.0f);
-				}
+				//save text to be drawn after roads etc.
+				ps.map=this;
+				ps.polytype=m_polytype;
+				ps.corners=m_polycorners;
+
+				/* copy decompressed point to a temporary heap so we don't need to */
+				/* decompress it again, this is a speed optimization! */
+
+				ps.numpoints=1;
+				ps.points=(kGUIDPoint2 *)m_sortpolysheap.Alloc(sizeof(kGUIDPoint2));
+				memcpy(ps.points,m_ppoints,sizeof(kGUIDPoint2));
+
+				/* save labels associated with this point */
+				ps.numlabels=m_numlabels;
+				memcpy(ps.curlabels,m_curlabels,sizeof(m_curlabels));
+
+				m_sortpolys.SetEntry(m_numsortpolys++,ps);
 			}
 		}
 	}
@@ -2148,7 +2183,7 @@ void MSGPXMap::DrawLineLabel(kGUIText *t,int nvert,kGUIDPoint2 *point,int over,b
 /* overlap and previously drawn labels */
 
 /* todo change positions to double from int */
-void MSGPXMap::DrawLabel(kGUIText *t,int lx,int ly,int lw,int lh,double heading)
+void MSGPXMap::DrawLabel(kGUIText *t,double lx,double ly,double lw,double lh,double heading)
 {
 	int hx,hy,i;
 	bool dodraw;
@@ -2156,7 +2191,7 @@ void MSGPXMap::DrawLabel(kGUIText *t,int lx,int ly,int lw,int lh,double heading)
 	kGUICorners m_bounds;
 	kGUIDrawSurface *savesurface;
 	kGUIImage *icon;
-	int icx=0,icy=0;
+	double icx=0.0f,icy=0.0f;
 
 	/* calculate 4 corners of the text */
 	
@@ -2172,10 +2207,10 @@ void MSGPXMap::DrawLabel(kGUIText *t,int lx,int ly,int lw,int lh,double heading)
 		icy=iconcentery[m_labelicon];
 
 		/* if icon is cliped against edge of tile then don't draw */
-		m_bounds.lx=lx;
-		m_bounds.rx=lx+icon->GetImageWidth();
-		m_bounds.ty=ly;
-		m_bounds.by=ly+icon->GetImageHeight();
+		m_bounds.lx=(int)lx;
+		m_bounds.rx=(int)lx+icon->GetImageWidth();
+		m_bounds.ty=(int)ly;
+		m_bounds.by=(int)ly+icon->GetImageHeight();
 
 		m_tbounds.lx=0;
 		m_tbounds.ty=0;
@@ -2193,26 +2228,26 @@ void MSGPXMap::DrawLabel(kGUIText *t,int lx,int ly,int lw,int lh,double heading)
 
 	if(heading==0.0f)
 	{
-		m_corners[0].x=lx;
-		m_corners[0].y=ly;
-		m_corners[1].x=lx+lw;
-		m_corners[1].y=ly;
-		m_corners[2].x=lx+lw;
-		m_corners[2].y=ly+lh;
-		m_corners[3].x=lx;
-		m_corners[3].y=ly+lh;
+		m_corners[0].x=(int)lx;
+		m_corners[0].y=(int)ly;
+		m_corners[1].x=(int)(lx+lw);
+		m_corners[1].y=(int)ly;
+		m_corners[2].x=(int)(lx+lw);
+		m_corners[2].y=(int)(ly+lh);
+		m_corners[3].x=(int)lx;
+		m_corners[3].y=(int)(ly+lh);
 		
-		m_bounds.lx=lx;
-		m_bounds.rx=lx+lw;
-		m_bounds.ty=ly;
-		m_bounds.by=ly+lh;
+		m_bounds.lx=(int)lx;
+		m_bounds.rx=(int)(lx+lw);
+		m_bounds.ty=(int)ly;
+		m_bounds.by=(int)(ly+lh);
 	}
 	else
 	{
-		m_corners[0].x=lx;
-		m_corners[0].y=ly;
-		m_corners[1].x=lx+(int)(cos(heading)*lw);
-		m_corners[1].y=ly-(int)(sin(heading)*lw);
+		m_corners[0].x=(int)lx;
+		m_corners[0].y=(int)ly;
+		m_corners[1].x=(int)(lx+(int)(cos(heading)*lw));
+		m_corners[1].y=(int)(ly-(int)(sin(heading)*lw));
 		hx=(int)(cos(heading-(PI*2*0.25f))*lh);
 		hy=(int)(sin(heading-(PI*2*0.25f))*lh);
 		m_corners[3].x=m_corners[0].x+hx;
@@ -2271,21 +2306,21 @@ void MSGPXMap::DrawLabel(kGUIText *t,int lx,int ly,int lw,int lh,double heading)
 					ipp=m_iconpos.GetEntryPtr(i);
 					if(ipp->icon==m_labelicon)
 					{
-						if(kGUI::FastHypot(ipp->x-lx,ipp->y-ly)<128)
+						if(hypot(ipp->x-lx,ipp->y-ly)<128.0f)
 							return;
 					}
 				}
 
-				ip.x=lx;
-				ip.y=ly;
+				ip.x=(int)lx;
+				ip.y=(int)ly;
 				ip.icon=m_labelicon;
 				m_iconpos.SetEntry(m_numiconsdrawn++,ip);
 
-				icon->Draw(0,lx,ly);
+				icon->Draw(0,(int)lx,(int)ly);
 				lx+=icx-(lw/2);
 				ly+=icy-(lh/2);
 			}
-			t->Draw(lx,ly,lw,lh,DrawColor(0,0,0));
+			t->DrawRot(lx,ly,0.0f,DrawColor(0,0,0));
 		}
 		else
 			t->DrawRot(lx,ly,heading,DrawColor(0,0,0));
