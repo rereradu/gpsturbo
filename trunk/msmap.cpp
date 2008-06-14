@@ -908,25 +908,25 @@ static kGUIColor polycolours[]={
 	DrawColor(180,180,180),		//5 parking lot
 	DrawColor(160,160,160),		//6 parking garage
 	DrawColor(255,255,192),		//7 !airport (yellow)
-	DrawColor(0,0,255),		//8  shopping center
-	DrawColor(0,0,255),		//9 marina
-	DrawColor(0,0,0),		//10 !college or university
-	DrawColor(0,0,0),		//11 hospital
-	DrawColor(0,0,255),		//12 industrial
+	DrawColor(255,192,255),		//8  shopping center
+	DrawColor(128,128,255),		//9 marina
+	DrawColor(192,192,192),		//10 !college or university
+	DrawColor(192,192,192),		//11 hospital
+	DrawColor(192,192,192),		//12 industrial
 	DrawColor(255,225,225),		//13 !reservation (brown)
 	DrawColor(192,192,192),	//14 airport runway
 	DrawColor(0,0,0),		//15 
 	DrawColor(0,0,0),		//16 
 	DrawColor(0,0,0),		//17 
 	DrawColor(0,0,0),		//18 
-	DrawColor(0,0,0),		//19 !man made area, hi rise buildings
+	DrawColor(192,192,192),		//19 !man made area, hi rise buildings
 	DrawColor(128,255,128),	//20 national park
 	DrawColor(128,255,128),	//21 national park
 	DrawColor(128,255,128),	//22 national park
 	DrawColor(64,255,64),	//23 city park
 	DrawColor(96,255,96),	//24 golf
 	DrawColor(225,255,225),		//25 !sport park (light green)
-	DrawColor(192,192,192),		//26 !cemetery
+	DrawColor(175,175,175),		//26 !cemetery
 	DrawColor(0,0,0),			//27 ferry route
 	DrawColor(0,0,0),			//28 
 	DrawColor(0,0,0),			//29 
@@ -941,7 +941,7 @@ static kGUIColor polycolours[]={
 	DrawColor(0,0,0),		//38 
 	DrawColor(0,0,0),		//39 
 	DrawColor(64,64,255),	//40 ocean 
-	DrawColor(0,0,0),		//41 
+	DrawColor(32,32,255),	//41 water reservoir
 	DrawColor(0,0,0),		//42 
 	DrawColor(0,0,0),		//43 
 	DrawColor(0,0,0),		//44 
@@ -964,18 +964,18 @@ static kGUIColor polycolours[]={
 	DrawColor(0,0,255),	//61 lake
 	DrawColor(0,0,255),	//62 lake
 	DrawColor(0,0,255),	//63 lake
-	DrawColor(0,0,255),	//64 lake
+	DrawColor(0,0,255),	//64 lake / inlet
 	DrawColor(0,0,255),	//65 lake
 	DrawColor(0,0,255),	//66 lake
 	DrawColor(0,0,255),	//67 lake
 	DrawColor(0,0,255),	//68 lake
 	DrawColor(0,0,0),		//69 unknown
-	DrawColor(32,32,255),	//70 river
-	DrawColor(32,32,255),	//71 river
-	DrawColor(32,32,255),	//72 river
-	DrawColor(32,32,255),	//73 river
-	DrawColor(0,0,0),		//74 
-	DrawColor(0,0,0),		//75 background??
+	DrawColor(16,16,255),	//70 river
+	DrawColor(16,16,255),	//71 river
+	DrawColor(16,16,255),	//72 river / inlet
+	DrawColor(16,16,255),	//73 river
+	DrawColor(0,0,0),		//74 background do not draw
+	DrawColor(0,0,0),		//75 background do not draw
 	DrawColor(32,32,255),	//76 intermittent river/lake
 	DrawColor(128,255,192),	//77 glacier
 	DrawColor(32,255,32),	//78 orchard or plantation
@@ -983,8 +983,11 @@ static kGUIColor polycolours[]={
 	DrawColor(32,255,32),	//80 woods
 	DrawColor(32,255,32),	//81 wetland
 	DrawColor(32,255,32),	//82 tundra
-	DrawColor(32,255,32)};	//83 flats
-	
+	DrawColor(32,32,255)};	//83 flats / shoreline
+
+
+
+
 enum
 {
 PL_NORMAL,
@@ -1002,55 +1005,56 @@ typedef struct
 /* thickness for roads */
 
 static double thickinfo[ROADGROUP_NUM][MAXMSZOOM]={
-	{1.0f,1.0f,1.0f,1.0f,1.0f,1.0f,1.0f,1.0f,1.0f,1.0f,1.0f, 1.0f, 1.0f, 2.0f, 3.0f, 5.0f, 7.0f,8.0f,9.0f,10.0f},		/* creek */
-	{1.0f,1.0f,1.0f,1.0f,1.0f,1.0f,1.0f,1.0f,1.0f,1.0f,1.0f, 1.0f, 1.0f, 2.0f, 4.0f, 6.0f, 8.0f,10.0f,12.0f,14.0f},		/* side street */
-	{2.0f,2.0f,2.0f,2.0f,2.0f,2.0f,2.0f,2.0f,2.0f,2.0f,2.0f, 2.0f, 3.0f, 4.0f, 6.0f, 8.0f, 9.0f,10.0f,12.0f,14.0f},		/* ramps */
-	{2.0f,2.0f,2.0f,2.0f,2.0f,2.0f,2.0f,2.0f,2.0f,2.0f,2.0f, 5.0f, 7.0f, 9.0f,10.0f,11.0f,12.0f,14.0f,16.0f,17.0f},		/* artery */
-	{2.0f,2.0f,2.0f,2.0f,2.0f,2.0f,2.0f,2.0f,2.0f,3.0f,4.0f,10.0f,12.0f,14.0f,15.0f,16.0f,17.0f,18.0f,19.0f,20.0f}};	/* highway */
+	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f,1.0f,1.0f,1.0f},		/* line ( topo etc. )*/
+	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,1.0f, 1.0f, 1.0f, 2.0f, 3.0f, 5.0f, 7.0f,8.0f,9.0f,10.0f},		/* creek */
+	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,1.0f,1.0f, 1.0f, 1.0f, 2.0f, 4.0f, 6.0f, 8.0f,10.0f,12.0f,14.0f},		/* side street */
+	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,2.0f,2.0f,2.0f, 2.0f, 3.0f, 4.0f, 6.0f, 8.0f, 9.0f,10.0f,12.0f,14.0f},		/* ramps */
+	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,1.0f,2.0f,2.0f,2.0f, 5.0f, 7.0f, 9.0f,10.0f,11.0f,12.0f,14.0f,16.0f,17.0f},		/* artery */
+	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,2.0f,2.0f,3.0f,4.0f,10.0f,12.0f,14.0f,15.0f,16.0f,17.0f,18.0f,19.0f,20.0f}};	/* highway */
 
 static POLYLINEINFO_DEF polylineinfo[]={
-	{0,1,PL_NORMAL,DrawColor(0,0,255)},	//0 
-	{1+ROADGROUP_HIGHWAY,1,PL_NORMAL,DrawColor(242,191,36)},	//1 highway
-	{1+ROADGROUP_HIGHWAY,1,PL_NORMAL,DrawColor(242,181,36)},	//2 highway
-	{1+ROADGROUP_COLLECTOR,1,PL_NORMAL,DrawColor(255,250,112)}, //3 artiery
-	{1+ROADGROUP_COLLECTOR,1,PL_NORMAL,DrawColor(255,250,112)},	//4 artiery
-	{1+ROADGROUP_COLLECTOR,1,PL_NORMAL,DrawColor(255,250,112)},	//5 artiery
-	{1+ROADGROUP_STREET,1,PL_NORMAL,DrawColor(255,255,255)},	//6 street
-	{1+ROADGROUP_STREET,1,PL_NORMAL,DrawColor(255,255,255)},		//7 
-	{1+ROADGROUP_STREET,1,PL_NORMAL,DrawColor(255,255,255)},		//8 
-	{1+ROADGROUP_RAMPS,1,PL_NORMAL,DrawColor(249,222,77)},	//9 on ramp
-	{1+ROADGROUP_STREET,1,PL_NORMAL,DrawColor(255,255,255)},		//10 rural street
-	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//11
-	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//12
-	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//13
-	{0,1,PL_NORMAL,DrawColor(192,192,192)},//14 
-	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//15 
-	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//16 
-	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//17 
-	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//18 
-	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//19 
-	{0,1,PL_TRAINTRACKS,DrawColor(128,255,128)},	//20 train tracks
-	{0,1,PL_NORMAL,DrawColor(128,255,128)},	//21 
-	{0,1,PL_NORMAL,DrawColor(0,0,0)},		//22 small street? 
-	{0,1,PL_NORMAL,DrawColor(64,255,64)},	//23 
-	{1+ROADGROUP_CREEK,1,PL_NORMAL,DrawColor(0,0,255)},		//24  creek
-	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//25  
-	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//26  
-	{0,1,PL_NORMAL,DrawColor(255,255,255)},	//27 ferry route  
-	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//28  
-	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//29  
-	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//30  
-	{0,1,PL_NORMAL,DrawColor(128,128,128)},	//31  topo line
-	{0,0,PL_NORMAL,DrawColor(134,134,134)},	//32  topo line
-	{0,0,PL_NORMAL,DrawColor(140,140,140)},	//33  topo line
-	{0,0,PL_NORMAL,DrawColor(146,146,146)},	//34  topo line
-	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//35  
-	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//36  
-	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//37  
-	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//38  
-	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//39  
-	{0,1,PL_NORMAL,DrawColor(0,255,0)},		//40  
-	{0,1,PL_NORMAL,DrawColor(255,0,0)}};	//41 power line  
+	{ROADGROUP_LINE,1,PL_NORMAL,DrawColor(0,0,255)},	//0 
+	{ROADGROUP_HIGHWAY,1,PL_NORMAL,DrawColor(242,191,36)},	//1 highway
+	{ROADGROUP_HIGHWAY,1,PL_NORMAL,DrawColor(242,181,36)},	//2 highway
+	{ROADGROUP_COLLECTOR,1,PL_NORMAL,DrawColor(255,250,112)}, //3 artiery
+	{ROADGROUP_COLLECTOR,1,PL_NORMAL,DrawColor(255,250,112)},	//4 artiery
+	{ROADGROUP_COLLECTOR,1,PL_NORMAL,DrawColor(255,250,112)},	//5 artiery
+	{ROADGROUP_STREET,1,PL_NORMAL,DrawColor(255,255,255)},	//6 street
+	{ROADGROUP_STREET,1,PL_NORMAL,DrawColor(255,255,255)},		//7 
+	{ROADGROUP_STREET,1,PL_NORMAL,DrawColor(255,255,255)},		//8 
+	{ROADGROUP_RAMPS,1,PL_NORMAL,DrawColor(249,222,77)},	//9 on ramp
+	{ROADGROUP_STREET,1,PL_NORMAL,DrawColor(255,255,255)},		//10 rural street
+	{ROADGROUP_LINE,1,PL_NORMAL,DrawColor(0,255,0)},		//11
+	{ROADGROUP_LINE,1,PL_NORMAL,DrawColor(0,255,0)},		//12
+	{ROADGROUP_LINE,1,PL_NORMAL,DrawColor(0,255,0)},		//13
+	{ROADGROUP_LINE,1,PL_NORMAL,DrawColor(192,192,192)},//14 
+	{ROADGROUP_LINE,1,PL_NORMAL,DrawColor(0,255,0)},		//15 
+	{ROADGROUP_LINE,1,PL_NORMAL,DrawColor(0,255,0)},		//16 
+	{ROADGROUP_LINE,1,PL_NORMAL,DrawColor(0,255,0)},		//17 
+	{ROADGROUP_LINE,1,PL_NORMAL,DrawColor(0,255,0)},		//18 
+	{ROADGROUP_LINE,1,PL_NORMAL,DrawColor(0,255,0)},		//19 
+	{ROADGROUP_LINE,1,PL_TRAINTRACKS,DrawColor(128,255,128)},	//20 train tracks
+	{ROADGROUP_LINE,1,PL_NORMAL,DrawColor(128,255,128)},	//21 
+	{ROADGROUP_LINE,1,PL_NORMAL,DrawColor(0,0,0)},		//22 small street? 
+	{ROADGROUP_LINE,1,PL_NORMAL,DrawColor(64,255,64)},	//23 
+	{ROADGROUP_CREEK,1,PL_NORMAL,DrawColor(0,0,255)},		//24  creek
+	{ROADGROUP_LINE,1,PL_NORMAL,DrawColor(0,255,0)},		//25  
+	{ROADGROUP_LINE,1,PL_NORMAL,DrawColor(0,255,0)},		//26  
+	{ROADGROUP_LINE,1,PL_NORMAL,DrawColor(255,255,255)},	//27 ferry route  
+	{ROADGROUP_LINE,1,PL_NORMAL,DrawColor(0,255,0)},		//28  
+	{ROADGROUP_LINE,1,PL_NORMAL,DrawColor(0,255,0)},		//29  
+	{ROADGROUP_LINE,1,PL_NORMAL,DrawColor(0,255,0)},		//30  
+	{ROADGROUP_LINE,1,PL_NORMAL,DrawColor(128,128,128)},	//31  topo line
+	{ROADGROUP_LINE,0,PL_NORMAL,DrawColor(134,134,134)},	//32  topo line
+	{ROADGROUP_LINE,0,PL_NORMAL,DrawColor(140,140,140)},	//33  topo line
+	{ROADGROUP_LINE,0,PL_NORMAL,DrawColor(146,146,146)},	//34  topo line
+	{ROADGROUP_LINE,1,PL_NORMAL,DrawColor(0,255,0)},		//35  
+	{ROADGROUP_LINE,1,PL_NORMAL,DrawColor(0,255,0)},		//36  
+	{ROADGROUP_LINE,1,PL_NORMAL,DrawColor(0,255,0)},		//37  
+	{ROADGROUP_LINE,1,PL_NORMAL,DrawColor(0,255,0)},		//38  
+	{ROADGROUP_LINE,1,PL_NORMAL,DrawColor(0,255,0)},		//39  
+	{ROADGROUP_LINE,1,PL_NORMAL,DrawColor(0,255,0)},		//40  
+	{ROADGROUP_LINE,1,PL_NORMAL,DrawColor(255,0,0)}};	//41 power line  
 
 	static int mlevels[MAXMSZOOM]={
 		0,0,0,0,1,
@@ -1528,7 +1532,7 @@ void MSGPXMap::AddSubPolys(MSSUBDIV *sub)
 		while(rstart<rend && rstart)
 		{
 			ps.rstart=rstart;
-			rstart=ReadPoly(sub,rstart);
+			rstart=ReadPoly(sub,rstart,ELEM_POLYGON);
 			if(rstart && kGUI::Overlap(&m_tilecorners,&m_polycorners))
 			{
 				/* draw 3 first, then everything in order after that? */
@@ -1562,6 +1566,9 @@ void MSGPXMap::DrawPoly(POLYSORT_DEF *ps)
 	kGUIColor c;
 
 	l=ps->polytype;
+	if((l==74) || (l==75))
+		return;	/* background, no need to draw */
+
 	if(ps->polytype<(sizeof(polycolours)/sizeof(kGUIColor)))
 		c=polycolours[ps->polytype];
 	else
@@ -1663,7 +1670,7 @@ void MSGPXMap::DrawRoadGroupLabels(POLYSORT_DEF *ps)
 		if(m_t.GetLen())
 		{
 			roadthickness=ps->thickness;
-			fs=(int)(roadthickness*2.0f);
+			fs=(int)(roadthickness*2.2f);
 			if(fs>4)
 			{
 				m_pixlen=ps->pixlen;
@@ -1723,7 +1730,7 @@ void MSGPXMap::DrawSub(MSSUBDIV *sub)
 			POLYLINEINFO_DEF *pi;
 			double thickness;
 
-			rstart=ReadPoly(sub,rstart);
+			rstart=ReadPoly(sub,rstart,ELEM_POLYLINE);
 			if(rstart && kGUI::Overlap(&m_tilecorners,&m_polycorners))
 			{
 				skiplabel=false;
@@ -1735,53 +1742,37 @@ void MSGPXMap::DrawSub(MSSUBDIV *sub)
 				switch(pi->type)
 				{
 				case PL_NORMAL:
-#if 0
-					if(m_numpoints==2)
-						kGUI::DrawPolyLine(m_numpoints,m_ppoints,DrawColor(0,0,0));
-					else if(m_numpoints==3)
-						kGUI::DrawPolyLine(m_numpoints,m_ppoints,DrawColor(255,0,0));
-					else
-						kGUI::DrawPolyLine(m_numpoints,m_ppoints,DrawColor(0,255,0));
-#else
-					if(!pi->thickindex)
+					thickness=thickinfo[pi->thickindex][GetZoom()];
+					if(thickness==1.0f)
 						kGUI::DrawPolyLine(m_numpoints,m_ppoints,pi->colour);
-					else
+					else if(thickness>1.0f)
 					{
-						thickness=thickinfo[pi->thickindex-1][GetZoom()]*0.5f;
-						if(thickness<1.0f)
+						thickness=thickness*0.5f;
+						ps.map=this;
+						ps.polytype=m_polytype;
+						ps.corners=m_polycorners;
+						ps.thickness=thickness;
+						ps.pixlen=m_pixlen;
+
+						/* copy decompressed points to a temporary heap so we don't need to */
+						/* decompress them again, this is a speed optimization! */
+
+						ps.numpoints=m_numpoints;
+						ps.points=(kGUIDPoint2 *)m_sortpolysheap.Alloc(m_numpoints*sizeof(kGUIDPoint2));
+						memcpy(ps.points,m_ppoints,m_numpoints*sizeof(kGUIDPoint2));
+
+						/* save labels associated with this polyline */
+						if(GetZoom()>=13 && m_numlabels && pi->drawlabel)
 						{
-							kGUI::DrawFatPolyLine(m_numpoints,m_ppoints,DrawColor(128,128,128),2.0f,0.5f);
-							kGUI::DrawFatPolyLine(m_numpoints,m_ppoints,pi->colour,1.0f);
+							skiplabel=true;
+							ps.numlabels=m_numlabels;
+							memcpy(ps.curlabels,m_curlabels,sizeof(m_curlabels));
 						}
 						else
-						{
-							ps.map=this;
-							ps.polytype=m_polytype;
-							ps.corners=m_polycorners;
-							ps.thickness=thickness;
-							ps.pixlen=m_pixlen;
-
-							/* copy decompressed points to a temporary heap so we don't need to */
-							/* decompress them again, this is a speed optimization! */
-
-							ps.numpoints=m_numpoints;
-							ps.points=(kGUIDPoint2 *)m_sortpolysheap.Alloc(m_numpoints*sizeof(kGUIDPoint2));
-							memcpy(ps.points,m_ppoints,m_numpoints*sizeof(kGUIDPoint2));
-
-							/* save labels associated with this polyline */
-							if(GetZoom()>=13 && m_numlabels && pi->drawlabel)
-							{
-								skiplabel=true;
-								ps.numlabels=m_numlabels;
-								memcpy(ps.curlabels,m_curlabels,sizeof(m_curlabels));
-							}
-							else
-								ps.numlabels=0;
-							m_roadgroups[pi->thickindex-1].SetEntry(m_roadgroupspolys[pi->thickindex-1]++,ps);
-							kGUI::DrawFatPolyLine(m_numpoints,m_ppoints,DrawColor(128,128,128),thickness+1.0f,0.5f);
-						}
+							ps.numlabels=0;
+						m_roadgroups[pi->thickindex].SetEntry(m_roadgroupspolys[pi->thickindex]++,ps);
+						kGUI::DrawFatPolyLine(m_numpoints,m_ppoints,DrawColor(128,128,128),thickness+1.0f,0.5f);
 					}
-#endif
 				break;
 				case PL_TRAINTRACKS:
 					if(GetZoom()>13)
@@ -1839,7 +1830,7 @@ void MSGPXMap::DrawSub(MSSUBDIV *sub)
 			rstart=ReadPoint(sub,rstart);
 			kGUI::DrawRect((int)m_ppoints[0].x,(int)m_ppoints[0].y,(int)m_ppoints[0].x+2,(int)m_ppoints[0].y+2,DrawColor(0,64,192));
 
-			if(m_numlabels)
+			if(m_numlabels && GetZoom()>13)
 			{
 				//save text to be drawn after roads etc.
 				ps.map=this;
@@ -1870,7 +1861,7 @@ void MSGPXMap::DrawSub(MSSUBDIV *sub)
 			rstart=ReadPoint(sub,rstart);
 			kGUI::DrawRect((int)m_ppoints[0].x,(int)m_ppoints[0].y,(int)m_ppoints[0].x+2,(int)m_ppoints[0].y+2,DrawColor(0,96,224));
 
-			if(m_numlabels)
+			if(m_numlabels && GetZoom()>13)
 			{
 				//save text to be drawn after roads etc.
 				ps.map=this;
@@ -1988,6 +1979,8 @@ void MSGPXMap::ReadLabel(const char *enc,kGUIString *s)
 	const unsigned char *uenc=(const unsigned char *)enc;
 	
 	s->Clear();
+	if(!uenc[0])
+		return;
 	m_labelicon=-1;
 	if(m_labelencoding==9)
 	{
@@ -2018,8 +2011,11 @@ void MSGPXMap::ReadLabel(const char *enc,kGUIString *s)
 		--numdec;
 
 		if(c>0x2f)
+		{
+			if(strstr(s->GetString(),"~"))
+				c=99;
 			return;
-
+		}
 		if(c>=0x2a && c<=0x2f)
 		{
 			//0x2A Interstate highway shield
@@ -2033,23 +2029,20 @@ void MSGPXMap::ReadLabel(const char *enc,kGUIString *s)
 		else
 		{
 			ch=0;
-			if (set==ENC6_FIRST)
+			if(c==0x1b)
+				set=ENC6_SPECIAL;
+			else if(c==0x1c)
+				set=ENC6_SYMBOL;
+			else if (set==ENC6_FIRST)
 			{
 				ch=enc6[ENC6_FIRST][c];
 				set=ENC6_NORMAL;
 			}
 			else if (set==ENC6_NORMAL)
 			{
-				if(c==0x1b)
-					set=ENC6_SPECIAL;
-				else if(c==0x1c)
-					set=ENC6_SYMBOL;
-				else
-				{
-					ch=enc6[ENC6_NORMAL][c];
-					if(ch==' ')
-						set=ENC6_FIRST;
-				}
+				ch=enc6[ENC6_NORMAL][c];
+				if(ch==' ')
+					set=ENC6_FIRST;
 			}
 			else if(set==ENC6_SYMBOL)
 			{
@@ -2330,7 +2323,7 @@ void MSGPXMap::DrawLabel(kGUIText *t,double lx,double ly,double lw,double lh,dou
 int maxpp=0;
 
 /* used for both polygons and polylines */
-const char *MSGPXMap::ReadPoly(MSSUBDIV *sub,const char *rstart)
+const char *MSGPXMap::ReadPoly(MSSUBDIV *sub,const char *rstart,int type)
 {
 	int pi,npi;	/* point index */
 	unsigned int polydata;
@@ -2356,7 +2349,10 @@ const char *MSGPXMap::ReadPoly(MSSUBDIV *sub,const char *rstart)
 
 	m_numlabels=0;	/* default is no labels */
 	polydata= ReadU32(rstart);
-	m_polytype=(polydata & 0x3F);
+	if(type==ELEM_POLYLINE)
+		m_polytype=(polydata & 0x3f);
+	else
+		m_polytype=(polydata & 0x7f);
 
 	wordlen= (bool) ((polydata & 0x80)!=0);
 	if(polydata & 0x40000000)
