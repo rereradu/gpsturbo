@@ -153,6 +153,7 @@ public:
 
 enum
 {
+ROADGROUP_LINE,
 ROADGROUP_CREEK,
 ROADGROUP_STREET,
 ROADGROUP_RAMPS,
@@ -200,7 +201,7 @@ private:
 	void CalcSubRegions(MSSUBDIV *sub);
 	double ToDegrees(int mapunit) {return (double) mapunit * UNIT_TO_DEG;}
 	const char *ReadPoint(MSSUBDIV *sub,const char *rstart);
-	const char *ReadPoly(MSSUBDIV *sub,const char *rstart);
+	const char *ReadPoly(MSSUBDIV *sub,const char *rstart,int type);
 	int GetPoint(kGUIBitStream *bs,int nbits,int sign);
 	void DrawTrainTracks(int nvert,kGUIDPoint2 *point);
 	
