@@ -1771,7 +1771,7 @@ void MSGPXMap::DrawSub(MSSUBDIV *sub)
 						else
 							ps.numlabels=0;
 						m_roadgroups[pi->thickindex].SetEntry(m_roadgroupspolys[pi->thickindex]++,ps);
-						kGUI::DrawFatPolyLine(m_numpoints,m_ppoints,DrawColor(128,128,128),thickness+1.0f,0.5f);
+						kGUI::DrawFatPolyLine(m_numpoints,m_ppoints,DrawColor(128,128,128),max(thickness+1.0f,thickness*1.2f),0.66f);
 					}
 				break;
 				case PL_TRAINTRACKS:
@@ -1908,10 +1908,10 @@ void MSGPXMap::DrawTrainTracks(int nvert,kGUIDPoint2 *point)
 			dx=x2-x1;
 			dy=y2-y1;
 
-			if(abs(dx)>abs(dy))
+			if(fabs(dx)>fabs(dy))
 			{
-				length=abs(dx);
-				stepy=dy/abs(dx);
+				length=fabs(dx);
+				stepy=dy/fabs(dx);
 				if(dx>0)
 					stepx=1.0f;
 				else
@@ -1919,8 +1919,8 @@ void MSGPXMap::DrawTrainTracks(int nvert,kGUIDPoint2 *point)
 			}
 			else
 			{
-				length=abs(dy);
-				stepx=dx/abs(dy);
+				length=fabs(dy);
+				stepx=dx/fabs(dy);
 				if(dy>0)
 					stepy=1.0f;
 				else if(dy<0)
