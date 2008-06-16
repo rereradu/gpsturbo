@@ -47,6 +47,8 @@ public:
 	void Verify(const char *filename,Hash *hash,kGUIString *results);
 	bool IsPointInside(const char *trackname,double lat,double lon);
 
+	//used by the poly draw code for transformed points
+	static Array<kGUIPoint2> m_polypoints; 
 private:
 	void UpdateTracksList(void);
 	void Load(void);
@@ -79,10 +81,12 @@ private:
 	kGUIButtonObj m_copy;
 	kGUIButtonObj m_simplify;
 
+	kGUITextObj m_drawcaption;
+	kGUIComboBoxObj m_draw;
 	kGUITextObj m_colorcaption;
 	kGUIComboBoxObj m_color;
-	kGUITextObj m_drawcaption;
-	kGUITickBoxObj m_draw;
+	kGUITextObj m_alphacaption;
+	kGUIComboBoxObj m_alpha;
 
 	kGUITextObj m_numcaption;
 	kGUIInputBoxObj m_num;

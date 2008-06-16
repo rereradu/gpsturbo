@@ -28,7 +28,7 @@
 /* overedraw by this many pixels since names on streets */
 /* go slightly past the lines themselves */
 
-#define EXPAND 20
+#define EXPAND 0
 
 Hash *MSGPXFName::m_hash=0;
 
@@ -1005,12 +1005,13 @@ typedef struct
 /* thickness for roads */
 
 static double thickinfo[ROADGROUP_NUM][MAXMSZOOM]={
-	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f,1.0f,1.0f,1.0f},		/* line ( topo etc. )*/
-	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,1.0f, 1.0f, 1.0f, 2.0f, 3.0f, 5.0f, 7.0f,8.0f,9.0f,10.0f},		/* creek */
-	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,1.0f,1.0f, 1.0f, 1.0f, 2.0f, 4.0f, 6.0f, 8.0f,10.0f,12.0f,14.0f},		/* side street */
-	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,2.0f,2.0f,2.0f, 2.0f, 3.0f, 4.0f, 6.0f, 8.0f, 9.0f,10.0f,12.0f,14.0f},		/* ramps */
-	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,1.0f,2.0f,2.0f,2.0f, 5.0f, 7.0f, 9.0f,10.0f,11.0f,12.0f,14.0f,16.0f,17.0f},		/* artery */
-	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,2.0f,2.0f,3.0f,4.0f,10.0f,12.0f,14.0f,15.0f,16.0f,17.0f,18.0f,19.0f,20.0f}};	/* highway */
+	//0    1    2    3    4    5    6    7    8    0   10    11    12    13    14    15    16    17    18    19
+	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f},		/* line ( topo etc. )*/
+	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,1.0f, 1.0f, 1.0f, 2.0f, 3.0f, 5.0f, 7.0f, 8.0f, 9.0f,10.0f},		/* creek */
+	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,1.0f,1.0f, 1.0f, 1.0f, 2.0f, 4.5f, 9.0f,12.0f,13.0f,14.0f,15.0f},		/* side street */
+	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,1.0f,2.0f,2.0f, 2.5f, 3.0f, 4.0f, 6.0f,11.0f,13.0f,14.0f,15.0f,16.0f},		/* ramps */
+	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,1.0f,2.0f,2.5f,2.0f, 4.0f, 6.0f, 9.0f,10.0f,13.0f,14.0f,15.0f,16.0f,17.0f},		/* artery */
+	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,2.0f,3.0f,4.0f,5.0f, 7.0f, 9.0f,12.0f,15.0f,16.0f,17.0f,18.0f,19.0f,20.0f}};	/* highway */
 
 static POLYLINEINFO_DEF polylineinfo[]={
 	{ROADGROUP_LINE,1,PL_NORMAL,DrawColor(0,0,255)},	//0 
@@ -1536,8 +1537,8 @@ void MSGPXMap::AddSubPolys(MSSUBDIV *sub)
 			if(rstart && kGUI::Overlap(&m_tilecorners,&m_polycorners))
 			{
 				/* draw 3 first, then everything in order after that? */
-				if(m_polytype<3)
-					m_polytype=4;
+//				if(m_polytype<3)
+//					m_polytype=4;
 
 				ps.map=this;
 				ps.polytype=m_polytype;
@@ -1605,7 +1606,7 @@ void MSGPXMap::DrawPolyLabel(POLYSORT_DEF *ps)
 	double lgh;	/* label group height */
 	double lx,ly,lw,lh;
 
-	m_t.SetFontSize(12);
+	m_t.SetFontSize((int)thickinfo[ROADGROUP_HIGHWAY][GetZoom()]);
 	m_t.Clear();
 	lh=m_t.GetHeight();			/* height of 1 line of text */
 	lgh=lh*ps->numlabels;		/* height of all labels on this polygon */
@@ -1675,7 +1676,7 @@ void MSGPXMap::DrawRoadGroupLabels(POLYSORT_DEF *ps)
 			{
 				m_pixlen=ps->pixlen;
 				m_t.SetFontSize(fs);
-				DrawLineLabel(&m_t,ps->numpoints,ps->points,(int)-roadthickness,true);
+				DrawLineLabel(&m_t,ps->numpoints,ps->points,-roadthickness*0.9f,true);
 			}
 #if 0
 //							m_t.ASprintf("<%d>",m_polytype);
@@ -1897,7 +1898,7 @@ void MSGPXMap::DrawTrainTracks(int nvert,kGUIDPoint2 *point)
 		x2=point[i+1].x;
 		y2=point[i+1].y;
 
-		if(kGUI::DrawLine(x1,y1,x2,y2,DrawColor(0,0,0))==true)
+		if(kGUI::DrawLine(x1,y1,x2,y2,DrawColor(64,64,64))==true)
 		{
 			double dx,dy;
 			double length,lcross;
@@ -1941,7 +1942,7 @@ void MSGPXMap::DrawTrainTracks(int nvert,kGUIDPoint2 *point)
 				lcross+=step;
 				if(lcross>=4.0f)
 				{
-					kGUI::DrawLine(curx+offx,cury-offy,curx-offx,cury+offy,DrawColor(0,0,0));
+					kGUI::DrawLine(curx+offx,cury-offy,curx-offx,cury+offy,DrawColor(64,64,64));
 					lcross-=4.0f;
 				}
 				curx+=stepx;
@@ -1964,7 +1965,7 @@ ENC6_SPECIAL
 
 static char enc6[4][128]={
 	{" ABCDEFGHIJKLMNOPQRSTUVWXYZ~~~~ 0123456789~~~~~~xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"},
-	{" abcdefghijklmnopqrstuvwxyz~~~~ 0123456789~~~~~~xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"},
+	{" abcdefghijklmnopqrstuvwxyz~~~  0123456789~~~~~~xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"},
 	{"@!\"#$%&'()*+,-./~~~~~~~~~~:;<=>?~~~~~~~~~~~[\\]^_yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"},
 	{"`abcdefghijklmnopqrstuvwxyz~~~~~0123456789~~~~~~zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"}};
 
@@ -2033,6 +2034,11 @@ void MSGPXMap::ReadLabel(const char *enc,kGUIString *s)
 				set=ENC6_SPECIAL;
 			else if(c==0x1c)
 				set=ENC6_SYMBOL;
+			else if(c==0x1e)
+			{
+				ch=' ';
+				set=ENC6_FIRST;
+			}
 			else if (set==ENC6_FIRST)
 			{
 				ch=enc6[ENC6_FIRST][c];
@@ -2060,6 +2066,7 @@ void MSGPXMap::ReadLabel(const char *enc,kGUIString *s)
 	}
 }
 
+#if 0
 /* calc center of polygon, draw lavel there */
 void MSGPXMap::DrawPolyLabel(kGUIText *t,int nvert,kGUIPoint2 *point)
 {
@@ -2078,19 +2085,20 @@ void MSGPXMap::DrawPolyLabel(kGUIText *t,int nvert,kGUIPoint2 *point)
 		t->Draw(m_polycorners.lx-m_tx,m_polycorners.ty-m_ty,w,h,DrawColor(0,0,0));
 	}
 }
+#endif
 
-void MSGPXMap::DrawLineLabel(kGUIText *t,int nvert,kGUIDPoint2 *point,int over,bool root)
+void MSGPXMap::DrawLineLabel(kGUIText *t,int nvert,kGUIDPoint2 *point,double over,bool root)
 {
 	int s;
-	int x1,y1,x2,y2;
-	int nc=t->GetLen();		/* get length of label in characters */
-	int lw=t->GetWidth();	/* get width of label in pixels */
-	int lh=t->GetHeight();	/* get height of label in pixels */
-	kGUIDPoint2 *p;
 	int lsec;			/* longest section */
-	int ldist;		/* longest distance */
-	int dist;
-	int cx,cy;
+	double x1,y1,x2,y2;
+	int nc=t->GetLen();		/* get length of label in characters */
+	double lw=(double)t->GetWidth();	/* get width of label in pixels */
+	double lh=(double)t->GetHeight();	/* get height of label in pixels */
+	kGUIDPoint2 *p;
+	double ldist;		/* longest distance */
+	double dist;
+	double cx,cy;
 	double heading;
 
 	if(!nc)
@@ -2108,7 +2116,7 @@ void MSGPXMap::DrawLineLabel(kGUIText *t,int nvert,kGUIDPoint2 *point,int over,b
 		persplit=m_pixlen/numsplits;
 		for(s=1;s<nvert;++s)
 		{
-			pixcount+=kGUI::FastHypot((int)point[s-1].y-(int)point[s].y,(int)point[s-1].x-(int)point[s].x);
+			pixcount+=(int)hypot(point[s-1].y-point[s].y,point[s-1].x-point[s].x);
 			if(pixcount>persplit)
 			{
 				pixcount-=persplit;
@@ -2123,12 +2131,12 @@ void MSGPXMap::DrawLineLabel(kGUIText *t,int nvert,kGUIDPoint2 *point,int over,b
 	/* calculate longest section */
 
 	lsec=0;
-	ldist=kGUI::FastHypot((int)point[0].y-(int)point[1].y,(int)point[0].x-(int)point[1].x);
+	ldist=hypot(point[0].y-point[1].y,point[0].x-point[1].x);
 	p=point+1;
 
 	for(s=1;s<nvert-1;++s)
 	{
-		dist=kGUI::FastHypot((int)(p->y)-(int)((p+1)->y),(int)(p->x)-(int)((p+1)->x));
+		dist=hypot((p->y)-((p+1)->y),(p->x)-((p+1)->x));
 		if(dist>ldist)
 		{
 			ldist=dist;
@@ -2137,15 +2145,14 @@ void MSGPXMap::DrawLineLabel(kGUIText *t,int nvert,kGUIDPoint2 *point,int over,b
 		++p;
 	}
 
-//	if((lw+lh+lh+4)>ldist)
-	if(lw>(ldist<<1))
+	if(lw>(ldist*2.0f))
 		return;	/* section is not long enough */
 
-	x1=(int)point[lsec].x;
-	y1=(int)point[lsec].y;
-	x2=(int)point[lsec+1].x;
-	y2=(int)point[lsec+1].y;
-	heading=atan2((double)(point[lsec+1].y-point[lsec].y),(double)(point[lsec].x-point[lsec+1].x));
+	x1=point[lsec].x;
+	y1=point[lsec].y;
+	x2=point[lsec+1].x;
+	y2=point[lsec+1].y;
+	heading=atan2((point[lsec+1].y-point[lsec].y),(point[lsec].x-point[lsec+1].x));
 	if(heading<0.0f)
 		heading+=2*PI;
 
@@ -2162,12 +2169,12 @@ void MSGPXMap::DrawLineLabel(kGUIText *t,int nvert,kGUIDPoint2 *point,int over,b
 	else
 	{
 		/* back 1/2 length of string */
-		cx-=(int)(cos(heading)*(lw>>1));
-		cy+=(int)(sin(heading)*(lw>>1));
+		cx-=(cos(heading)*(lw*0.5f));
+		cy+=(sin(heading)*(lw*0.5f));
 
 		/* move a few pixels below the road */
-		cx+=(int)(cos(heading-(PI*2*0.25f))*over);
-		cy-=(int)(sin(heading-(PI*2*0.25f))*over);
+		cx+=(cos(heading-(PI*2*0.25f))*over);
+		cy-=(sin(heading-(PI*2*0.25f))*over);
 	}
 	DrawLabel(t,cx,cy,lw,lh,heading);
 }
@@ -2175,7 +2182,6 @@ void MSGPXMap::DrawLineLabel(kGUIText *t,int nvert,kGUIDPoint2 *point,int over,b
 /* draw label but first check too make sure it doesn't */
 /* overlap and previously drawn labels */
 
-/* todo change positions to double from int */
 void MSGPXMap::DrawLabel(kGUIText *t,double lx,double ly,double lw,double lh,double heading)
 {
 	int hx,hy,i;
@@ -2257,8 +2263,12 @@ void MSGPXMap::DrawLabel(kGUIText *t,double lx,double ly,double lw,double lh,dou
 		m_bounds.by=max(max(m_corners[0].y,m_corners[1].y),
 						max(m_corners[2].y,m_corners[3].y));
 	}
-	/* is this label off the window? */
-	if(kGUI::Overlap(&m_lcbounds,&m_bounds)==false)
+//	/* is this label off the window? */
+//	if(kGUI::Overlap(&m_lcbounds,&m_bounds)==false)
+//		return;
+
+	/* is this label totally inside the window? */
+	if(kGUI::Inside(&m_bounds,&m_lcbounds)==false)
 		return;
 
 	kGUI::PushClip();
@@ -2313,10 +2323,10 @@ void MSGPXMap::DrawLabel(kGUIText *t,double lx,double ly,double lw,double lh,dou
 				lx+=icx-(lw/2);
 				ly+=icy-(lh/2);
 			}
-			t->DrawRot(lx,ly,0.0f,DrawColor(0,0,0));
+			t->DrawRot(lx,ly,0.0f,DrawColor(0,0,0),0.85f);
 		}
 		else
-			t->DrawRot(lx,ly,heading,DrawColor(0,0,0));
+			t->DrawRot(lx,ly,heading,DrawColor(0,0,0),0.85f);
 	}
 }
 

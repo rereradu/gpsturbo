@@ -1334,6 +1334,35 @@ void GPX::InitColorCombo(kGUIComboBoxObj *box)
 	box->SetAllowTyping(true);
 }
 
+typedef struct
+{
+	char *text;
+	int alpha;
+}ALPHA_DEF;
+
+const static ALPHA_DEF alphalist[]={
+	{"100% - opaque",100},
+	{"90%",90},
+	{"80%",80},
+	{"70%",70},
+	{"60%",60},
+	{"50%",50},
+	{"40%",40},
+	{"30%",30},
+	{"20%",20},
+	{"10%",10}};
+
+void GPX::InitAlphaCombo(kGUIComboBoxObj *box)
+{
+	unsigned int i;
+
+	box->SetNumEntries(sizeof(alphalist)/sizeof(ALPHA_DEF));
+	for(i=0;i<(sizeof(alphalist)/sizeof(ALPHA_DEF));++i)
+		box->SetEntry(i,alphalist[i].text,alphalist[i].alpha);
+	box->SetSize(box->GetWidest(),20);
+
+}
+
 kGUIColor GPX::GetTableColor(int index)
 {
 	return(wptcolours[index].color);
@@ -2615,7 +2644,7 @@ Credits::Credits()
 	m_window.SetAllowButtons(WINDOWBUTTON_CLOSE);
 	m_name.SetPos(0,0);
 	m_name.SetFontSize(20);
-	m_name.SetString("GPSTurbo v0.96");
+	m_name.SetString("GPSTurbo v0.97");
 	m_name.SetColor(DrawColor(255,0,0));
 	m_window.AddObject(&m_name);
 	m_window.SetPos( (kGUI::GetSurfaceWidth()-w)/2,(kGUI::GetSurfaceHeight()-h)/2);
@@ -4580,7 +4609,6 @@ int GPX::GetRow(GPXLabel *l)
 	return(-1);
 }
 
-
 void GPX::OverMap(int mx,int my)
 {
 	int i;
@@ -4588,6 +4616,7 @@ void GPX::OverMap(int mx,int my)
 	int sx,sy;
 	int numunder=0;	/* num labels under the mouse */
 	GPXCoord upos;	
+	int scroll=kGUI::GetMouseWheelDelta();
 
 	m_grid.GetScrollCorner(&sx,&sy);
 	mx+=sx;
@@ -4601,6 +4630,17 @@ void GPX::OverMap(int mx,int my)
 		m_upos.Set(&upos);
 		m_upos.Output(&m_ulat,&m_ulon);
 	}
+
+	if(scroll)
+	{
+		if(scroll>0)
+			ZoomIn();
+		else
+			ZoomOut();
+		kGUI::ClearMouseWheelDelta();
+		return;
+	}
+
 	if((kGUI::GetMouseDoubleClickLeft()==true) || (kGUI::GetMouseClickRight()==true) )
 	{
 		/* only look if labels are drawn at this zoom level */
@@ -5455,6 +5495,7 @@ void GPXLabel::Draw(int cxpix,int cypix)
 	int i,nt;
 	int px,py;
 	kGUICorners c;
+	double alpha=gpx->GetLabelAlpha();
 
 	px=m_c.lx-cxpix;
 	py=m_c.ty-cypix;
@@ -5462,8 +5503,8 @@ void GPXLabel::Draw(int cxpix,int cypix)
 	/* if label has moved, then draw a line between the old position and the new location */
 	if((m_origx!=m_c.lx) || (m_origy!=m_c.ty))
 	{
-		kGUI::DrawFatLine(m_origx-cxpix,m_origy-cypix,px+16,py,DrawColor(0,0,0),3.2f,0.5f);
-		kGUI::DrawFatLine(m_origx-cxpix,m_origy-cypix,px+16,py,m_colour,2.0f,0.5f);
+		kGUI::DrawFatLine(m_origx-cxpix,m_origy-cypix,px+16,py,DrawColor(0,0,0),3.2f,alpha);
+		kGUI::DrawFatLine(m_origx-cxpix,m_origy-cypix,px+16,py,m_colour,2.0f,alpha);
 	}
 
 	if(m_icon<0)
@@ -5491,7 +5532,7 @@ void GPXLabel::Draw(int cxpix,int cypix)
 	c.rx=c.lx+m_lw;
 	c.by=c.ty+m_lh;
 
-	kGUI::DrawRectFrame(c.lx,c.ty,c.rx,c.by,m_colour,DrawColor(32,32,32),0.8f);
+	kGUI::DrawRectFrame(c.lx,c.ty,c.rx,c.by,m_colour,DrawColor(32,32,32),alpha);
 	kGUIText::Draw(c.lx+2,c.ty+2,0,0,m_tcolour);
 }
 
@@ -6243,6 +6284,7 @@ void GPX::LoadPrefs(kGUIXML *xml,bool xmlstatus)
 
 			Get(root,"shownumticks",&m_shownumticks);
 			Get(root,"labelfontsize",&m_labelfontsize);
+			Get(root,"labelalpha",&m_labelalpha);
 			LabelFontSizeChanged();
 			
 			if(Get(root,"tablefontsize",&m_tablefontsize))
@@ -6350,6 +6392,7 @@ void GPX::SavePrefs(void)
 	root->AddChild("clipnotfoundlogs",m_clipnotfoundlogs);
 	root->AddChild("basic",m_basicsource.GetString());
 	root->AddChild("labelfontsize",m_labelfontsize.GetInt());
+	root->AddChild("labelalpha",m_labelalpha.GetSelection());
 	root->AddChild("tablefontsize",m_tablefontsize.GetInt());
 	root->AddChild("maxdownloads",m_maxdownloads.GetInt());
 	root->AddChild("shownumticks",m_shownumticks.GetInt());
