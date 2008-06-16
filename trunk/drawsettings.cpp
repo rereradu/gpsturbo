@@ -116,6 +116,12 @@ void GPX::InitSettings(void)
 	m_labelfontsizelabel.SetString("Font Size for Waypoint Labels on Map");
 	m_tabs.AddObject(&m_labelfontsize);
 	m_tabs.AddObject(&m_labelfontsizelabel);
+
+	m_labelalpha.SetPos(m_labelfontsizelabel.GetZoneRX()+10,y);
+	GPX::InitAlphaCombo(&m_labelalpha);
+	m_labelalpha.SetSelection(50);
+	m_tabs.AddObject(&m_labelalpha);
+	m_labelalpha.SetEventHandler(this,CALLBACKNAME(MapDirtyEvent));
 	y+=25;
 
 	m_shownumticks.SetString("0");

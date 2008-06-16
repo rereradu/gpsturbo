@@ -208,8 +208,8 @@ private:
 	kGUIText m_t;	/* temp used in drawing */
 	void ReadLabel(const char *enc,kGUIString *s);
 	static void DrawLabel(kGUIText *t,double lx,double ly,double lw,double lh,double heading);
-	void DrawLineLabel(kGUIText *s,int nvert,kGUIDPoint2 *point,int over,bool root);
-	void DrawPolyLabel(kGUIText *s,int nvert,kGUIPoint2 *point);
+	void DrawLineLabel(kGUIText *s,int nvert,kGUIDPoint2 *point,double over,bool root);
+//	void DrawPolyLabel(kGUIText *s,int nvert,kGUIPoint2 *point);
 
 	const char *m_filedata;
 	int m_blocksize;	/* bytes per block */

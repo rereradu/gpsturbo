@@ -507,6 +507,7 @@ public:
 	static kGUIColor GetTableTColor(int index);
 	static unsigned int GetTableColorIndex(const char *c);
 	static const char *GetTableColorName(int index);
+	static void InitAlphaCombo(kGUIComboBoxObj *box);
 	static void Project(double distance,int disttype,int model,double heading,int headtype,GPXCoord *from,GPXCoord *to);
 	static void GetDistInfo(int distmode,int modelmode,double *r,double *v1,double *v2);
 	static double GetMeters(double distance,int disttype);
@@ -564,6 +565,7 @@ public:
 	static bool Get(kGUIXMLItem *i,const char *name,kGUITickBoxObj *var);
 
 	/* events */
+	void MapDirtyEvent(kGUIEvent *event) {if(event->GetEvent()==EVENT_AFTERUPDATE)MapDirty();}
 	void BSPDirtyEvent(kGUIEvent *event) {if(event->GetEvent()==EVENT_AFTERUPDATE)BSPDirty();}
 	void LabelFontSizeChangedEvent(kGUIEvent *event) {if(event->GetEvent()==EVENT_AFTERUPDATE)LabelFontSizeChanged();}
 	void TableFontSizeChangedEvent(kGUIEvent *event) {if(event->GetEvent()==EVENT_AFTERUPDATE)TableFontSizeChanged();}
@@ -572,6 +574,7 @@ public:
 	void LabelNamesChangedEvent(kGUIEvent *event) {if(event->GetEvent()==EVENT_AFTERUPDATE)LabelNamesChanged();}
 	void ReCalcNearEvent(kGUIEvent *event) {if(event->GetEvent()==EVENT_AFTERUPDATE) ReCalcNear();}
 	//void ReCalcDistEvent(kGUIEvent *event) {if(event->GetEvent()==EVENT_AFTERUPDATE) ReCalcDist();}
+	double GetLabelAlpha(void) {return (m_labelalpha.GetSelection()/100.0f);}
 
 	kGUIBrowseSettings m_browsersettings;
 	kGUIHTMLItemCache m_browseritemcache;
@@ -709,6 +712,7 @@ private:
 	kGUITextObj m_tablefontsizelabel;
 	kGUIInputBoxObj m_labelfontsize;
 	kGUITextObj m_labelfontsizelabel;
+	kGUIComboBoxObj m_labelalpha;
 	
 	kGUIInputBoxObj m_shownumticks;
 	int m_numshowticks;					/* this is the same as above just cached for speed */
@@ -965,6 +969,7 @@ private:
 	CALLBACKGLUEPTR(GPX,LabelFontSizeChangedEvent,kGUIEvent)
 	CALLBACKGLUEPTR(GPX,TableFontSizeChangedEvent,kGUIEvent)
 	CALLBACKGLUEPTR(GPX,LabelNamesChangedEvent,kGUIEvent)
+	CALLBACKGLUEPTR(GPX,MapDirtyEvent,kGUIEvent)
 	CALLBACKGLUEPTR(GPX,BSPDirtyEvent,kGUIEvent)
 	CALLBACKGLUEPTR(GPX,ChangeEncode,kGUIEvent)
 	CALLBACKGLUEPTR(GPX,SolveEncode,kGUIEvent)

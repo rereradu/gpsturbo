@@ -26,6 +26,9 @@
 #include "uploadxml.h"
 #include "babelglue.h"
 
+Array<kGUIPoint2> TracksPage::m_polypoints; 
+
+
 class GPXTrackEntry
 {
 	friend class TracksPage;
@@ -39,23 +42,31 @@ public:
 	void Save(kGUIXMLItem *xml);
 };
 
+enum
+{
+TRACKDRAW_OFF,
+TRACKDRAW_LINE,
+TRACKDRAW_POLY};
+
 class GPXTrack
 {
 	friend class TracksPage;
 public:
-	GPXTrack(const char *name) {m_draw=false;m_color=0;m_name.SetString(name);m_numentries=0;m_entries.SetGrow(true);m_entries.Alloc(16);m_numareapoints=0;}
+	GPXTrack(const char *name) {m_draw=false;m_color=0;m_name.SetString(name);m_numentries=0;m_entries.SetGrow(true);m_entries.Alloc(16);m_numareapoints=0;m_alpha=100;}
 	~GPXTrack();
 	void SetName(const char *name) {m_name.SetString(name);}
 	const char *GetName(void) {return m_name.GetString();}
-	void SetDraw(bool d) {m_draw=d;}
-	bool GetDraw(void) {return m_draw;}
+	void SetDraw(int d) {m_draw=d;}
+	int GetDraw(void) {return m_draw;}
 	void SetColorIndex(unsigned int index) {m_color=index;}
 	unsigned int GetColorIndex(void) {return m_color;}
+	void SetColorAlpha(unsigned int alpha) {m_alpha=alpha;}
+	unsigned int GetColorAlpha(void) {return m_alpha;}
 	unsigned int GetNumPoints(void) {return m_numentries;}
 	const char *Getm_starttime(void);
-	void Load(kGUITableObj *table,kGUITickBoxObj *draw,kGUIComboBoxObj *color);
-	bool Compare(kGUITableObj *table,kGUITickBoxObj *draw,kGUIComboBoxObj *color);
-	void Save(kGUITableObj *table,kGUITickBoxObj *draw,kGUIComboBoxObj *color);
+	void Load(kGUITableObj *table,kGUIComboBoxObj *draw,kGUIComboBoxObj *color,kGUIComboBoxObj *alpha);
+	bool Compare(kGUITableObj *table,kGUIComboBoxObj *draw,kGUIComboBoxObj *color,kGUIComboBoxObj *alpha);
+	void Save(kGUITableObj *table,kGUIComboBoxObj *draw,kGUIComboBoxObj *color,kGUIComboBoxObj *alpha);
 	unsigned int Changed(GPXTrack *t2);
 	void Load(kGUIXMLItem *xml);
 	void Save(kGUIXMLItem *xml);
@@ -67,8 +78,9 @@ public:
 	void Draw(kGUICorners *c);
 	private:
 	kGUIString m_name;
-	bool m_draw;
+	int m_draw;		/* TRACKDRAW_xxx */
 	unsigned int m_color;
+	unsigned int m_alpha;
 	unsigned int m_numentries;
 	Array<GPXTrackEntry *>m_entries;
 
@@ -268,8 +280,13 @@ void TracksPage::Init(kGUIContainerObj *obj)
 	m_drawcaption.SetPos(0,0);
 	m_drawcaption.SetFontSize(SMALLCAPTIONSIZE);
 	m_drawcaption.SetFontID(SMALLCAPTIONFONT);
-	m_drawcaption.SetString("Draw Track");
+	m_drawcaption.SetString("Draw Track Mode");
 	m_draw.SetPos(0,15);
+	m_draw.SetNumEntries(3);
+	m_draw.SetEntry(TRACKDRAW_OFF,"Don't Draw",TRACKDRAW_OFF);
+	m_draw.SetEntry(TRACKDRAW_LINE,"Draw as a Track",TRACKDRAW_LINE);
+	m_draw.SetEntry(TRACKDRAW_POLY,"Draw as a Polygon",TRACKDRAW_POLY);
+	m_draw.SetSize(m_draw.GetWidest(),20);
 	m_draw.SetEventHandler(this,CALLBACKNAME(ChangedEvent));
 	m_editcontrols.AddObjects(2,&m_drawcaption,&m_draw);
 
@@ -284,6 +301,16 @@ void TracksPage::Init(kGUIContainerObj *obj)
 	m_color.SetSelection("Magenta");
 	m_color.SetEventHandler(this,CALLBACKNAME(ChangedEvent));
 	m_editcontrols.AddObjects(2,&m_colorcaption,&m_color);
+
+	m_alphacaption.SetPos(0,0);
+	m_alphacaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_alphacaption.SetFontID(SMALLCAPTIONFONT);
+	m_alphacaption.SetString("Track transparency");
+
+	m_alpha.SetPos(0,15);
+	GPX::InitAlphaCombo(&m_alpha);
+	m_alpha.SetEventHandler(this,CALLBACKNAME(ChangedEvent));
+	m_editcontrols.AddObjects(2,&m_alphacaption,&m_alpha);
 
 	m_editcontrols.NextLine();
 
@@ -396,7 +423,10 @@ void TracksPage::AddPointToTrack(double lat,double lon)
 
 	m_table.AddRow(fr);
 
-	m_draw.SetSelected(true);	/* turn on drawing for this track */
+	/* if track drawing is off then turn it on */
+	if(m_draw.GetSelection()==TRACKDRAW_OFF)
+		m_draw.SetSelection(TRACKDRAW_LINE);
+
 	fr->m_llcoord.Set(lat,lon);
 	fr->m_llcoord.Output(&fr->m_lat,&fr->m_lon);
 	Changed();
@@ -478,7 +508,7 @@ void TracksPage::Load(void)
 	fnum=m_edittracklist.GetSelection();
 	if(!fnum)
 	{
-		m_draw.SetSelected(false);
+		m_draw.SetSelection(TRACKDRAW_OFF);
 		m_color.SetSelection("Magenta");
 		m_table.DeleteChildren();
 		m_num.Clear();
@@ -486,7 +516,7 @@ void TracksPage::Load(void)
 		m_time.Clear();
 	}
 	else
-		m_tracks.GetEntry(fnum-1)->Load(&m_table,&m_draw,&m_color);
+		m_tracks.GetEntry(fnum-1)->Load(&m_table,&m_draw,&m_color,&m_alpha);
 
 	Changed();
 }
@@ -611,7 +641,7 @@ void TracksPage::Changed(void)
 	else
 	{
 		int i=GetIndex(m_edittracklist.GetSelectionString());
-		changed=m_tracks.GetEntry(i)->Compare(&m_table,&m_draw,&m_color);
+		changed=m_tracks.GetEntry(i)->Compare(&m_table,&m_draw,&m_color,&m_alpha);
 		m_delete.SetEnabled(!changed);
 		m_rename.SetEnabled(!changed);
 		m_copy.SetEnabled(!changed);
@@ -669,13 +699,13 @@ void TracksPage::Save(const char *name)
 	if(t>=0)
 	{
 		robj=m_tracks.GetEntry(t);
-		robj->Save(&m_table,&m_draw,&m_color);
+		robj->Save(&m_table,&m_draw,&m_color,&m_alpha);
 	}
 	else
 	{
 		/* new Track */
 		robj=new GPXTrack(name);
-		robj->Save(&m_table,&m_draw,&m_color);
+		robj->Save(&m_table,&m_draw,&m_color,&m_alpha);
 		m_tracks.SetEntry(m_numtracks,robj);
 		++m_numtracks;
 		UpdateTracksList();
@@ -829,8 +859,9 @@ void GPXTrack::Draw(kGUICorners *c)
 	kGUIColor col;
 	kGUIColor col2;
 	GPXCoord pos;
-	int px,py,lpx=0,lpy=0;
-	kGUIPoint2 lpoints[2];
+	int px,py;
+	double alpha;
+	kGUIPoint2 *p;
 
 	/* first, project bounds for track and see if it overlaps the draw area */
 	pos.Set(m_bounds.GetMinLat(),m_bounds.GetMinLon());
@@ -843,29 +874,39 @@ void GPXTrack::Draw(kGUICorners *c)
 		return;
 
 	col=GPX::GetTableColor(GetColorIndex());
+	alpha=(double)GetColorAlpha()/100.0f;
 	col2=GPX::GetTableTColor(GetColorIndex());
+
 	ne=GetNumPoints();
+	TracksPage::m_polypoints.Alloc(ne);
+	p=TracksPage::m_polypoints.GetArrayPtr();
 	for(e=0;e<ne;++e)
 	{
 		te=m_entries.GetEntry(e);
 
 		pos.Set(te->m_lat,te->m_lon);
 		gpx->m_curmap->ToMap(&pos,&px,&py);
-		px-=c->lx;
-		py-=c->ty;
+		p->x=px-c->lx;
+		p->y=py-c->ty;
+		++p;
+	}
 
-		if(e)
+	p=TracksPage::m_polypoints.GetArrayPtr();
+	if(m_draw==TRACKDRAW_LINE)
+	{
+		/* draw points */
+		for(e=0;e<ne;++e)
 		{
-			lpoints[0].x=px;
-			lpoints[0].y=py;
-			lpoints[1].x=lpx;
-			lpoints[1].y=lpy;
-			kGUI::DrawFatPolyLine(2,lpoints,col,3,0.7f);
-			kGUI::DrawPixel(lpx,lpy,col2);
-			kGUI::DrawPixel(px,py,col2);
+			if(e<(ne-1))
+				kGUI::DrawFatPolyLine(2,p,col,3,alpha);
+			kGUI::DrawPixel(p->x,p->y,col2);
+			++p;
 		}
-		lpx=px;
-		lpy=py;
+	}
+	else
+	{
+		/* draw track as polygon */
+		kGUI::DrawPoly(ne,TracksPage::m_polypoints.GetArrayPtr(),col,alpha);
 	}
 }
 
@@ -877,12 +918,13 @@ void TracksPage::DrawMap(kGUICorners *c)
 	unsigned int ne;
 	GPXTrack *track;
 	GPXTrackRow *row;
-	kGUIPoint2 lpoints[2];
-	int px,py,lpx=0,lpy=0;
+	int px,py,draw;
 	kGUIColor col;
 	kGUIColor col2;
+	double alpha;
 	kGUICorners b;
 	GPXCoord pos;
+	kGUIPoint2 *p;
 
 	/* draw any saved tracks that are flagged to be drawn */
 	/* skipping current edited track as it will be drawn below */
@@ -892,13 +934,14 @@ void TracksPage::DrawMap(kGUICorners *c)
 		if(i!=((unsigned int)m_edittracklist.GetSelection()-1))
 		{
 			track=m_tracks.GetEntry(i);
-			if(track->GetDraw()==true)
+			if(track->GetDraw()!=TRACKDRAW_OFF)
 				track->Draw(c);
 		}
 	}
 
 	/* draw current track being edited */
-	if(m_draw.GetSelected())
+	draw=m_draw.GetSelection();
+	if(draw!=TRACKDRAW_OFF)
 	{
 		/* first, project bounds for the current track and see if it overlaps the draw area */
 		pos.Set(m_curbounds.GetMinLat(),m_curbounds.GetMinLon());
@@ -906,11 +949,18 @@ void TracksPage::DrawMap(kGUICorners *c)
 		pos.Set(m_curbounds.GetMaxLat(),m_curbounds.GetMaxLon());
 		gpx->m_curmap->ToMap(&pos,&b.rx,&b.ty);
 
+		/* todo handle poly draw for current too */
+
 		/* only draw if track overlaps the draw area */
 		if(kGUI::Overlap(c,&b)==true)
 		{
 			col=GPX::GetTableColor(m_color.GetSelection());
 			col2=GPX::GetTableTColor(m_color.GetSelection());
+			alpha=(double)m_alpha.GetSelection()/100.0f;
+
+			ne=m_table.GetNumChildren();
+			TracksPage::m_polypoints.Alloc(ne);
+			p=TracksPage::m_polypoints.GetArrayPtr();
 
 			ne=m_table.GetNumChildren();
 			for(e=0;e<ne;++e)
@@ -918,21 +968,27 @@ void TracksPage::DrawMap(kGUICorners *c)
 				row=static_cast<GPXTrackRow *>(m_table.GetChild(e));
 
 				gpx->m_curmap->ToMap(&row->m_llcoord,&px,&py);
-				px-=c->lx;
-				py-=c->ty;
+				p->x=px-c->lx;
+				p->y=py-c->ty;
+				++p;
+			}
+			p=TracksPage::m_polypoints.GetArrayPtr();
 
-				if(e)
+			if(draw==TRACKDRAW_LINE)
+			{
+				/* draw points */
+				for(e=0;e<ne;++e)
 				{
-					lpoints[0].x=px;
-					lpoints[0].y=py;
-					lpoints[1].x=lpx;
-					lpoints[1].y=lpy;
-					kGUI::DrawFatPolyLine(2,lpoints,col,3,0.7f);
-					kGUI::DrawPixel(lpx,lpy,col2);
-					kGUI::DrawPixel(px,py,col2);
+					if(e<(ne-1))
+						kGUI::DrawFatPolyLine(2,p,col,3,alpha);
+					kGUI::DrawPixel(p->x,p->y,col2);
+					++p;
 				}
-				lpx=px;
-				lpy=py;
+			}
+			else
+			{
+				/* draw track as polygon */
+				kGUI::DrawPoly(ne,TracksPage::m_polypoints.GetArrayPtr(),col,alpha);
 			}
 		}
 	}
@@ -957,16 +1013,18 @@ GPXTrack::~GPXTrack()
 		delete m_entries.GetEntry(i);
 }
 
-void GPXTrack::Load(kGUITableObj *table,kGUITickBoxObj *draw,kGUIComboBoxObj *color)
+void GPXTrack::Load(kGUITableObj *table,kGUIComboBoxObj *draw,kGUIComboBoxObj *color,kGUIComboBoxObj *alpha)
 {
 	unsigned int e;
 	GPXTrackRow *row;
 	GPXTrackEntry *re;
 
 	if(draw)
-		draw->SetSelected(GetDraw());
+		draw->SetSelection(GetDraw());
 	if(color)
 		color->SetSelection(GetColorIndex());
+	if(alpha)
+		alpha->SetSelection(GetColorAlpha());
 
 	table->DeleteChildren();
 	for(e=0;e<m_numentries;++e)
@@ -998,7 +1056,7 @@ void GPXTrack::UpdateBounds(void)
 
 /* true=changed, false=same */
 
-bool GPXTrack::Compare(kGUITableObj *table,kGUITickBoxObj *draw,kGUIComboBoxObj *color)
+bool GPXTrack::Compare(kGUITableObj *table,kGUIComboBoxObj *draw,kGUIComboBoxObj *color,kGUIComboBoxObj *alpha)
 {
 	unsigned int e;
 	GPXTrackRow *row;
@@ -1007,12 +1065,16 @@ bool GPXTrack::Compare(kGUITableObj *table,kGUITickBoxObj *draw,kGUIComboBoxObj 
 	if(table->GetNumChildren(0)!=m_numentries)
 		return(true);
 
-	/* draw flag has changed */
-	if(draw->GetSelected()!=GetDraw())
+	/* draw has changed */
+	if(draw->GetSelection()!=GetDraw())
 		return(true);
 
 	/* color has changed? */
 	if((unsigned int)color->GetSelection()!=GetColorIndex())
+		return(true);
+
+	/* alpha has changed */
+	if(alpha->GetSelection()!=GetColorAlpha())
 		return(true);
 
 	for(e=0;e<m_numentries;++e)
@@ -1033,7 +1095,7 @@ bool GPXTrack::Compare(kGUITableObj *table,kGUITickBoxObj *draw,kGUIComboBoxObj 
 	return(false);	/* same! */
 }
 
-void GPXTrack::Save(kGUITableObj *table,kGUITickBoxObj *draw,kGUIComboBoxObj *color)
+void GPXTrack::Save(kGUITableObj *table,kGUIComboBoxObj *draw,kGUIComboBoxObj *color,kGUIComboBoxObj *alpha)
 {
 	unsigned int e;
 	unsigned int nr;
@@ -1045,8 +1107,9 @@ void GPXTrack::Save(kGUITableObj *table,kGUITickBoxObj *draw,kGUIComboBoxObj *co
 	for(e=0;e<m_numentries;++e)
 		delete m_entries.GetEntry(e);
 
-	SetDraw(draw->GetSelected());
+	SetDraw(draw->GetSelection());
 	SetColorIndex(color->GetSelection());
+	SetColorAlpha(alpha->GetSelection());
 
 	nr=table->GetNumChildren(0);
 	/* number of valid entries */
@@ -1080,11 +1143,15 @@ void GPXTrack::Load(kGUIXMLItem *xml)
 
 	flxml=xml->Locate("draw");
 	if(flxml)
-		SetDraw(flxml->GetValueInt()?true:false);
+		SetDraw(flxml->GetValueInt());
 	flxml=xml->Locate("color");
 	/* convert string to color index */
 	if(flxml)
 		SetColorIndex(GPX::GetTableColorIndex(flxml->GetValueString()));
+
+	flxml=xml->Locate("alpha");
+	if(flxml)
+		SetColorAlpha(flxml->GetValueInt());
 
 	nc=xml->GetNumChildren();
 	for(i=0;i<nc;++i)
@@ -1121,8 +1188,9 @@ void GPXTrack::Save(kGUIXMLItem *xml)
 		fxml=xml->AddChild("trk");
 		fxml->AddChild("name",m_name.GetString());
 
-		fxml->AddParm("draw",GetDraw()==true?"1":"0");
+		fxml->AddParm("draw",GetDraw());
 		fxml->AddParm("color",GPX::GetTableColorName(GetColorIndex()));
+		fxml->AddParm("alpha",(int)GetColorAlpha());
 
 		fsegxml=fxml->AddChild("trkseg");
 		for(e=0;e<m_numentries;++e)
@@ -1405,7 +1473,7 @@ void TracksPage::ClickSimplify2(kGUIString *result,int closebutton)
 						/* make a new track, and load from xml into that track, then load that track into the table and delete it */
 						track=new GPXTrack(track->GetName());
 						track->Load(x2);
-						track->Load(&m_table,0,0);
+						track->Load(&m_table,0,0,0);
 						delete track;
 						Changed();
 					}

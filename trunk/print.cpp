@@ -418,6 +418,10 @@ void PrintMap::Setup(void)
 	{
 		/* remove width of split area from map */
 		m_splitw=(int)(m_splitwidth.GetDouble()*GetPPI());
+		/* max 1/2 width */
+		if(m_splitw>(pw>>1))
+			m_splitw=pw>>1;
+
 		pw-=m_splitw;
 		m_splitx=pw;
 		m_splith=ph;
