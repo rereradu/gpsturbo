@@ -302,9 +302,7 @@ public:
 	static void Purge(void);
 	static const char *GetFName(int mapnum);
 private:
-//	static kGUIDir m_dir;
 	static Hash *m_hash;
-//	static int *m_mapnums;
 };
 
 #endif

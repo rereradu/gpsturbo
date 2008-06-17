@@ -6284,7 +6284,7 @@ void GPX::LoadPrefs(kGUIXML *xml,bool xmlstatus)
 
 			Get(root,"shownumticks",&m_shownumticks);
 			Get(root,"labelfontsize",&m_labelfontsize);
-			Get(root,"labelalpha",&m_labelalpha);
+			GetI(root,"labelalpha",&m_labelalpha);
 			LabelFontSizeChanged();
 			
 			if(Get(root,"tablefontsize",&m_tablefontsize))
@@ -6710,6 +6710,18 @@ bool GPX::Get(kGUIXMLItem *i,const char *name,kGUIString *var)
 	return(true);
 }
 
+bool GPX::GetI(kGUIXMLItem *i,const char *name,kGUIComboBoxObj *var)
+{
+	kGUIXMLItem *c;
+
+	c=i->Locate(name);
+	if(!c)
+		return(false);
+
+	var->SetSelectionz(c->GetValueInt());
+	return(true);
+}
+
 bool GPX::Get(kGUIXMLItem *i,const char *name,kGUIComboBoxObj *var)
 {
 	kGUIXMLItem *c;
@@ -6717,6 +6729,7 @@ bool GPX::Get(kGUIXMLItem *i,const char *name,kGUIComboBoxObj *var)
 	c=i->Locate(name);
 	if(!c)
 		return(false);
+
 	var->SetSelectionz(c->GetValueString());
 	return(true);
 }

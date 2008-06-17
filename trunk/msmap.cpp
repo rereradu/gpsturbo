@@ -25,10 +25,8 @@
 #include "gpsturbo.h"
 #include "heap.h"
 
-/* overedraw by this many pixels since names on streets */
-/* go slightly past the lines themselves */
-
-#define EXPAND 0
+/* overedraw by this many pixels since streets have width and are not single lines */
+#define CLIPEXPAND 20
 
 Hash *MSGPXFName::m_hash=0;
 
@@ -90,11 +88,11 @@ void MSGPXMap::Init(void)
 	kGUIImage *image;
 
 	m_lcwindow=new kGUIDrawSurface();
-	m_lcwindow->Init(256+EXPAND+EXPAND,256+EXPAND+EXPAND);
+	m_lcwindow->Init(256,256);
 	m_lcbounds.lx=0;
 	m_lcbounds.ty=0;
-	m_lcbounds.rx=256+EXPAND+EXPAND;
-	m_lcbounds.by=256+EXPAND+EXPAND;
+	m_lcbounds.rx=256;
+	m_lcbounds.by=256;
 
 	m_drawsubdivs.Init(50,25);
 	m_drawmaps.Init(50,25);
@@ -278,23 +276,6 @@ MSGPXMap::MSGPXMap(const char *fn)
 		for(unsigned long ii=0;ii<filesize;++ii)
 			fp[ii]^=xorchar;
 	}
-
-#if 0
-	/* check for specific codes */
-	{
-		int ml;
-		static char findstring[]={0x20,0x53,0x4c,0x3c,0x32,0xdf};
-
-		for(i=0;i<filesize;++i)
-		{
-			ml=0;
-			while((fp[i+ml]==findstring[ml]) && ((i+ml)<filesize) && (ml<sizeof(findstring)))
-				++ml;
-			if(ml==sizeof(findstring))
-				ml=99;
-		}
-	}
-#endif
 
 	/* is this a garmin file? */
 	if(strncmp(fp+0x10,"DSKIMG",6))
@@ -808,10 +789,6 @@ MSGPXMap::MSGPXMap(const char *fn)
 			/* build a bsp for the children */
 		}
 	}
-
-//	m_labelbounds.SetGrow(true);
-//	m_labelbounds.Alloc(100);
-//	m_labelbounds.SetGrowSize(25);
 }
 
 /* set the cbits shift value for this level and re-calc sub bounds */
@@ -1081,15 +1058,15 @@ int MSGPXMap::DrawTile(int tx,int ty)
 
 	m_tx=tx<<8;
 	m_ty=ty<<8;
-	m_tilecorners.lx=(tx<<8)-EXPAND;		/* tiles are 64x64 */
-	m_tilecorners.rx=((tx+1)<<8)+EXPAND;
-	m_tilecorners.ty=(ty<<8)-EXPAND;		/* tiles are 64x64 */
-	m_tilecorners.by=((ty+1)<<8)+EXPAND;
+	/* expand so lines right on the edge are grabbed too */
+	m_tilecorners.lx=(tx<<8)-CLIPEXPAND;		/* tiles are 256x256 */
+	m_tilecorners.rx=((tx+1)<<8)+CLIPEXPAND;
+	m_tilecorners.ty=(ty<<8)-CLIPEXPAND;		/* tiles are 256x256 */
+	m_tilecorners.by=((ty+1)<<8)+CLIPEXPAND;
 
 	/* keep track of drawn icons so we don't draw them too close together */
 	m_numiconsdrawn=0;
 
-//	m_numlabelbounds=0;
 	m_numdrawsubs=0;
 	kGUI::DrawRect(0,0,256,256,DrawColor(245,245,245));
 	
@@ -2222,9 +2199,6 @@ void MSGPXMap::DrawLabel(kGUIText *t,double lx,double ly,double lw,double lh,dou
 	else
 		icon=0;
 
-	lx+=EXPAND;
-	ly+=EXPAND;
-
 	if(heading==0.0f)
 	{
 		m_corners[0].x=(int)lx;
@@ -2263,10 +2237,6 @@ void MSGPXMap::DrawLabel(kGUIText *t,double lx,double ly,double lw,double lh,dou
 		m_bounds.by=max(max(m_corners[0].y,m_corners[1].y),
 						max(m_corners[2].y,m_corners[3].y));
 	}
-//	/* is this label off the window? */
-//	if(kGUI::Overlap(&m_lcbounds,&m_bounds)==false)
-//		return;
-
 	/* is this label totally inside the window? */
 	if(kGUI::Inside(&m_bounds,&m_lcbounds)==false)
 		return;
@@ -2288,8 +2258,6 @@ void MSGPXMap::DrawLabel(kGUIText *t,double lx,double ly,double lw,double lh,dou
 
 	if(dodraw==true)
 	{
-		lx-=EXPAND;
-		ly-=EXPAND;
 		if(heading==0.0f)
 		{
 //0x2A Interstate highway shield
@@ -2323,10 +2291,10 @@ void MSGPXMap::DrawLabel(kGUIText *t,double lx,double ly,double lw,double lh,dou
 				lx+=icx-(lw/2);
 				ly+=icy-(lh/2);
 			}
-			t->DrawRot(lx,ly,0.0f,DrawColor(0,0,0),0.85f);
+			t->DrawRot(lx,ly,0.0f,DrawColor(0,0,0),1.0f);
 		}
 		else
-			t->DrawRot(lx,ly,heading,DrawColor(0,0,0),0.85f);
+			t->DrawRot(lx,ly,heading,DrawColor(0,0,0),1.0f);
 	}
 }
 
