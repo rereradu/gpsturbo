@@ -561,8 +561,9 @@ public:
 	static bool Get(kGUIXMLItem *i,const char *name,int *var);
 	static bool Get(kGUIXMLItem *i,const char *name,bool *var);
 	static bool Get(kGUIXMLItem *i,const char *name,kGUIString *var);
-	static bool Get(kGUIXMLItem *i,const char *name,kGUIComboBoxObj *var);
 	static bool Get(kGUIXMLItem *i,const char *name,kGUITickBoxObj *var);
+	static bool Get(kGUIXMLItem *i,const char *name,kGUIComboBoxObj *var);
+	static bool GetI(kGUIXMLItem *i,const char *name,kGUIComboBoxObj *var);
 
 	/* events */
 	void MapDirtyEvent(kGUIEvent *event) {if(event->GetEvent()==EVENT_AFTERUPDATE)MapDirty();}

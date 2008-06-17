@@ -1074,7 +1074,7 @@ bool GPXTrack::Compare(kGUITableObj *table,kGUIComboBoxObj *draw,kGUIComboBoxObj
 		return(true);
 
 	/* alpha has changed */
-	if(alpha->GetSelection()!=GetColorAlpha())
+	if(alpha->GetSelection()!=(int)GetColorAlpha())
 		return(true);
 
 	for(e=0;e<m_numentries;++e)

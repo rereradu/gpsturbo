@@ -119,7 +119,7 @@ void GPX::InitSettings(void)
 
 	m_labelalpha.SetPos(m_labelfontsizelabel.GetZoneRX()+10,y);
 	GPX::InitAlphaCombo(&m_labelalpha);
-	m_labelalpha.SetSelection(50);
+	m_labelalpha.SetSelection(70);
 	m_tabs.AddObject(&m_labelalpha);
 	m_labelalpha.SetEventHandler(this,CALLBACKNAME(MapDirtyEvent));
 	y+=25;
