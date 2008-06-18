@@ -880,15 +880,15 @@ static kGUIColor polycolours[]={
 	DrawColor(0,0,255),			//0 unknown [lake]
 	DrawColor(215,215,245),		//1 town_poly, City (>200k)
 	DrawColor(220,220,250),		//2 town_poly, City (<200k)
-	DrawColor(225,225,255),		//3 !city
+	DrawColor(235,230,220),		//3 !city
 	DrawColor(230,230,255),		//4 !small city
 	DrawColor(180,180,180),		//5 parking lot
 	DrawColor(160,160,160),		//6 parking garage
 	DrawColor(255,255,192),		//7 !airport (yellow)
-	DrawColor(255,192,255),		//8  shopping center
+	DrawColor(209,208,205),		//8  shopping center
 	DrawColor(128,128,255),		//9 marina
 	DrawColor(192,192,192),		//10 !college or university
-	DrawColor(192,192,192),		//11 hospital
+	DrawColor(229,198,195),		//11 hospital
 	DrawColor(192,192,192),		//12 industrial
 	DrawColor(255,225,225),		//13 !reservation (brown)
 	DrawColor(192,192,192),	//14 airport runway
@@ -897,19 +897,19 @@ static kGUIColor polycolours[]={
 	DrawColor(0,0,0),		//17 
 	DrawColor(0,0,0),		//18 
 	DrawColor(192,192,192),		//19 !man made area, hi rise buildings
-	DrawColor(128,255,128),	//20 national park
-	DrawColor(128,255,128),	//21 national park
-	DrawColor(128,255,128),	//22 national park
-	DrawColor(64,255,64),	//23 city park
-	DrawColor(96,255,96),	//24 golf
+	DrawColor(167,204,149),	//20 national park
+	DrawColor(167,204,149),	//21 national park
+	DrawColor(167,204,149),	//22 national park
+	DrawColor(167,204,149),	//23 city park
+	DrawColor(167,214,149),	//24 golf
 	DrawColor(225,255,225),		//25 !sport park (light green)
 	DrawColor(175,175,175),		//26 !cemetery
 	DrawColor(0,0,0),			//27 ferry route
 	DrawColor(0,0,0),			//28 
 	DrawColor(0,0,0),			//29 
-	DrawColor(128,255,128),		//30 state park
-	DrawColor(128,255,128),		//31 state park
-	DrawColor(128,255,128),		//32 park
+	DrawColor(167,204,149),		//30 state park
+	DrawColor(167,204,149),		//31 state park
+	DrawColor(167,204,149),		//32 park
 	DrawColor(0,0,0),		//33 
 	DrawColor(0,0,0),		//34 
 	DrawColor(0,0,0),		//35 
@@ -917,8 +917,8 @@ static kGUIColor polycolours[]={
 	DrawColor(0,0,0),		//37 
 	DrawColor(0,0,0),		//38 
 	DrawColor(0,0,0),		//39 
-	DrawColor(64,64,255),	//40 ocean 
-	DrawColor(32,32,255),	//41 water reservoir
+	DrawColor(153,179,224),	//40 ocean 
+	DrawColor(153,179,214),	//41 water reservoir
 	DrawColor(0,0,0),		//42 
 	DrawColor(0,0,0),		//43 
 	DrawColor(0,0,0),		//44 
@@ -936,30 +936,30 @@ static kGUIColor polycolours[]={
 	DrawColor(0,0,0),		//56 
 	DrawColor(0,0,0),		//57 
 	DrawColor(0,0,0),		//58 
-	DrawColor(64,255,64),	//59 unknown
-	DrawColor(0,0,255),	//60 lake
-	DrawColor(0,0,255),	//61 lake
-	DrawColor(0,0,255),	//62 lake
-	DrawColor(0,0,255),	//63 lake
-	DrawColor(0,0,255),	//64 lake / inlet
-	DrawColor(0,0,255),	//65 lake
-	DrawColor(0,0,255),	//66 lake
-	DrawColor(0,0,255),	//67 lake
-	DrawColor(0,0,255),	//68 lake
+	DrawColor(167,204,149),	//59 unknown
+	DrawColor(153,179,204),	//60 lake
+	DrawColor(153,179,204),	//61 lake
+	DrawColor(153,179,204),	//62 lake
+	DrawColor(153,179,204),	//63 lake
+	DrawColor(153,179,204),	//64 lake / inlet
+	DrawColor(153,179,204),	//65 lake
+	DrawColor(153,179,204),	//66 lake
+	DrawColor(153,179,204),	//67 lake
+	DrawColor(153,179,204),	//68 lake
 	DrawColor(0,0,0),		//69 unknown
-	DrawColor(16,16,255),	//70 river
-	DrawColor(16,16,255),	//71 river
-	DrawColor(16,16,255),	//72 river / inlet
-	DrawColor(16,16,255),	//73 river
+	DrawColor(153,179,214),	//70 river
+	DrawColor(153,179,214),	//71 river
+	DrawColor(153,179,214),	//72 river / inlet
+	DrawColor(153,179,214),	//73 river
 	DrawColor(0,0,0),		//74 background do not draw
 	DrawColor(0,0,0),		//75 background do not draw
-	DrawColor(32,32,255),	//76 intermittent river/lake
+	DrawColor(153,179,214),	//76 intermittent river/lake
 	DrawColor(128,255,192),	//77 glacier
 	DrawColor(32,255,32),	//78 orchard or plantation
-	DrawColor(96,255,32),	//79 scrub
-	DrawColor(32,255,32),	//80 woods
-	DrawColor(32,255,32),	//81 wetland
-	DrawColor(32,255,32),	//82 tundra
+	DrawColor(167,204,149),	//79 scrub
+	DrawColor(167,204,149),	//80 woods
+	DrawColor(167,204,149),	//81 wetland
+	DrawColor(167,204,149),	//82 tundra
 	DrawColor(32,32,255)};	//83 flats / shoreline
 
 
@@ -984,7 +984,7 @@ typedef struct
 static double thickinfo[ROADGROUP_NUM][MAXMSZOOM]={
 	//0    1    2    3    4    5    6    7    8    0   10    11    12    13    14    15    16    17    18    19
 	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f},		/* line ( topo etc. )*/
-	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,1.0f, 1.0f, 1.0f, 2.0f, 3.0f, 5.0f, 7.0f, 8.0f, 9.0f,10.0f},		/* creek */
+	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,1.0f, 1.0f, 1.0f, 1.0f, 2.5f, 5.0f, 7.0f, 8.0f, 9.0f,10.0f},		/* creek */
 	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,1.0f,1.0f, 1.0f, 1.0f, 2.0f, 4.5f, 9.0f,12.0f,13.0f,14.0f,15.0f},		/* side street */
 	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,1.0f,2.0f,2.0f, 2.5f, 3.0f, 4.0f, 6.0f,11.0f,13.0f,14.0f,15.0f,16.0f},		/* ramps */
 	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,1.0f,2.0f,2.5f,2.0f, 4.0f, 6.0f, 9.0f,10.0f,13.0f,14.0f,15.0f,16.0f,17.0f},		/* artery */
@@ -1068,7 +1068,7 @@ int MSGPXMap::DrawTile(int tx,int ty)
 	m_numiconsdrawn=0;
 
 	m_numdrawsubs=0;
-	kGUI::DrawRect(0,0,256,256,DrawColor(245,245,245));
+	kGUI::DrawRect(0,0,256,256,DrawColor(242,239,233));
 	
 	/* add all sub areas to list */
 	DrawTile(mlevels[GetZoom()]);
@@ -1580,10 +1580,14 @@ void MSGPXMap::DrawPolyLabel(POLYSORT_DEF *ps)
 {
 	int l;
 	double ah=ps->corners.by-ps->corners.ty; /* height of poly area */
+	double aw=ps->corners.rx-ps->corners.lx; /* width of poly area */
 	double lgh;	/* label group height */
 	double lx,ly,lw,lh;
+	int fs;
 
-	m_t.SetFontSize((int)thickinfo[ROADGROUP_HIGHWAY][GetZoom()]);
+	/* assume average of 80 pix */
+	fs=max(8,min(20,(int)(aw/(30.0f))));
+	m_t.SetFontSize(fs);
 	m_t.Clear();
 	lh=m_t.GetHeight();			/* height of 1 line of text */
 	lgh=lh*ps->numlabels;		/* height of all labels on this polygon */
@@ -1692,6 +1696,7 @@ void MSGPXMap::DrawSub(MSSUBDIV *sub)
 	int l;
 	POLYSORT_DEF ps;
 	bool skiplabel;
+	double edge;
 
 	/* no elements to draw, abort */
 	if(!sub->elements)
@@ -1749,7 +1754,8 @@ void MSGPXMap::DrawSub(MSSUBDIV *sub)
 						else
 							ps.numlabels=0;
 						m_roadgroups[pi->thickindex].SetEntry(m_roadgroupspolys[pi->thickindex]++,ps);
-						kGUI::DrawFatPolyLine(m_numpoints,m_ppoints,DrawColor(128,128,128),max(thickness+1.0f,thickness*1.2f),0.66f);
+						edge=min(max(0.75f,thickness*0.115f),1.5f);
+						kGUI::DrawFatPolyLine(m_numpoints,m_ppoints,DrawColor(128,128,128),thickness+edge,0.66f);
 					}
 				break;
 				case PL_TRAINTRACKS:
@@ -2042,27 +2048,6 @@ void MSGPXMap::ReadLabel(const char *enc,kGUIString *s)
 		}
 	}
 }
-
-#if 0
-/* calc center of polygon, draw lavel there */
-void MSGPXMap::DrawPolyLabel(kGUIText *t,int nvert,kGUIPoint2 *point)
-{
-	int tlen=t->GetWidth();
-	int w,h;
-
-	w=m_polycorners.rx-m_polycorners.lx;
-	h=m_polycorners.by-m_polycorners.ty;
-
-	/* only if it can fit */
-	if(tlen<=w)
-	{
-//			t->ASprintf("<%d>",m_polytype);
-		t->SetHAlign(FT_CENTER);
-		t->SetVAlign(FT_MIDDLE);
-		t->Draw(m_polycorners.lx-m_tx,m_polycorners.ty-m_ty,w,h,DrawColor(0,0,0));
-	}
-}
-#endif
 
 void MSGPXMap::DrawLineLabel(kGUIText *t,int nvert,kGUIDPoint2 *point,double over,bool root)
 {
