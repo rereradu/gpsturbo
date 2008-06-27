@@ -366,6 +366,33 @@ public:
 	kGUIString m_filename;
 };
 
+/* todo: any images for 'labels' are hex encoded in config file */
+
+/* user definable macro buttons */
+class MacroButton
+{
+public:
+	void Load(kGUIXMLItem *xml);
+	void Save(kGUIXMLItem *xml);
+	void SetFuncName(kGUIString *name) {m_funcname.SetString(name);}
+	void SetButtonText(kGUIString *text) {m_buttontext.SetString(text);}
+	void SetUseImage(bool u) {m_useimage=u;}
+	void SetImage(DataHandle *image) {m_image.Copy(image);};	
+	kGUIString *GetFuncName(void) {return &m_funcname;}	
+	kGUIString *GetButtonText(void) {return &m_buttontext;}	
+	bool GetUseImage(void) {return m_useimage;}
+	kGUIImage *GetImage(void) {return &m_image;}
+	/* used to locate this object when user clicks on a button */
+	void SetButton(kGUIButtonObj *b) {m_button=b;}
+	kGUIButtonObj *GetButton(void) {return m_button;}
+private:
+	kGUIString m_funcname;
+	kGUIString m_buttontext;
+	bool m_useimage;
+	kGUIImage m_image;	/* image is saved as base64 encoded in config file */
+	kGUIButtonObj *m_button;
+};
+
 
 #define MAXLL 64
 
@@ -401,6 +428,27 @@ BROWSE_DATA
 #include "stickers.h"
 #include "gpsrs.h"
 #include "notes.h"
+#include "download.h"
+
+/* update text array 'tabnames' in gpsturbo.cpp if adding to this list */
+
+enum
+{
+TAB_MAIN,
+TAB_ROUTE,
+TAB_TRACKS,
+TAB_LINES,
+TAB_FILTERS,
+TAB_SETTINGS,
+TAB_GPSES,
+TAB_DOWNLOAD,
+TAB_SOLVER,
+TAB_STICKERS,
+TAB_NOTES,
+TAB_BASIC,
+TAB_DEBUG,
+TAB_NUMTABS
+};
 
 class GPX
 {
@@ -413,6 +461,7 @@ class GPX
 	friend class RemoveStale;
 	friend class LoadAs;
 	friend class PrintMap;
+	friend class AutoOrderWindow;
 public:
 	GPX();
 	~GPX();
@@ -426,6 +475,7 @@ public:
 	void LoadMapPaths(kGUIXML *xml,bool xmlstatus);
 	void LoadPrefs(kGUIXML *xml,bool xmlstatus);
 	void SavePrefs(void);
+	void UpdateMacroButtons(void);
 	bool IsOnline(void) {return m_online.GetSelected();}
 	void SetScrollCenter(GPXCoord *c);
 	void InitPopMenu(kGUIMenuColObj *menu,int numentries,int *entrylist);
@@ -444,6 +494,7 @@ public:
 
 	void Browse(int mode,kGUIString *s);
 
+	void MacroButtonEvent(kGUIEvent *event);
 	void StartBasic(kGUIEvent *event);
 	kGUIBasic m_basic;
 	kGUIInputBoxObj m_basicsource;
@@ -453,7 +504,9 @@ public:
 	kGUIMenuColObj m_basicstartmenu;
 	kGUIDividerObj m_basicdivider;
 	kGUIInputBoxObj m_basicoutput;
-	
+	unsigned int m_nummacrobuttons;
+	ClassArray<MacroButton>m_macrobuttons;
+
 	kGUIInputBoxObj m_debug;
 	kGUIString m_printmap;	/* name of printer to use for printing maps */
 	kGUIString m_printgrid;	/* name of printer to use for printing grids */
@@ -592,7 +645,7 @@ private:
 	void BasicCancel(kGUIEvent *event);
 	void BasicAddButton(kGUIEvent *event);
 	void SetBasicCClasses(void);
-	void BasicError(int s,int e) {m_basicsource.Activate();m_basicsource.Select(s,e);}
+	void BasicError(int s,int e) {m_tabs.SetCurrentTab(TAB_BASIC);m_basicsource.Activate();m_basicsource.Select(s,e);}
 	void MoveBasicDivider(kGUIEvent *event);
 
 	void UpdateCenter(kGUIEvent *event);
@@ -688,12 +741,14 @@ private:
 	StickersPage m_stickers;
 	GPSrPage m_gpsr;
 	NotesPage m_notes;
-
+	DownloadPage m_download;
 
 	kGUIControlBoxObj m_labelcontrols;
 	kGUIButtonObj m_labelup;
 	kGUIButtonObj m_labeldown;
 	kGUITableObj m_labelcolourtable;
+
+	kGUIControlBoxObj m_macrocontrols;
 
 	kGUITableObj m_mapdirstable;
 
@@ -981,6 +1036,7 @@ private:
 	CALLBACKGLUEPTR(GPX,ReCalcDistsEvent,kGUIEvent)
 	CALLBACKGLUEPTR(GPX,ReCalcNearEvent,kGUIEvent)
 	CALLBACKGLUEPTR(GPX,StartBasic,kGUIEvent)
+	CALLBACKGLUEPTR(GPX,MacroButtonEvent,kGUIEvent)
 	CALLBACKGLUE(GPX,BasicDone)
 	CALLBACKGLUEPTR(GPX,BasicCancel,kGUIEvent)
 	CALLBACKGLUEPTR(GPX,BasicAddButton,kGUIEvent)
@@ -1073,17 +1129,17 @@ private:
 	kGUIButtonObj m_cancel;
 };
 
-class BasicButtonEdit
+class MacroButtonEdit
 {
 public:
-	BasicButtonEdit();
-	~BasicButtonEdit() {}
+	MacroButtonEdit();
+	~MacroButtonEdit() {}
 	void Init(void);
 private:
-	CALLBACKGLUEPTR(BasicButtonEdit,WindowEvent,kGUIEvent)
-	CALLBACKGLUEPTR(BasicButtonEdit,Delete,kGUIEvent)
-	CALLBACKGLUEPTR(BasicButtonEdit,Cancel,kGUIEvent)
-	CALLBACKGLUEPTR(BasicButtonEdit,Save,kGUIEvent)
+	CALLBACKGLUEPTR(MacroButtonEdit,WindowEvent,kGUIEvent)
+	CALLBACKGLUEPTR(MacroButtonEdit,Delete,kGUIEvent)
+	CALLBACKGLUEPTR(MacroButtonEdit,Cancel,kGUIEvent)
+	CALLBACKGLUEPTR(MacroButtonEdit,Save,kGUIEvent)
 	void WindowEvent(kGUIEvent *event);
 	void Cancel(kGUIEvent *event) {if(event->GetEvent()==EVENT_PRESSED)m_window.Close();}
 	void Save(kGUIEvent *event) {if(event->GetEvent()==EVENT_PRESSED)m_window.Close();}
@@ -1180,25 +1236,6 @@ private:
 	kGUIButtonObj m_update;
 };
 
-
-/* update text array 'tabnames' in gpsturbo.cpp if adding to this list */
-
-enum
-{
-TAB_MAIN,
-TAB_ROUTE,
-TAB_TRACKS,
-TAB_LINES,
-TAB_FILTERS,
-TAB_SETTINGS,
-TAB_GPSES,
-TAB_SOLVER,
-TAB_STICKERS,
-TAB_NOTES,
-TAB_BASIC,
-TAB_DEBUG,
-TAB_NUMTABS
-};
 
 enum
 {

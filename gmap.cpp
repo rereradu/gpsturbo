@@ -46,9 +46,9 @@ kGUIThread GGPXMap::m_checkthread;
 
 void GGPXMap::InitVersions(void)
 {
-	m_mapver.SetString("74");
-	m_satmapver.SetString("25");
-	m_overlayver.SetString("74");
+	m_mapver.SetString("75");
+	m_satmapver.SetString("28");
+	m_overlayver.SetString("75");
 	m_terver.SetString("71");
 }
 
@@ -103,6 +103,7 @@ void GGPXMap::CheckVersionsThread(void *unused)
 	int ver;
 	int bestver;
 	int numbad;
+	int numgood;
 	int tryver;
 	kGUIString *vp=0;
 	kGUIString url;
@@ -110,6 +111,11 @@ void GGPXMap::CheckVersionsThread(void *unused)
 	kGUIString lastmod;
 	int serverid;
 	kGUIDownloadEntry dl;
+	long lastcrc;
+	long curcrc;
+	unsigned long long curlen;
+	unsigned long long lastlen;
+	bool diff;
 
 	dl.SetAllowCookies(false);
 	for(ts=0;ts<TILESOURCE_NUM;++ts)
@@ -135,13 +141,18 @@ void GGPXMap::CheckVersionsThread(void *unused)
 
 		tryver=0;
 		numbad=0;
+		numgood=0;
 		lastmod.Clear();
+		lastcrc=0;
+		lastlen=0;
 		do
 		{
 			kGUIImage *i;
 
+			diff=false;
 			i=new kGUIImage();
 			i->SetMemory();
+			/* tryver is relative to the current setting! */
 			GenerateURL(ts,&url,&hstr,&serverid,0,1,3,tryver);
 			if(dl.DownLoad(i,&url)==DOWNLOAD_OK)
 			{
@@ -151,21 +162,36 @@ void GGPXMap::CheckVersionsThread(void *unused)
 					goto wasbad;
 
 				/* should we make sure that it is a valid image? */
+				curcrc=i->CRC();
+				curlen=i->GetSize();
 				delete i;
 
-				if(bestver==-1)
-					lastmod.SetString(dl.GetLastModified());
+				if(lastlen)
+				{
+					if(lastlen!=curlen)
+						diff=true;
+					else if(lastcrc!=curcrc)
+						diff=true;
+					else if(strcmp(lastmod.GetString(),dl.GetLastModified()->GetString()))
+						diff=true;
+				}
 				else
 				{
-					/* is this the same as the last one? */
-					if(!strcmp(lastmod.GetString(),dl.GetLastModified()->GetString()))
-						break;
-					else
-						lastmod.SetString(dl.GetLastModified());
+					bestver=ver+tryver;
+					numbad=0;
 				}
 
-				bestver=ver+tryver;
-				numbad=0;
+				lastmod.SetString(dl.GetLastModified());
+				lastcrc=curcrc;
+				lastlen=curlen;
+				if(diff==true)
+				{
+					bestver=ver+tryver;
+					numbad=0;
+				}
+				else if(numgood>5)
+					break;
+				++numgood;
 			}
 			else
 			{

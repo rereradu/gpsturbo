@@ -83,10 +83,10 @@ class GPXRecordVar : public kGUIBasicVarObj
 	friend class GPXRecordSet;
 public:
 	GPXRecordVar() {m_incallback=false;m_arrayentries=0;}
-	~GPXRecordVar() {if(m_arrayentries) delete []m_arrayentries;}
+	virtual ~GPXRecordVar() {if(m_arrayentries) delete []m_arrayentries;}
 	void PreRead(void);
 	void PostWrite(void);
-	virtual void AllocArray(int n) {m_arrayentries=new GPXRecordVar[n];}
+	virtual void AllocArray(int n) {if(m_arrayentries){delete []m_arrayentries;}m_arrayentries=new GPXRecordVar[n];}
 	virtual kGUIBasicVarObj *GetEntry(int n) {return m_arrayentries+n;}
 	void SetIndex(GPXRecordSet *rs,int i) {m_rs=rs;m_index=i;}
 //	int GetIndex(void) {return m_index;}
