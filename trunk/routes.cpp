@@ -25,6 +25,31 @@
 #include "gpsturbo.h"
 #include "kguitsp.h"
 
+class AutoOrderWindow
+{
+public:
+	AutoOrderWindow(kGUITableObj *t);
+	~AutoOrderWindow();
+private:
+	void WindowEvent(kGUIEvent *event);
+	CALLBACKGLUEPTR(AutoOrderWindow,WindowEvent,kGUIEvent);
+	void DoneEvent(kGUIEvent *event);
+	CALLBACKGLUEPTR(AutoOrderWindow,DoneEvent,kGUIEvent);
+	void Update(void);
+	CALLBACKGLUE(AutoOrderWindow,Update);
+	kGUITableObj *m_t;
+	kGUITSP m_tsp;
+	Array<GPXRow *>m_rows;
+	kGUIWindowObj m_window;
+	kGUIBusyRectObj m_busyrect;
+	kGUITextObj m_tries;
+	kGUITextObj m_best;
+	kGUIButtonObj m_done;
+	double m_startdist;
+	unsigned int m_count;
+	unsigned int m_curbest;
+};
+
 class GPXRouteEntry
 {
 public:
@@ -285,22 +310,25 @@ double RoutesPage::UpdateInfo(void)
 {
 	unsigned int e;
 	GPXRow *row;
-	GPXCoord *coord=0;
-	double dist=0.0f;
+	GPXRow *lrow;
+	double dist=0.0f,d;
+	double ratio,eval1,eval2;
+	/* generate results report */
+	GPX::GetDistInfo(gpx->GetCurrentDist(),0,&ratio,&eval1,&eval2);
 
 	for(e=0;e<m_routewptable.GetNumChildren();++e)
 	{
 		row=static_cast<GPXRow *>(m_routewptable.GetChild(e));	/* wpt row to check */
-//		row->SetIndex(e);
 		gpx->GetColour(row);
-		if(coord)
+		if(e)
 		{
-			row->SetDist(coord->Dist(row->GetCoord()));
-			dist+=row->GetDist();
+			d=lrow->GetCoord()->Dist(row->GetCoord())*ratio;
+			row->SetDist(d);
+			dist+=d;
 		}
 		else
 			row->SetDist(0.0f);
-		coord=row->GetCoord();
+		lrow=row;
 	}
 	m_num.Sprintf("%d",m_routewptable.GetNumChildren());
 	m_dist.Sprintf("%.2f %s",dist,gpx->GetCurrentDistString());
@@ -369,20 +397,26 @@ void RoutesPage::ClickWpntUp(kGUIEvent *event)
 
 void RoutesPage::ClickAutoOrder(kGUIEvent *event)
 {
-	if(event->GetEvent()==EVENT_PRESSED)
+	if(event->GetEvent()==EVENT_PRESSED )
 	{
-		unsigned int f;
-		unsigned int s;
 		unsigned int nc=m_routewptable.GetNumChildren(0);
-		kGUITSP tsp;
-		GPXCoord *cp;
-		GPXRow *row;
-		GPXRow *newrow;
-		Array<GPXRow *>rows;
-		double curdist;
 
 		if(nc>1)
 		{
+#if 1
+			AutoOrderWindow *aw;
+
+			aw=new AutoOrderWindow(&m_routewptable);
+#else
+			unsigned int f;
+			unsigned int s;
+			kGUITSP tsp;
+			GPXCoord *cp;
+			GPXRow *row;
+			GPXRow *newrow;
+			Array<GPXRow *>rows;
+			double curdist;
+
 			tsp.Init(nc);
 			rows.Alloc(nc);
 
@@ -431,6 +465,7 @@ void RoutesPage::ClickAutoOrder(kGUIEvent *event)
 
 			Changed();
 			gpx->MapDirty();
+#endif
 		}
 	}
 }
@@ -991,4 +1026,176 @@ bool RoutesPage::InAnyRoute(GPXRow *row)
 	}
 
 	return(false);
+}
+
+AutoOrderWindow::AutoOrderWindow(kGUITableObj *t)
+{
+	unsigned int f;
+	unsigned int nc;
+	GPXCoord *cp;
+	GPXRow *row;
+
+	m_t=t;
+	nc=t->GetNumChildren();
+	m_tsp.Init(nc);
+	m_rows.Alloc(nc);
+
+	/* get the current distance for the track */
+	m_startdist=gpx->m_routes.UpdateInfo();
+	for(f=0;f<nc;++f)
+	{
+		row=static_cast<GPXRow *>(t->GetChild(f));
+		m_rows.SetEntry(f,row->GetCopiedFrom());
+		cp=row->GetCoord();
+		m_tsp.SetCoord(f,cp->GetLat(),cp->GetLon());
+	}
+
+	m_tsp.AsyncCalc();
+
+	m_tries.SetPos(2,20);
+	m_tries.SetSize(100,20);
+	m_window.AddObject(&m_tries);
+
+	m_best.SetPos(100+2+20,20);
+	m_best.SetSize(100,20);
+	m_window.AddObject(&m_best);
+
+	m_done.SetPos(200+2+20+20,20);
+	m_done.SetString("Good Enough");
+	m_done.SetSize(75,20);
+	m_window.AddObject(&m_done);
+
+	m_busyrect.SetPos(2,2);
+	m_busyrect.SetSize(m_done.GetZoneRX(),16);
+	m_busyrect.SetIsBar(false);
+	m_window.AddObject(&m_busyrect);
+
+	m_count=0;
+	m_curbest=0;
+
+	m_window.GetTitle()->SetString("Calculating...");
+	m_window.SetSize(10,10);
+	m_window.ExpandToFit();
+	m_window.Center();
+	m_window.SetTop(true);
+	kGUI::AddWindow(&m_window);
+
+	kGUI::AddEvent(this,CALLBACKNAME(Update));
+	m_window.SetEventHandler(this,CALLBACKNAME(WindowEvent));
+	m_done.SetEventHandler(this,CALLBACKNAME(DoneEvent));
+}
+
+void AutoOrderWindow::Update(void)
+{
+	unsigned int newcount;
+	unsigned int newbest;
+
+	m_busyrect.Animate();
+	newcount=m_tsp.GetCount();
+	if(newcount!=m_count)
+	{
+		m_count=newcount;
+		m_tries.Sprintf("Tries: %d",m_count);
+
+		newbest=m_tsp.GetNewBest();
+		if(newbest!=m_curbest)
+		{
+			unsigned int f;
+			unsigned int s;
+			unsigned int nc=m_t->GetNumChildren();
+			int *curlist=m_tsp.GetCurList();
+			double dist=0.0f,ratio,eval1,eval2;
+			GPXRow *lrow;
+			GPXRow *row;
+
+			/* generate results report */
+			GPX::GetDistInfo(gpx->GetCurrentDist(),0,&ratio,&eval1,&eval2);
+
+			s=0;
+			while(curlist[s])
+				++s;
+			lrow=0;
+			for(f=0;f<nc;++f)
+			{
+				row=m_rows.GetEntry(curlist[s]);
+				if(lrow)
+					dist+=(lrow->GetCoord()->Dist(row->GetCoord())*ratio);
+				lrow=row;
+				if(++s==nc)
+					s=0;
+			}
+			if(dist<m_startdist)
+				m_best.Sprintf("Distance: %.2f",dist);
+		}
+	}
+}
+
+void AutoOrderWindow::WindowEvent(kGUIEvent *event)
+{
+	switch(event->GetEvent())
+	{
+	case EVENT_CLOSE:
+		delete this;
+	break;
+	}
+}
+
+void AutoOrderWindow::DoneEvent(kGUIEvent *event)
+{
+	switch(event->GetEvent())
+	{
+	case EVENT_PRESSED:
+		m_window.Close();
+	break;
+	}
+}
+
+AutoOrderWindow::~AutoOrderWindow()
+{
+	unsigned int s;
+	unsigned int nc=m_t->GetNumChildren();
+	unsigned int f;
+	GPXRow *newrow;
+	GPXRow *row;
+
+	/* wait for tsp to finish */
+	m_tsp.Stop();
+	while(m_tsp.GetActive());
+
+	kGUI::DelEvent(this,CALLBACKNAME(Update));
+	m_t->DeleteChildren();
+
+	/* find position of starting point */
+	s=0;
+	while(m_tsp.GetIndex(s))
+		++s;
+
+	for(f=0;f<nc;++f)
+	{
+		row=m_rows.GetEntry(m_tsp.GetIndex(s));
+		if(++s==nc)
+			s=0;
+		newrow=new GPXRow();
+		newrow->Copy(row);
+		m_t->AddRow(newrow);
+	}
+
+	/* is this better or worse than before? */
+	if(gpx->m_routes.UpdateInfo()>m_startdist)
+	{
+		/* this is worse!, revert back to original order */
+		m_t->DeleteChildren();
+		for(f=0;f<nc;++f)
+		{
+			row=m_rows.GetEntry(f);
+			newrow=new GPXRow();
+			newrow->Copy(row);
+			m_t->AddRow(newrow);
+		}
+	}
+
+	gpx->m_routes.Changed();
+	gpx->MapDirty();
+
+	kGUI::DelWindow(&m_window);
 }

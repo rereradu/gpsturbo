@@ -960,7 +960,7 @@ static kGUIColor polycolours[]={
 	DrawColor(167,204,149),	//80 woods
 	DrawColor(167,204,149),	//81 wetland
 	DrawColor(167,204,149),	//82 tundra
-	DrawColor(32,32,255)};	//83 flats / shoreline
+	DrawColor(163,184,209)};	//83 flats / shoreline
 
 
 
@@ -985,6 +985,7 @@ static double thickinfo[ROADGROUP_NUM][MAXMSZOOM]={
 	//0    1    2    3    4    5    6    7    8    0   10    11    12    13    14    15    16    17    18    19
 	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f},		/* line ( topo etc. )*/
 	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,1.0f, 1.0f, 1.0f, 1.0f, 2.5f, 5.0f, 7.0f, 8.0f, 9.0f,10.0f},		/* creek */
+	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.4f,0.5f, 0.6f, 0.7f, 1.0f, 2.0f, 5.0f, 8.0f, 7.0f,10.0f,11.0f},		/* narrow street */
 	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,1.0f,1.0f, 1.0f, 1.0f, 2.0f, 4.5f, 9.0f,12.0f,13.0f,14.0f,15.0f},		/* side street */
 	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,1.0f,2.0f,2.0f, 2.5f, 3.0f, 4.0f, 6.0f,11.0f,13.0f,14.0f,15.0f,16.0f},		/* ramps */
 	{0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,1.0f,2.0f,2.5f,2.0f, 4.0f, 6.0f, 9.0f,10.0f,13.0f,14.0f,15.0f,16.0f,17.0f},		/* artery */
@@ -1013,7 +1014,7 @@ static POLYLINEINFO_DEF polylineinfo[]={
 	{ROADGROUP_LINE,1,PL_NORMAL,DrawColor(0,255,0)},		//19 
 	{ROADGROUP_LINE,1,PL_TRAINTRACKS,DrawColor(128,255,128)},	//20 train tracks
 	{ROADGROUP_LINE,1,PL_NORMAL,DrawColor(128,255,128)},	//21 
-	{ROADGROUP_LINE,1,PL_NORMAL,DrawColor(0,0,0)},		//22 small street? 
+	{ROADGROUP_NARROWSTREET,1,PL_NORMAL,DrawColor(255,255,255)},		//22 narrow street 
 	{ROADGROUP_LINE,1,PL_NORMAL,DrawColor(64,255,64)},	//23 
 	{ROADGROUP_CREEK,1,PL_NORMAL,DrawColor(0,0,255)},		//24  creek
 	{ROADGROUP_LINE,1,PL_NORMAL,DrawColor(0,255,0)},		//25  
@@ -1085,7 +1086,7 @@ int MSGPXMap::DrawTile(int tx,int ty)
 	}
 
 	if(m_numsortpolys>1)
-		m_sortpolys.Sort(m_numsortpolys,SortPolygons);
+		m_sortpolys.Sort(m_numsortpolys,SortPolygonsType);
 
 	/* draw all polygons in sorted order */
 	for(i=0;i<m_numsortpolys;++i)
@@ -1120,6 +1121,20 @@ int MSGPXMap::DrawTile(int tx,int ty)
 		}
 	}
 
+	/* draw all polygon labels in sorted order */
+
+	if(m_numsortpolys>1)
+		m_sortpolys.Sort(m_numsortpolys,SortPolygonsLeft);
+
+	for(i=0;i<m_numsortpolys;++i)
+	{
+		POLYSORT_DEF ps;
+
+		ps=m_sortpolys.GetEntry(i);
+		if(ps.numlabels)
+			ps.map->DrawPolyLabel(&ps);
+	}
+
 	/* draw roadgroups labels */
 	for(i=0;i<ROADGROUP_NUM;++i)
 	{
@@ -1130,16 +1145,6 @@ int MSGPXMap::DrawTile(int tx,int ty)
 			ps=m_roadgroups[i].GetEntry(j);
 			ps.map->DrawRoadGroupLabels(&ps);
 		}
-	}
-
-	/* draw all polygon labels in sorted order */
-	for(i=0;i<m_numsortpolys;++i)
-	{
-		POLYSORT_DEF ps;
-
-		ps=m_sortpolys.GetEntry(i);
-		if(ps.numlabels)
-			ps.map->DrawPolyLabel(&ps);
 	}
 
 	return(TILE_OK);
@@ -1485,7 +1490,7 @@ int MSGPXMap::GetPoint(kGUIBitStream *bs,int nbits,int sign)
 
 /**********************************************************************/
 
-int MSGPXMap::SortPolygons(const void *v1,const void *v2)
+int MSGPXMap::SortPolygonsType(const void *v1,const void *v2)
 {
 	POLYSORT_DEF *i1;
 	POLYSORT_DEF *i2;
@@ -1494,6 +1499,17 @@ int MSGPXMap::SortPolygons(const void *v1,const void *v2)
 	i2=(POLYSORT_DEF *)v2;
 
 	return(i1->polytype-i2->polytype);
+}
+
+int MSGPXMap::SortPolygonsLeft(const void *v1,const void *v2)
+{
+	POLYSORT_DEF *i1;
+	POLYSORT_DEF *i2;
+
+	i1=(POLYSORT_DEF *)v1;
+	i2=(POLYSORT_DEF *)v2;
+
+	return(i1->corners.lx-i2->corners.lx);
 }
 
 void MSGPXMap::AddSubPolys(MSSUBDIV *sub)
@@ -1566,13 +1582,13 @@ void MSGPXMap::DrawPoly(POLYSORT_DEF *ps)
 
 		/* then draw the color number in the center so we can then define a color for this type */
 
-		m_t.SetFontSize(12);
-		m_t.Sprintf("%d",ps->polytype);
-		lw=m_t.GetWidth();
-		lh=m_t.GetHeight();
+		m_t[0].SetFontSize(12);
+		m_t[0].Sprintf("%d",ps->polytype);
+		lw=m_t[0].GetWidth();
+		lh=m_t[0].GetHeight();
 		lx=(ps->corners.lx-m_tx)+(aw>>1)-(lw>>1);
 		ly=(ps->corners.ty-m_ty)+(ah>>1);
-		DrawLabel(&m_t,lx,ly,lw,lh,0.0f);
+		DrawLabel(&m_t[0],lx,ly,lw,lh,0.0f,false);
 	}
 }
 
@@ -1582,59 +1598,71 @@ void MSGPXMap::DrawPolyLabel(POLYSORT_DEF *ps)
 	double ah=ps->corners.by-ps->corners.ty; /* height of poly area */
 	double aw=ps->corners.rx-ps->corners.lx; /* width of poly area */
 	double lgh;	/* label group height */
-	double lx,ly,lw,lh;
+	double cx,y,lw,lh;
 	int fs;
+	int validlabels;
 
-	/* assume average of 80 pix */
-	fs=max(8,min(20,(int)(aw/(30.0f))));
-	m_t.SetFontSize(fs);
-	m_t.Clear();
-	lh=m_t.GetHeight();			/* height of 1 line of text */
-	lgh=lh*ps->numlabels;		/* height of all labels on this polygon */
-
-	if(ps->numpoints==1)
+	/* unpack labels */
+	validlabels=0;
+	for(l=0;l<ps->numlabels;++l)
 	{
-		lx=ps->points->x;
-		ly=ps->points->y;
-		for(l=0;l<ps->numlabels;++l)
-		{
-			ReadLabel(ps->curlabels[l],&m_t);
-			if(m_t.GetLen())
-			{
-				lw=m_t.GetWidth();
-				DrawLabel(&m_t,lx,ly,lw,lh,0.0f);
-				ly+=lh;
-			}
-		}
+		ReadLabel(ps->curlabels[l],&m_t[validlabels]);
+		if(m_t[validlabels].GetLen())
+			++validlabels;
 	}
-	else
+
+	if(!validlabels)
+		return;
+
+	fs=7;
+	/* expand font size until it doesn't fit anymore or 20 point */
+	do
 	{
-		if(lgh<ah)					/* is there room over the poly for these lines? */
+		for(l=0;l<validlabels;++l)
 		{
-			int aw=ps->corners.rx-ps->corners.lx;	/* with of poly area */
+			m_t[l].SetFontSize(fs);
+			if(m_t[l].GetWidth()>aw)
+				goto hit;
+		}
+		++fs;
+	}while(fs<14);
+hit:;
+	if(fs==7)
+		return;
 
-			ly=(ps->corners.ty-m_ty)+(ah/2.0f)-(lgh*2.0f);	/* y for first line */
+	for(l=0;l<validlabels;++l)
+		m_t[l].SetFontSize(fs);
 
-			/* draw polygon labels */
-			for(l=0;l<ps->numlabels;++l)
-			{
-				ReadLabel(ps->curlabels[l],&m_t);
+	lh=m_t[0].GetHeight();		/* height of 1 line of text */
+	lgh=lh*validlabels;		/* height of all labels on this polygon */
+
 #if 0
-				m_t.ASprintf("<%d>",ps->polytype);
+	kGUI::DrawLine(
+		ps->corners.lx-m_tx,
+		ps->corners.ty-m_ty,
+		ps->corners.rx-m_tx,
+		ps->corners.by-m_ty,
+		DrawColor(0,0,0));
+
+	kGUI::DrawLine(
+		ps->corners.rx-m_tx,
+		ps->corners.ty-m_ty,
+		ps->corners.lx-m_tx,
+		ps->corners.by-m_ty,
+		DrawColor(0,0,0));
 #endif
-				if(m_t.GetLen())
-				{
-					lw=m_t.GetWidth();
-					if(lw<aw)
-					{
-						lx=(ps->corners.lx-m_tx)+(aw/2.0f)-(lw/2.0f);
-						DrawLabel(&m_t,lx,ly,lw,lh,0.0f);
-						ly+=lh;
-					}
-				}
-			}
-		}
+
+	cx=((ps->corners.lx+ps->corners.rx)/2.0f)-m_tx;
+	y=((ps->corners.by+ps->corners.ty-lgh)/2.0f)-m_ty;
+
+	/* draw em */
+	for(l=0;l<validlabels;++l)
+	{
+		lw=m_t[l].GetWidth();
+		DrawLabel(&m_t[l],cx-(lw/2.0f),y,lw,lh,0.0f,false);
+		y+=lh;
 	}
+	
 }
 
 void MSGPXMap::DrawRoadGroupLabels(POLYSORT_DEF *ps)
@@ -1644,47 +1672,21 @@ void MSGPXMap::DrawRoadGroupLabels(POLYSORT_DEF *ps)
 
 	for(l=0;l<ps->numlabels;++l)
 	{
-		ReadLabel(ps->curlabels[l],&m_t);
+		ReadLabel(ps->curlabels[l],&m_t[l]);
 #if 0
 		//debug, append poly type
 		m_t.ASprintf("<%d>",m_polytype);
 #endif
-		if(m_t.GetLen())
+		if(m_t[l].GetLen())
 		{
 			roadthickness=ps->thickness;
 			fs=(int)(roadthickness*2.2f);
 			if(fs>4)
 			{
 				m_pixlen=ps->pixlen;
-				m_t.SetFontSize(fs);
-				DrawLineLabel(&m_t,ps->numpoints,ps->points,-roadthickness*0.9f,true);
+				m_t[l].SetFontSize(fs);
+				DrawLineLabel(&m_t[l],ps->numpoints,ps->points,-roadthickness*0.9f,true);
 			}
-#if 0
-//							m_t.ASprintf("<%d>",m_polytype);
-			if(m_labelicon>=0)
-				m_t.SetFontSize(11);
-			else
-			{
-				switch(GetZoom())
-				{
-				case 13:
-				case 14:
-					m_t.SetFontSize(8);
-				break;
-				case 15:
-					m_t.SetFontSize(9);
-				break;
-				case 16:
-					m_t.SetFontSize(10);
-				break;
-				default:
-					m_t.SetFontSize(11);
-				break;
-				}
-			}
-			m_pixlen=ps->pixlen;
-			DrawLineLabel(&m_t,ps->numpoints,ps->points,(int)(ps->thickness+2.0f),true);
-#endif
 		}
 	}
 }
@@ -1770,34 +1772,34 @@ void MSGPXMap::DrawSub(MSSUBDIV *sub)
 				{
 					for(l=0;l<m_numlabels;++l)
 					{
-						ReadLabel(m_curlabels[l],&m_t);
+						ReadLabel(m_curlabels[l],&m_t[l]);
 #if 0
 						m_t.ASprintf("<%d>",m_polytype);
 #endif
-						if(m_t.GetLen())
+						if(m_t[l].GetLen())
 						{
 							if(m_labelicon>=0)
-								m_t.SetFontSize(11);
+								m_t[l].SetFontSize(11);
 							else
 							{
 								switch(GetZoom())
 								{
 								case 13:
 								case 14:
-									m_t.SetFontSize(8);
+									m_t[l].SetFontSize(8);
 								break;
 								case 15:
-									m_t.SetFontSize(9);
+									m_t[l].SetFontSize(9);
 								break;
 								case 16:
-									m_t.SetFontSize(10);
+									m_t[l].SetFontSize(10);
 								break;
 								default:
-									m_t.SetFontSize(11);
+									m_t[l].SetFontSize(11);
 								break;
 								}
 							}
-							DrawLineLabel(&m_t,m_numpoints,m_ppoints,5,true);
+							DrawLineLabel(&m_t[l],m_numpoints,m_ppoints,5,true);
 						}
 					}
 				}
@@ -2138,13 +2140,13 @@ void MSGPXMap::DrawLineLabel(kGUIText *t,int nvert,kGUIDPoint2 *point,double ove
 		cx+=(cos(heading-(PI*2*0.25f))*over);
 		cy-=(sin(heading-(PI*2*0.25f))*over);
 	}
-	DrawLabel(t,cx,cy,lw,lh,heading);
+	DrawLabel(t,cx,cy,lw,lh,heading,true);
 }
 
 /* draw label but first check too make sure it doesn't */
 /* overlap and previously drawn labels */
 
-void MSGPXMap::DrawLabel(kGUIText *t,double lx,double ly,double lw,double lh,double heading)
+void MSGPXMap::DrawLabel(kGUIText *t,double lx,double ly,double lw,double lh,double heading,bool clipedge)
 {
 	int hx,hy,i;
 	bool dodraw;
@@ -2178,8 +2180,16 @@ void MSGPXMap::DrawLabel(kGUIText *t,double lx,double ly,double lw,double lh,dou
 		m_tbounds.rx=256;
 		m_tbounds.by=256;
 
-		if(kGUI::Inside(&m_bounds,&m_tbounds)==false)
-			return;
+		if(clipedge)
+		{
+			if(kGUI::Inside(&m_bounds,&m_tbounds)==false)
+				return;
+		}
+		else
+		{
+			if(kGUI::Overlap(&m_bounds,&m_tbounds)==false)
+				return;
+		}
 	}
 	else
 		icon=0;
@@ -2222,9 +2232,18 @@ void MSGPXMap::DrawLabel(kGUIText *t,double lx,double ly,double lw,double lh,dou
 		m_bounds.by=max(max(m_corners[0].y,m_corners[1].y),
 						max(m_corners[2].y,m_corners[3].y));
 	}
+
 	/* is this label totally inside the window? */
-	if(kGUI::Inside(&m_bounds,&m_lcbounds)==false)
-		return;
+	if(clipedge)
+	{
+		if(kGUI::Inside(&m_bounds,&m_lcbounds)==false)
+			return;
+	}
+	else
+	{
+		if(kGUI::Overlap(&m_bounds,&m_lcbounds)==false)
+			return;
+	}
 
 	kGUI::PushClip();
 	savesurface=kGUI::GetCurrentSurface();
@@ -2353,7 +2372,7 @@ const char *MSGPXMap::ReadPoly(MSSUBDIV *sub,const char *rstart,int type)
 						assert(loffset<m_labelsize,"bad offset!");
 						if(loffset<m_labelsize)
 						{
-							assert(m_numlabels<4,"Too many Labels!");
+							assert(m_numlabels<MAXLABELS,"Too many Labels!");
 							m_curlabels[m_numlabels++]=m_labelstart+loffset;
 						}
 					}
@@ -2373,7 +2392,7 @@ const char *MSGPXMap::ReadPoly(MSSUBDIV *sub,const char *rstart,int type)
 			offset<<=m_labelshift;
 			if(offset<m_labelsize)
 			{
-				assert(m_numlabels<4,"Too many Labels!");
+				assert(m_numlabels<MAXLABELS,"Too many Labels!");
 				m_curlabels[m_numlabels++]=m_labelstart+offset;
 			}
 		}
@@ -2564,7 +2583,7 @@ const char *MSGPXMap::ReadPoint(MSSUBDIV *sub,const char *rstart)
 		assert(loffset<m_labelsize,"bad offset!");
 		if(loffset<m_labelsize)
 		{
-			assert(m_numlabels<4,"Too many Labels!");
+			assert(m_numlabels<MAXLABELS,"Too many Labels!");
 			m_curlabels[m_numlabels++]=m_labelstart+loffset;
 		}
 	}

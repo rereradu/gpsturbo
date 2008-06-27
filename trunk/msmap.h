@@ -155,11 +155,14 @@ enum
 {
 ROADGROUP_LINE,
 ROADGROUP_CREEK,
+ROADGROUP_NARROWSTREET,
 ROADGROUP_STREET,
 ROADGROUP_RAMPS,
 ROADGROUP_COLLECTOR,
 ROADGROUP_HIGHWAY,
 ROADGROUP_NUM};
+
+#define MAXLABELS 4
 
 /* Garmin mapsource map */
 class MSGPXMap : public GPXMap
@@ -205,9 +208,9 @@ private:
 	int GetPoint(kGUIBitStream *bs,int nbits,int sign);
 	void DrawTrainTracks(int nvert,kGUIDPoint2 *point);
 	
-	kGUIText m_t;	/* temp used in drawing */
+	kGUIText m_t[MAXLABELS];	/* temp used in drawing */
 	void ReadLabel(const char *enc,kGUIString *s);
-	static void DrawLabel(kGUIText *t,double lx,double ly,double lw,double lh,double heading);
+	static void DrawLabel(kGUIText *t,double lx,double ly,double lw,double lh,double heading,bool clipedge);
 	void DrawLineLabel(kGUIText *s,int nvert,kGUIDPoint2 *point,double over,bool root);
 //	void DrawPolyLabel(kGUIText *s,int nvert,kGUIPoint2 *point);
 
@@ -248,7 +251,8 @@ private:
 //	static PolyGroup m_roadgroups[ROADGROUP_NUM];
 
 	static Heap m_sortpolysheap;
-	static int SortPolygons(const void *v1,const void *v2);
+	static int SortPolygonsType(const void *v1,const void *v2);
+	static int SortPolygonsLeft(const void *v1,const void *v2);
 
 	static int m_numiconsdrawn;
 	static Array<ICON_POS> m_iconpos;

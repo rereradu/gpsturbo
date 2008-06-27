@@ -44,6 +44,7 @@ public:
 	void CopyColors(void);
 	void DrawMap(kGUICorners *c);
 	bool InAnyRoute(GPXRow *row);
+	double UpdateInfo(void);
 private:
 	/* route controls */
 	void ClickSave(kGUIEvent *event);
@@ -68,7 +69,6 @@ private:
 	void Load(void);
 	int GetIndex(const char *name);
 	void UpdateRouteList(void);
-	double UpdateInfo(void);
 
 	unsigned int m_numroutes;
 	Array<class GPXRoute *>m_routes;

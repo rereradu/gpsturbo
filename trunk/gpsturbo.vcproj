@@ -145,6 +145,9 @@ setupapi.lib"
 				RelativePath=".\basicclasses.cpp">
 			</File>
 			<File
+				RelativePath=".\download.cpp">
+			</File>
+			<File
 				RelativePath=".\drawsettings.cpp">
 			</File>
 			<File
@@ -208,6 +211,9 @@ setupapi.lib"
 			</File>
 			<File
 				RelativePath=".\babelglue.h">
+			</File>
+			<File
+				RelativePath=".\download.h">
 			</File>
 			<File
 				RelativePath=".\filters.h">

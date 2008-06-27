@@ -313,6 +313,68 @@ private:
 	kGUIButtonObj m_cancel;
 };
 
+
+class EditButtonWindowObj
+{
+	friend class EditButtonRowObj;
+public:
+	EditButtonWindowObj(unsigned int numsubs, ClassArray<kGUIString>*sublist);
+private:
+	CALLBACKGLUEPTR(EditButtonWindowObj,WindowEvent,kGUIEvent)
+	CALLBACKGLUEPTR(EditButtonWindowObj,TableEvent,kGUIEvent)
+	CALLBACKGLUEPTR(EditButtonWindowObj,PressUp,kGUIEvent)
+	CALLBACKGLUEPTR(EditButtonWindowObj,PressDown,kGUIEvent)
+	CALLBACKGLUEPTR(EditButtonWindowObj,PressCancel,kGUIEvent)
+	CALLBACKGLUEPTR(EditButtonWindowObj,PressSave,kGUIEvent)
+	void WindowEvent(kGUIEvent *event);
+	void TableEvent(kGUIEvent *event);
+	void PressUp(kGUIEvent *event);
+	void PressDown(kGUIEvent *event);
+	void PressCancel(kGUIEvent *event);
+	void PressSave(kGUIEvent *event);
+
+	unsigned int m_numsubs;
+	ClassArray<kGUIString>m_sublist;
+
+	kGUIWindowObj m_window;
+	kGUIButtonObj m_up;
+	kGUIButtonObj m_down;
+	kGUIButtonObj m_cancel;
+	kGUIButtonObj m_save;
+	kGUITableObj m_table;	
+};
+
+enum
+{
+EBRCOL_FUNCNAME,
+EBRCOL_BUTTONTEXT,
+EBROL_USEIMAGE,
+EBRCOL_IMAGE,
+EBRCOL_BROWSE,
+EBRCOL_NUMCOLS
+};
+
+class EditButtonRowObj : public kGUITableRowObj
+{
+public:
+	EditButtonRowObj(class EditButtonWindowObj *w,MacroButton *bb);
+	inline int GetNumObjects(void) {return EBRCOL_NUMCOLS;}
+	kGUIObj **GetObjectList(void) {return m_objptrs;}
+
+	kGUIString *GetFuncName(void) {return m_funclist.GetSelectionStringObj();}	
+	kGUIString *GetButtonText(void) {return &m_buttontext;}	
+	bool GetUseImage(void) {return m_useimage.GetSelected();}
+	kGUIImage *GetImage(void) {return &m_image;}
+private:
+	kGUIObj *m_objptrs[EBRCOL_NUMCOLS];
+
+	kGUIComboBoxObj m_funclist;
+	kGUIInputBoxObj m_buttontext;
+	kGUITickBoxObj m_useimage;
+	kGUIImageObj m_image;
+	kGUIButtonObj m_browse;
+};
+
 GPX *gpx;
 
 void GPXRow::Init(void)
@@ -1392,7 +1454,7 @@ unsigned int GPX::GetTableColorIndex(const char *c)
 	return(0);
 }
 
-const char *tabnames[TAB_NUMTABS]={
+const char *tabnames[]={
 	"Filtered/Map",
 	"Routes",
 	"Tracks",
@@ -1400,6 +1462,7 @@ const char *tabnames[TAB_NUMTABS]={
 	"Filters",
 	"Draw Settings",
 	"GPSRs",
+	"Download",
 	"Solver",
 	"Stickers",
 	"Notes",
@@ -1746,7 +1809,8 @@ void GPX::PreInit(void)
 	/* now go full screen */
 	kGUI::HideWindow();
 	kGUI::GetBackground()->SetPos(0,0);
-	kGUI::GetBackground()->SetSize(kGUI::GetFullScreenWidth(),kGUI::GetFullScreenHeight());
+	/* leave a few pixels at the bottom so they can access their taskbar */
+	kGUI::GetBackground()->SetSize(kGUI::GetFullScreenWidth(),kGUI::GetFullScreenHeight()-25);
 	kGUI::GetBackground()->SetTitle("GPS Turbo");
 	ss->SetPos((kGUI::GetFullScreenWidth()-ss->GetZoneW())/2,(kGUI::GetFullScreenHeight()-ss->GetZoneH())/2);
 	ss->SetDoing("Initializing GUI.");
@@ -1766,6 +1830,7 @@ void GPX::PreInit(void)
 
 	ss->SetDoing("Parsing Database/Prefs.");
 	LoadPrefs(&xml,xmlstatus);
+	UpdateMacroButtons();
 
 	kGUI::DelWindow(ss);
 	delete ss;
@@ -1869,8 +1934,10 @@ void GPX::Init(void)
 	kGUIString s;
 	kGUIText *t;
 
+	m_nummacrobuttons=0;
+	m_macrobuttons.Init(16,16);
+
 	m_realtime=new BabelGlue();
-//	m_googleupdatetried=false;
 	m_clipfoundlogs=-1;
 	m_clipnotfoundlogs=6;
 
@@ -1907,6 +1974,7 @@ void GPX::Init(void)
 	m_helpmenulabel.SetString("Help");
 	m_helpmenulabel.SetEventHandler(this,CALLBACKNAME(ShowHelpMenu));
 	m_maincontrols.AddObject(&m_helpmenulabel);
+	m_maincontrols.NextLine();
 
 	m_filemenu.SetFontSize(14);
 	m_filemenu.Init(sizeof(filemenu)/sizeof(int));
@@ -1931,12 +1999,19 @@ void GPX::Init(void)
 
 	kGUI::GetBackground()->AddObject(&m_maincontrols);
 
+	//macro buttons will be added here!
+	m_macrocontrols.SetPos(m_maincontrols.GetZoneX(),m_maincontrols.GetZoneBY());
+	m_macrocontrols.SetMaxWidth(kGUI::GetBackground()->GetChildZoneW()-m_macrocontrols.GetZoneX());
+	m_macrocontrols.SetZoneH(24);
+	kGUI::GetBackground()->AddObject(&m_macrocontrols);
+
 	y=m_logo.GetImageHeight()-m_tabs.GetTabRowHeight();
 	/* font size on tabs? */
 	m_tabs.SetPos(0,y);
 	m_tabs.SetStartTabX(m_logo.GetImageWidth()+10);
 	m_tabs.SetSize(bw,bh-y-5);
 	m_tabs.SetNumTabs(TAB_NUMTABS);
+	assert((sizeof(tabnames)/sizeof(char *))==TAB_NUMTABS,"Not enough strings in the tabname array!");
 	for(i=0;i<TAB_NUMTABS;++i)
 	{
 		t=m_tabs.GetTabTextPtr(i);
@@ -2178,6 +2253,9 @@ void GPX::Init(void)
 	m_tabs.SetCurrentTab(TAB_NOTES);
 	m_notes.Init(&m_tabs);
 
+	m_tabs.SetCurrentTab(TAB_DOWNLOAD);
+	m_download.Init(&m_tabs);
+
 	/***************************************************************/
 	m_tabs.SetCurrentTab(TAB_BASIC);
 	m_basicstart.SetPos(5,5);
@@ -2194,8 +2272,8 @@ void GPX::Init(void)
 	m_tabs.AddObject(&m_basiccancel);
 
 	m_basicaddbutton.SetPos(225,5);
-	m_basicaddbutton.SetSize(100,20);
-	m_basicaddbutton.SetString("Add Button");
+	m_basicaddbutton.SetSize(150,20);
+	m_basicaddbutton.SetString("Add/Edit Macro Buttons");
 	m_basicaddbutton.SetEventHandler(this,CALLBACKNAME(BasicAddButton));
 	m_basicaddbutton.SetEnabled(true);
 	m_tabs.AddObject(&m_basicaddbutton);
@@ -2214,8 +2292,8 @@ void GPX::Init(void)
 	m_basicsource.SetAllowTab(true);
 	m_basicsource.SetLeaveSelection(true);
 
-	/* calc the width of 8 spaces ( using current font etc ) for the tab size */
-	m_basicsource.SetString("        ");
+	/* calc the width of 4 spaces ( using current font etc ) for the tab size */
+	m_basicsource.SetString("    ");
 	m_basicsource.SetFixedTabs(true);
 	m_basicsource.SetTab(0,m_basicsource.GetWidth());
 	m_basicsource.Clear();
@@ -2314,7 +2392,7 @@ void GPX::StartBasic(kGUIEvent *event)
 	{
 		if(m_basic.Compile(&m_basicsource,&m_basicoutput)==true)
 		{
-			int i,numsubs;
+			unsigned int i,numsubs;
 			ClassArray<kGUIString>sublist;
 			kGUIMsgBoxReq *msg;
 
@@ -2359,12 +2437,12 @@ void GPX::BasicCancel(kGUIEvent *event)
 		m_basic.Cancel();
 }
 
-BasicButtonEdit::BasicButtonEdit()
+MacroButtonEdit::MacroButtonEdit()
 {
 	Init();
 }
 
-void BasicButtonEdit::Init(void)
+void MacroButtonEdit::Init(void)
 {
 	unsigned int i;
 	unsigned int numsubs;
@@ -2434,7 +2512,7 @@ void BasicButtonEdit::Init(void)
 	m_window.Shrink();
 }
 
-void BasicButtonEdit::WindowEvent(kGUIEvent *event)
+void MacroButtonEdit::WindowEvent(kGUIEvent *event)
 {
 	switch(event->GetEvent())
 	{
@@ -2450,7 +2528,7 @@ void GPX::BasicAddButton(kGUIEvent *event)
 	{
 		if(m_basic.Compile(&m_basicsource,&m_basicoutput)==true)
 		{
-			int numsubs;
+			unsigned int numsubs;
 			ClassArray<kGUIString>sublist;
 			kGUIMsgBoxReq *msg;
 
@@ -2460,9 +2538,15 @@ void GPX::BasicAddButton(kGUIEvent *event)
 				msg=new kGUIMsgBoxReq(MSGBOX_OK,false,"No public subroutines defined!");
 			else
 			{
-				BasicButtonEdit *bbe;
+#if 1
+				EditButtonWindowObj *ebw;
+
+				ebw=new EditButtonWindowObj(numsubs,&sublist);
+#else
+				MacroButtonEdit *bbe;
 				/* add a new button */
-				bbe=new BasicButtonEdit();
+				bbe=new MacroButtonEdit();
+#endif
 			}
 		}
 	}
@@ -4177,6 +4261,7 @@ GPX::~GPX()
 
 	m_labelcolourtable.DeleteChildren();
 	m_mapdirstable.DeleteChildren();
+	m_macrocontrols.DeleteChildren();
 
 	m_routes.Purge();
 	m_tracks.Purge();
@@ -4185,6 +4270,7 @@ GPX::~GPX()
 	m_filters.Purge();
 	m_gpsr.Purge();
 	m_stickers.Purge();
+	m_download.Purge();
 
 	for(x=0;x<m_numwpts;++x)
 		delete m_wptlist.GetEntry(x);
@@ -5262,6 +5348,7 @@ void GPX::ReCalcDists(void)
 	UpdateZoomButtons();
 	CalcDists();
 	ReCalcNear();
+	gpx->m_routes.UpdateInfo();
 }
 
 /* callback when user clicks on a column header in the list */
@@ -6134,6 +6221,7 @@ void GPX::LoadPrefs(kGUIXML *xml,bool xmlstatus)
 {
 	unsigned int i;
 	kGUIXMLItem *root;
+	kGUIXMLItem *group;
 	kGUIXMLItem *item;
 	kGUIDate endtime;
 
@@ -6226,6 +6314,9 @@ void GPX::LoadPrefs(kGUIXML *xml,bool xmlstatus)
 			/* get notes */
 			m_notes.LoadPrefs(root);
 
+			/* get downloads */
+			m_download.LoadPrefs(root);
+
 			endtime.SetToday();
 			m_debug.ASprintf("LoadPrefs 7(notes) seconds=%d\n",m_starttime.GetDiffSeconds(&endtime));
 
@@ -6273,8 +6364,15 @@ void GPX::LoadPrefs(kGUIXML *xml,bool xmlstatus)
 			Get(root,"realtimegps",&m_realtimegps);
 			Get(root,"basic",&m_basicsource);
 
+			m_nummacrobuttons=0;
+			group=root->Locate("macrobuttons");
+			if(group)
+			{
+				for(i=0;i<group->GetNumChildren();++i)
+					m_macrobuttons.GetEntryPtr(m_nummacrobuttons++)->Load(group->GetChild(i));
+			}
+
 			Get(root,"showchildwpts",&m_showchildren);
-//			m_showchildren.SetSelected(!strcmp(root->Locate("showchildwpts")->GetValueString(),"0")?false:true);
 
 			Get(root,"split",&m_split);
 			Get(root,"splitfontsize",&m_splitfontsize);
@@ -6391,6 +6489,17 @@ void GPX::SavePrefs(void)
 	root->AddChild("clipfoundlogs",m_clipfoundlogs);
 	root->AddChild("clipnotfoundlogs",m_clipnotfoundlogs);
 	root->AddChild("basic",m_basicsource.GetString());
+
+	/* save basic macro buttons */
+	if(m_nummacrobuttons)
+	{
+		kGUIXMLItem *group;
+
+		group=root->AddChild("macrobuttons");
+		for(i=0;i<m_nummacrobuttons;++i)
+			m_macrobuttons.GetEntryPtr(i)->Save(group->AddChild("macrobutton"));
+	}
+
 	root->AddChild("labelfontsize",m_labelfontsize.GetInt());
 	root->AddChild("labelalpha",m_labelalpha.GetSelection());
 	root->AddChild("tablefontsize",m_tablefontsize.GetInt());
@@ -6442,6 +6551,7 @@ void GPX::SavePrefs(void)
 	m_lines.SavePrefs(root);
 	m_tracks.SavePrefs(root);
 	m_notes.SavePrefs(root);
+	m_download.SavePrefs(root);
 
 	/* save default sort for filtered results table */
 	{
@@ -6490,6 +6600,72 @@ void GPX::SavePrefs(void)
 	}
 }
 
+void GPX::UpdateMacroButtons(void)
+{
+	unsigned int i;
+	MacroButton *bb;
+	kGUIButtonObj *b;
+	kGUITextObj *t;
+
+	m_macrocontrols.DeleteChildren();
+	m_macrocontrols.Reset();
+	m_macrocontrols.SetRedo(true);
+	m_macrocontrols.SetObjectGap(10);
+
+	if(m_nummacrobuttons)
+	{
+		t=new kGUITextObj();
+		t->SetString("Macros:");
+		t->SetSize(t->GetWidth()+8,t->GetHeight()+8);
+		m_macrocontrols.AddObject(t);
+	}
+
+	for(i=0;i<m_nummacrobuttons;++i)
+	{
+		bb=m_macrobuttons.GetEntryPtr(i);
+		b=new kGUIButtonObj();
+		b->SetString(bb->GetButtonText());
+		b->SetSize(b->GetWidth()+8,b->GetHeight()+8);
+		b->SetShowCurrent(false);	/* don't draw 'current' object frame on this button */
+		bb->SetButton(b);
+		m_macrocontrols.AddObject(b);
+		b->SetEventHandler(this,CALLBACKNAME(MacroButtonEvent));
+	}
+	m_macrocontrols.SetRedo(false);
+}
+
+/* run the macro */
+void GPX::MacroButtonEvent(kGUIEvent *event)
+{
+	if(event->GetEvent()==EVENT_PRESSED)
+	{
+		unsigned int i;
+		MacroButton *bb;
+
+		/* what button am i */
+		for(i=0;i<m_nummacrobuttons;++i)
+		{
+			bb=m_macrobuttons.GetEntryPtr(i);
+			if(bb->GetButton()==event->GetObj())
+			{
+				/* this is false if basic is already running */
+				if(m_basicstart.GetEnabled()==true)
+				{
+					if(m_basic.Compile(&m_basicsource,&m_basicoutput)==true)
+					{
+						m_basicoutput.Clear();
+						m_basicsource.SetLocked(true);
+						m_basicstart.SetEnabled(false);
+						m_basiccancel.SetEnabled(true);
+						m_basic.Start(bb->GetFuncName()->GetString(),true);
+					}
+				}
+
+				return;
+			}
+		}
+	}
+}
 
 kGUIRenameDBReq::kGUIRenameDBReq()
 {
@@ -6777,5 +6953,243 @@ void GPX::Browse(int mode,kGUIString *s)
 			h=new HtmlWindow(BROWSE_DATA,s);
 		}
 	break;
+	}
+}
+
+static unsigned char b64[]={"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"};
+
+void MacroButton::Load(kGUIXMLItem *xml)
+{
+	gpx->Get(xml,"funcname",&m_funcname);
+	gpx->Get(xml,"buttontext",&m_buttontext);
+	gpx->Get(xml,"useimage",&m_useimage);
+
+	/* todo: load a base64 encoded image */
+//	gpx->Get(xml,"image",&m_image);
+}
+
+void MacroButton::Save(kGUIXMLItem *xml)
+{
+	kGUIBitStream bs;
+	unsigned long fs;
+	kGUIString base64image;
+	unsigned int i,bits,c;
+	unsigned char *imgdata;
+
+	xml->AddChild("funcname",&m_funcname);
+	xml->AddChild("buttontext",&m_buttontext);
+	xml->AddChild("useimage",m_useimage==true?1:0);
+
+	fs=m_image.GetLoadableSize();
+	if(fs)
+	{
+		imgdata=new unsigned char[fs];
+		m_image.Open();
+		m_image.Read(imgdata,fs);
+		m_image.Close();
+
+		/* generate base64 string for the image */
+		bs.SetReverseOut();
+		bs.SetReverseIn();
+		bs.Set(imgdata);
+		bits=(unsigned int)fs*8;
+		for(i=0;i<bits;i+=6)
+		{
+			c=bs.ReadU(6);
+			base64image.Append(b64[c]);
+		}
+	}
+
+	xml->AddChild("image",&base64image);
+}
+
+
+
+EditButtonRowObj::EditButtonRowObj(EditButtonWindowObj *w,MacroButton *bb)
+{
+	unsigned int i;
+
+	m_funclist.SetNumEntries(w->m_numsubs);
+	for(i=0;i<w->m_numsubs;++i)
+		m_funclist.SetEntry(i,w->m_sublist.GetEntryPtr(i),i);
+
+	m_browse.SetFontSize(25);	/* make bigger */
+	m_browse.SetFontID(1);	/* BOLD */
+	m_browse.SetString("...");
+	m_objptrs[EBRCOL_FUNCNAME]=&m_funclist;
+	m_objptrs[EBRCOL_BUTTONTEXT]=&m_buttontext;
+	m_objptrs[EBROL_USEIMAGE]=&m_useimage;
+	m_objptrs[EBRCOL_IMAGE]=&m_image;
+	m_objptrs[EBRCOL_BROWSE]=&m_browse;
+
+	if(bb)
+	{
+		m_funclist.SetSelectionz(bb->GetFuncName()->GetString());
+		m_buttontext.SetString(bb->GetButtonText());
+		m_useimage.SetSelected(bb->GetUseImage());
+		m_image.Copy(bb->GetImage());
+	}
+	SetRowHeight(24);
+}
+
+#if 0
+void EditButtonRowObj::ChangeShow(kGUIEvent *event)
+{
+	if(event->GetEvent()==EVENT_AFTERUPDATE)
+		m_t->SetColShow(m_xcol,m_tick.GetSelected());
+}
+
+void EditButtonRowObj::ChangeWidth(kGUIEvent *event)
+{
+	if(event->GetEvent()==EVENT_AFTERUPDATE)
+		m_t->SetColWidth(m_xcol,m_width.GetInt());
+}
+#endif
+
+EditButtonWindowObj::EditButtonWindowObj(unsigned int numsubs,ClassArray<kGUIString>*sublist)
+{
+	unsigned int i;
+
+	m_numsubs=numsubs;
+	m_sublist.Init(numsubs,0);
+	for(i=0;i<numsubs;++i)
+		m_sublist.GetEntryPtr(i)->SetString(sublist->GetEntryPtr(i));
+
+	m_up.SetString("Up");
+	m_up.SetPos(10,10);
+	m_up.SetSize(60,20);
+	m_up.SetEventHandler(this,CALLBACKNAME(PressUp));
+	m_window.AddObject(&m_up);
+
+	m_down.SetString("Down");
+	m_down.SetPos(80,10);
+	m_down.SetSize(60,20);
+	m_down.SetEventHandler(this,CALLBACKNAME(PressDown));
+	m_window.AddObject(&m_down);
+
+	m_cancel.SetString("Cancel");
+	m_cancel.SetPos(150,10);
+	m_cancel.SetSize(60,20);
+	m_cancel.SetEventHandler(this,CALLBACKNAME(PressCancel));
+	m_window.AddObject(&m_cancel);
+
+	m_save.SetString("Save");
+	m_save.SetPos(220,10);
+	m_save.SetSize(60,20);
+	m_save.SetEventHandler(this,CALLBACKNAME(PressSave));
+	m_window.AddObject(&m_save);
+
+	m_table.SetPos(10,40);
+	m_table.SetNumCols(EBRCOL_NUMCOLS);
+	m_table.SetColTitle(EBRCOL_FUNCNAME,"Function");
+	m_table.SetColTitle(EBRCOL_BUTTONTEXT,"Button Text");
+	m_table.SetColTitle(EBROL_USEIMAGE,"Use Image");
+	m_table.SetColTitle(EBRCOL_IMAGE,"Image");
+	m_table.SetColTitle(EBRCOL_BROWSE,"Browse");
+
+	m_table.SetColWidth(EBRCOL_FUNCNAME,200);
+	m_table.SetColWidth(EBRCOL_BUTTONTEXT,100);
+	m_table.SetColWidth(EBROL_USEIMAGE,60);
+	m_table.SetColWidth(EBRCOL_IMAGE,100);
+	m_table.SetColWidth(EBRCOL_BROWSE,45);
+	m_table.SetSize(m_table.CalcTableWidth(),400);
+	m_window.AddObject(&m_table);
+	m_table.SetEventHandler(this,CALLBACKNAME(TableEvent));
+	m_table.SetAllowAddNewRow(true);
+
+	for(i=0;i<gpx->m_nummacrobuttons;++i)
+	{
+		EditButtonRowObj *tcr;
+
+		tcr=new EditButtonRowObj(this,gpx->m_macrobuttons.GetEntryPtr(i));
+		m_table.AddRow(tcr);
+	}
+
+	m_window.SetSize(450,480);
+	m_window.ExpandToFit();
+	m_window.Center();
+	m_window.SetTop(true);
+	m_window.SetEventHandler(this,CALLBACKNAME(WindowEvent));
+	kGUI::AddWindow(&m_window);
+}
+
+void EditButtonWindowObj::WindowEvent(kGUIEvent *event)
+{
+	if(event->GetEvent()==EVENT_CLOSE)
+	{
+		m_table.DeleteChildren();
+		delete this;
+	}
+}
+
+void EditButtonWindowObj::TableEvent(kGUIEvent *event)
+{
+	if(event->GetEvent()==EVENT_ADDROW)
+	{
+		EditButtonRowObj *er=new EditButtonRowObj(this,0);
+		m_table.AddRow(er);
+	}
+}
+
+
+void EditButtonWindowObj::PressUp(kGUIEvent *event)
+{
+	unsigned int line;
+
+	if(event->GetEvent()==EVENT_PRESSED)
+	{
+		line=m_table.GetCursorRow();
+		if(line>0 && line<m_table.GetNumberRows())
+		{
+			m_table.SwapRow(-1);
+			m_table.MoveRow(-1);
+		}
+	}
+}
+
+void EditButtonWindowObj::PressDown(kGUIEvent *event)
+{
+	unsigned int line;
+
+	if(event->GetEvent()==EVENT_PRESSED)
+	{
+		line=m_table.GetCursorRow();
+		if(line<(m_table.GetNumberRows()-1))
+		{
+			m_table.SwapRow(1);
+			m_table.MoveRow(1);
+		}
+	}
+}
+
+void EditButtonWindowObj::PressCancel(kGUIEvent *event)
+{
+	if(event->GetEvent()==EVENT_PRESSED)
+		m_window.Close();
+}
+
+void EditButtonWindowObj::PressSave(kGUIEvent *event)
+{
+	if(event->GetEvent()==EVENT_PRESSED)
+	{
+		unsigned int i,nr;
+		EditButtonRowObj *tr;
+		MacroButton *bb;
+
+		nr=m_table.GetNumChildren();
+		gpx->m_nummacrobuttons=nr;
+		for(i=0;i<nr;++i)
+		{
+			tr=static_cast<EditButtonRowObj *>(m_table.GetChild(i));
+			bb=gpx->m_macrobuttons.GetEntryPtr(i);
+
+			bb->SetFuncName(tr->GetFuncName());
+			bb->SetButtonText(tr->GetButtonText());
+			bb->SetUseImage(tr->GetUseImage());
+			bb->SetImage(tr->GetImage());
+		}
+		gpx->UpdateMacroButtons();
+
+		m_window.Close();
 	}
 }
