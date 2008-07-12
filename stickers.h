@@ -32,6 +32,7 @@ public:
 	StickersPage();
 	~StickersPage();
 	void Init(kGUIContainerObj *obj);
+	void Resize(int changey);
 	void Purge(void);
 	void LoadPrefs(kGUIXMLItem *root);
 	void SavePrefs(kGUIXMLItem *root);

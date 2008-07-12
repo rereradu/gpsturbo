@@ -71,6 +71,11 @@ void NotesPage::Init(kGUIContainerObj *obj)
 	obj->AddObject(&m_table);
 }
 
+void NotesPage::Resize(int changey)
+{
+	m_table.SetZoneH(m_table.GetZoneH()+changey);
+}
+
 void NotesPage::Purge(void)
 {
 	m_table.DeleteChildren();

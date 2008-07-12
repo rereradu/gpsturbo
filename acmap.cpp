@@ -23,7 +23,9 @@
 /*********************************************************************************/
 
 #include "gpsturbo.h"
+#include "acmap.h"
 
+#if 0
 #define TILEW 3200
 #define TILEH 1600
 
@@ -200,3 +202,4 @@ int ACGPXMap::DrawTile(int tx,int ty)
 	}
 	return(TILE_OK);
 }
+#endif

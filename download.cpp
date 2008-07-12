@@ -133,7 +133,7 @@ void DownloadPage::Init(kGUIContainerObj *obj)
 	m_table.SetColWidth(COL_PATH,350);
 	m_table.SetColTitle(COL_BROWSE,"Browse");
 	m_table.SetColWidth(COL_BROWSE,50);
-	m_table.SetSize(min(bw,m_table.CalcTableWidth()),bh);
+	m_table.SetSize(min(bw,m_table.CalcTableWidth()),200);
 	obj->AddObject(&m_table);
 }
 
@@ -317,6 +317,12 @@ void DownloadWindow::Update(void)
 	}
 }
 
+static const char *canbasefiles[]={
+	{"NTDBDATA.mdx"},
+	{"NTDBData.img"},
+	{"NTDBDATA_MDR.img"},
+	{"NTDBData.TDB"}};
+
 void DownloadWindow::DownloadThread(void)
 {
 	kGUIDownloadEntry dl;
@@ -368,6 +374,61 @@ void DownloadWindow::DownloadThread(void)
 			s=new kGUIString();
 			s->Sprintf("number of img files=%d\n",numlines);
 			m_comm.Write(&s);
+
+			/* these are the base files */
+			for(i=0;i<sizeof(canbasefiles)/sizeof(char *);++i)
+			{
+				filename.SetString(canbasefiles[i]);
+				kGUI::MakeFilename(&m_path,&filename,&fullfilename);
+				if(kGUI::FileExists(fullfilename.GetString())==false)
+				{
+					s=new kGUIString();
+					s->Sprintf("Loading filename='%s'\n",filename.GetString());
+					/* if buffer is full then delay and try again */
+					m_comm.Write(&s);
+
+					dh.SetMemory();
+					url.Sprintf("http://www.ibycus.com/ibycustopo/download/%s",filename.GetString());
+					status=dl.DownLoad(&dh,&url);
+
+					s=new kGUIString();
+					s->Sprintf("download status=%s\n",status==DOWNLOAD_OK?"OK":"Error!");
+					m_comm.Write(&s);
+
+					dlsize=dh.GetLoadableSize();
+					if(status==DOWNLOAD_OK && dlsize>0)
+					{
+						/* ok, save file to drive */
+						werror=false;
+
+						wdh.SetFilename(fullfilename.GetString());
+						if(wdh.OpenWrite("wb",dlsize)==true)
+						{
+							dh.Open();
+							for(i=0;i<dlsize;++i)
+							{
+								dh.Read(&c,(unsigned long)1L);
+								wdh.Write(&c,1L);
+							}
+							dh.Close();
+							if(wdh.Close()==false)
+								werror=true;
+						}
+						else
+							werror=true;
+
+						if(!werror)
+							++numdownloaded;
+						else
+						{
+							s=new kGUIString();
+							s->Sprintf("Error opening file '%s' for write!\n",fullfilename.GetString());
+							m_comm.Write(&s);
+							m_abort=true;
+						}
+					}
+				}
+			}
 
 			fullfilename.SetString("imgs");
 			kGUI::MakeFilename(&m_path,&fullfilename,&mapdir);
@@ -503,7 +564,7 @@ DownloadWindow::~DownloadWindow()
 {
 	kGUIString *s;
 
-	/* wait for tsp to finish */
+	/* wait for finished */
 	m_abort=true;
 	while(m_thread.GetActive());
 
@@ -517,6 +578,10 @@ DownloadWindow::~DownloadWindow()
 	}
 
 	kGUI::DelWindow(&m_window);
+
+	//if this is the current map and new IMG files are downloaded then this will force them
+	//to be re-loaded
+	gpx->ChangeMapType();
 }
 
 

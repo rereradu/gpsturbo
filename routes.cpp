@@ -277,6 +277,11 @@ void RoutesPage::Init(kGUIContainerObj *obj)
 	obj->AddObject(&m_routewptable);
 }
 
+void RoutesPage::Resize(int changey)
+{
+	m_routewptable.SetZoneH(m_routewptable.GetZoneH()+changey);
+}
+
 void RoutesPage::TableEvent(kGUIEvent *event)
 {
 	switch(event->GetEvent())

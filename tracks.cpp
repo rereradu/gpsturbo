@@ -196,6 +196,35 @@ void TracksPage::LoadPrefs(kGUIXMLItem *root,Hash *hash)
 	UpdateTracksList();
 }
 
+/* if the hash table is passed, then only load tracks whose names are in it */
+void TracksPage::LoadTrack(const char *name,kGUIXMLItem *item)
+{
+	bool add=true;
+	kGUIString trackname;
+	int version;
+	GPXTrack *s;
+
+	/* if track name already exists, then generate a unique name */
+	version=0;
+	do
+	{
+		if(!version)
+			trackname.SetString(name);
+		else
+			trackname.Sprintf("%s.%d",name,version);
+		++version;
+
+		/* loop until we get a name that isn't already used */
+		if(GetIndex(trackname.GetString())<0)
+			break;
+	}while(1);
+
+	s=new GPXTrack(trackname.GetString());
+	m_tracks.SetEntry(m_numtracks++,s);
+	s->Load(item);
+	UpdateTracksList();
+}
+
 /* if the hash table is passed, then only save tracks whose names are in it */
 int TracksPage::SavePrefs(kGUIXMLItem *root,Hash *hash,GPXBounds *bounds)
 {
@@ -237,6 +266,7 @@ void TracksPage::Init(kGUIContainerObj *obj)
 
 	bw=obj->GetChildZoneW();
 
+	m_editcontrols.SetPos(0,0);
 	m_editcontrols.SetSize(bw,20);
 
 	m_edittracklist.SetSize(300,20);
@@ -359,7 +389,7 @@ void TracksPage::Init(kGUIContainerObj *obj)
 	bh=(obj->GetChildZoneH()-y);
 
 	m_table.SetPos(0,y);
-	m_table.SetSize(bw,bh-y);
+	m_table.SetSize(bw,bh);
 
 	m_table.SetNumCols(TRACKCOL_NUMCOLUMNS);
 	for(i=0;i<TRACKCOL_NUMCOLUMNS;++i)
@@ -377,6 +407,11 @@ void TracksPage::Init(kGUIContainerObj *obj)
 
 	obj->AddObject(&m_editcontrols);
 	obj->AddObject(&m_table);
+}
+
+void TracksPage::Resize(int changey)
+{
+	m_table.SetZoneH(m_table.GetZoneH()+changey);
 }
 
 void TracksPage::TableEvent(kGUIEvent *event)
@@ -1216,22 +1251,25 @@ LOADTRACK_NUMCOLUMNS
 class SelectTracksRow : public kGUITableRowObj
 {
 public:
-	SelectTracksRow(const char *name,int numpts,const char *starttime);
+	SelectTracksRow(kGUIXMLItem *xi,const char *name,int numpts,const char *starttime);
 	~SelectTracksRow() {}
 	int GetNumObjects(void) {return LOADTRACK_NUMCOLUMNS;}
 	kGUIObj **GetObjectList(void) {return m_objectlist;} 
 	kGUIObj *m_objectlist[LOADTRACK_NUMCOLUMNS];
 	bool GetSelected(void) {return m_selected.GetSelected();}
 	const char *GetName(void) {return m_name.GetString();}
+	kGUIXMLItem *GetXI(void) {return m_xi;}
 private:
-	kGUITickBoxObj m_selected;
+	kGUIXMLItem		*m_xi;
+	kGUITickBoxObj  m_selected;
 	kGUIInputBoxObj m_name;
 	kGUIInputBoxObj m_numpoints;
 	kGUIInputBoxObj m_starttime;
 };
 
-SelectTracksRow::SelectTracksRow(const char *name,int numpts,const char *starttime)
+SelectTracksRow::SelectTracksRow(kGUIXMLItem *xi,const char *name,int numpts,const char *starttime)
 {
+	m_xi=xi;
 	m_objectlist[LOADTRACK_SELECTED]=&m_selected;
 	m_objectlist[LOADTRACK_NAME]=&m_name;
 	m_objectlist[LOADTRACK_NUMPOINTS]=&m_numpoints;
@@ -1269,7 +1307,7 @@ SelectTracks::SelectTracks(Hash *hash,void *codeobj,void (*code)(void *,int),kGU
 
 	m_donecallback.Set(codeobj,code);
 	m_pressed=MSGBOX_CANCEL;
-	hash->Init(12,0);
+	hash->Init(12,sizeof(kGUIXMLItem *));
 	m_hash=hash;
 	
 	m_window.SetTitle("Select Tracks");
@@ -1313,7 +1351,7 @@ SelectTracks::SelectTracks(Hash *hash,void *codeobj,void (*code)(void *,int),kGU
 		for(i=0;i<tp->GetNumTracks();++i)
 		{
 			track=tp->GetIndex(i);
-			tsr=new SelectTracksRow(track->GetName(),track->GetNumPoints(),track->Getm_starttime());
+			tsr=new SelectTracksRow(0,track->GetName(),track->GetNumPoints(),track->Getm_starttime());
 			m_list.AddRow(tsr);
 		}
 	}
@@ -1321,6 +1359,8 @@ SelectTracks::SelectTracks(Hash *hash,void *codeobj,void (*code)(void *,int),kGU
 	{
 		kGUIXMLItem *xroot;
 		kGUIXMLItem *xi;
+		int trackcount=0;
+		kGUIString trackname;
 
 		xroot=xml->GetRootItem()->Locate("gpx");
 		if(xroot)
@@ -1330,11 +1370,22 @@ SelectTracks::SelectTracks(Hash *hash,void *codeobj,void (*code)(void *,int),kGU
 				xi=xroot->GetChild(i);
 				if(!strcmp(xi->GetName(),"trk"))
 				{
-					if(xi->Locate("name"))		/* ignore tracks with no name */
+					if(xi->Locate("name"))
 					{
 						GPXTrack *s=new GPXTrack(xi->Locate("name")->GetValueString());
 						s->Load(xi);
-						tsr=new SelectTracksRow(s->GetName(),s->GetNumPoints(),s->Getm_starttime());
+						tsr=new SelectTracksRow(xi,s->GetName(),s->GetNumPoints(),s->Getm_starttime());
+						m_list.AddRow(tsr);
+						delete s;
+					}
+					else
+					{
+						GPXTrack *s;
+						
+						trackname.Sprintf("Track #%d",++trackcount);
+						s=new GPXTrack(trackname.GetString());
+						s->Load(xi);
+						tsr=new SelectTracksRow(xi,s->GetName(),s->GetNumPoints(),s->Getm_starttime());
 						m_list.AddRow(tsr);
 						delete s;
 					}
@@ -1367,13 +1418,18 @@ void SelectTracks::PressDone(kGUIEvent *event)
 	{
 		unsigned int i;
 		SelectTracksRow *rsr;
+		kGUIXMLItem *xi;
 
 		/* add names of selected tracks to hash table */
 		for(i=0;i<m_list.GetNumChildren();++i)
 		{
 			rsr=static_cast<SelectTracksRow *>(m_list.GetChild(i));
 			if(rsr->GetSelected()==true)
-				m_hash->Add(rsr->GetName(),0);
+			{
+				/* since some tracks are unnamed, we also pass pointer to xml item for them */
+				xi=rsr->GetXI();
+				m_hash->Add(rsr->GetName(),&xi);
+			}
 		}
 
 		m_pressed=MSGBOX_OK;

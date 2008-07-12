@@ -42,7 +42,7 @@
 /* map classes */
 #include "map.h"
 #include "gmap.h"
-#include "acmap.h"
+//#include "acmap.h"
 #include "ozmap.h"
 #include "msmap.h"
 #include "tsmap.h"
@@ -366,8 +366,6 @@ public:
 	kGUIString m_filename;
 };
 
-/* todo: any images for 'labels' are hex encoded in config file */
-
 /* user definable macro buttons */
 class MacroButton
 {
@@ -634,6 +632,9 @@ public:
 	kGUIHTMLItemCache m_browseritemcache;
 	kGUIHTMLVisitedCache m_browservisitedcache;
 	Hash m_xmlnamecache;
+
+	//this is public since if a new map data is downloaded then this is called to flush
+	void ChangeMapType(void);
 private:
 	kGUIString m_newname;	/* used for saving filters, routes etc */
 	void MoveDividerEvent(kGUIEvent *event);
@@ -674,7 +675,6 @@ private:
 	void BuildPage(DataHandle *dh,GPXRow *page,bool head,bool tail);
 	void DoRCLabel(GPXLabel *label);
 	void Online(kGUIEvent *event);
-	void ChangeMapType(void);
 	void ChangeMapTypeEvent(kGUIEvent *event) {if(event->GetEvent()==EVENT_AFTERUPDATE)ChangeMapType();}
 	void LabelFontSizeChanged(void);
 	void TableFontSizeChanged(void);

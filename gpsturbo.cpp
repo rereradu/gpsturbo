@@ -366,6 +366,11 @@ public:
 	bool GetUseImage(void) {return m_useimage.GetSelected();}
 	kGUIImage *GetImage(void) {return &m_image;}
 private:
+	CALLBACKGLUEPTRVAL(EditButtonRowObj,GotFilename,kGUIFileReq,int);
+	void GotFilename(kGUIFileReq *fr,int pressed);
+	CALLBACKGLUEPTR(EditButtonRowObj,Browse,kGUIEvent);
+	void Browse(kGUIEvent *event);
+
 	kGUIObj *m_objptrs[EBRCOL_NUMCOLS];
 
 	kGUIComboBoxObj m_funclist;
@@ -625,10 +630,12 @@ void GPXRow::Load(kGUIString *ld,kGUIXMLItem *wp)
 	kGUIXMLItem *children;
 	kGUIXMLItem *child;
 
-	if(!strcmp(wp->Locate("sym")->GetValueString(),"Geocache Found"))
-		SetFound(true);
-	else
-		SetFound(false);
+	SetFound(false);
+	if(wp->Locate("sym"))
+	{
+		if(!strcmp(wp->Locate("sym")->GetValueString(),"Geocache Found"))
+			SetFound(true);
+	}
 
 	if(ld)
         SetGenDate(ld);
@@ -1787,8 +1794,10 @@ void GPX::PreInit(void)
 		m_mapinfo.SetEntry(2,mi);
 		mi=new GPXMAPInfo(MAPTYPE_GOOGLETERRAIN,"Google Terrain","");
 		m_mapinfo.SetEntry(3,mi);
+#if 0
 		mi=new GPXMAPInfo(MAPTYPE_TOPOCANADAMAP,"Topographic Canada","");
 		m_mapinfo.SetEntry(4,mi);
+#endif
 #if 0
 		mi=new GPXMAPInfo(MAPTYPE_TERRASERVSAT,"Terraserver USA Sattllite","");
 		m_mapinfo.SetEntry(5,mi);
@@ -1796,7 +1805,7 @@ void GPX::PreInit(void)
 		m_mapinfo.SetEntry(6,mi);
 		m_nummaps=7;
 #else
-		m_nummaps=5;
+		m_nummaps=4;
 #endif
 		/* scan 2 directories */
 		ss->SetDoing("Detecting IMG Files.");
@@ -1810,7 +1819,7 @@ void GPX::PreInit(void)
 	kGUI::HideWindow();
 	kGUI::GetBackground()->SetPos(0,0);
 	/* leave a few pixels at the bottom so they can access their taskbar */
-	kGUI::GetBackground()->SetSize(kGUI::GetFullScreenWidth(),kGUI::GetFullScreenHeight()-25);
+	kGUI::GetBackground()->SetSize(kGUI::GetFullScreenWidth(),kGUI::GetFullScreenHeight()-35);
 	kGUI::GetBackground()->SetTitle("GPS Turbo");
 	ss->SetPos((kGUI::GetFullScreenWidth()-ss->GetZoneW())/2,(kGUI::GetFullScreenHeight()-ss->GetZoneH())/2);
 	ss->SetDoing("Initializing GUI.");
@@ -1850,7 +1859,7 @@ void GPX::AddMaps(const char *path)
 	int e;
 	GPXMAPInfo *mi;
 	kGUIDir dir;
-	//unsigned int p;
+	kGUIString iname;
 	kGUIString mname;
 
 	MSGPXFName::Load(path);
@@ -1858,7 +1867,7 @@ void GPX::AddMaps(const char *path)
 	dir.LoadDir(path,false,true);
 	for(e=0;e<dir.GetNumFiles();++e)
 	{
-		if(strstr(dir.GetFilename(e),".map"))
+		if(strstri(dir.GetFilename(e),".map"))
 		{
 			mname.SetString(dir.GetFilename(e));
 			mname.Replace(".map","");
@@ -1871,21 +1880,28 @@ void GPX::AddMaps(const char *path)
 				m_mapinfo.SetEntry(m_nummaps++,mi);
 			}
 		}
-		else if(strstr(dir.GetFilename(e),".img"))
+	}
+
+	/* look for tdb and img with same name */
+	for(e=0;e<dir.GetNumFiles();++e)
+	{
+		if(strstri(dir.GetFilename(e),".tdb"))
 		{
-			if(!strstr(dir.GetFilename(e),"_mdr.img"))
+			iname.SetString(dir.GetFilename(e));
+			iname.Replace(".tdb",".img",0,1);
+			if(kGUI::FileExists(iname.GetString()))
 			{
-				MSGPXMap::GetLongName(dir.GetFilename(e),&mname);
+				MSGPXMap::GetLongName(iname.GetString(),&mname);
 				if(!mname.GetLen())
 				{
-					mname.SetString(dir.GetFilename(e));
+					mname.SetString(iname.GetString());
 					mname.Replace(".img","");
 					mname.Replace(path,"");
 				}
 				/* check if already is in list */
 				if(FindMapz(mname.GetString())<0)
 				{
-					mi=new GPXMAPInfo(MAPTYPE_MS,mname.GetString(),dir.GetFilename(e));
+					mi=new GPXMAPInfo(MAPTYPE_MS,mname.GetString(),iname.GetString());
 					m_mapinfo.SetEntry(m_nummaps++,mi);
 				}
 			}
@@ -2000,6 +2016,7 @@ void GPX::Init(void)
 	kGUI::GetBackground()->AddObject(&m_maincontrols);
 
 	//macro buttons will be added here!
+	m_macrocontrols.SetDrawBG(false);
 	m_macrocontrols.SetPos(m_maincontrols.GetZoneX(),m_maincontrols.GetZoneBY());
 	m_macrocontrols.SetMaxWidth(kGUI::GetBackground()->GetChildZoneW()-m_macrocontrols.GetZoneX());
 	m_macrocontrols.SetZoneH(24);
@@ -2239,7 +2256,7 @@ void GPX::Init(void)
 
 	/* solver page */
 	m_tabs.SetCurrentTab(TAB_SOLVER);
-	InitSolvers();
+	InitSolvers();		/* todo: needs to be made into a solverspage */
 
 	/* stickers page */
 	m_tabs.SetCurrentTab(TAB_STICKERS);
@@ -2307,7 +2324,7 @@ void GPX::Init(void)
 	m_tabs.AddObject(&m_basicdivider);
 
 	m_basicoutput.SetPos(0,30+(bh>>1)+10);
-	m_basicoutput.SetSize(bw,bh-(30+(bh>>1)+10));
+	m_basicoutput.SetSize(bw,(bh>>1));
 	m_tabs.AddObject(&m_basicoutput);
 
 	m_basic.SetAddAppObjectsCallback(this,CALLBACKNAME(AddCClasses));
@@ -2586,9 +2603,9 @@ void GPX::ChangeMapType(void)
 	case MAPTYPE_GOOGLETERRAIN:
 		m_curmap=new GGPXMap(MAPTYPE_GOOGLETERRAIN);
 	break;
-	case MAPTYPE_TOPOCANADAMAP:
-		m_curmap=new ACGPXMap();
-	break;
+//	case MAPTYPE_TOPOCANADAMAP:
+//		m_curmap=new ACGPXMap();
+//	break;
 	case MAPTYPE_OZF2:
 		m_curmap=new OZF2GPXMap(mi->m_filename.GetString());
 	break;
@@ -3853,13 +3870,24 @@ void GPX::SelectLoadTracks(void)
 
 void GPX::LoadTracks(int pressed)
 {
-	kGUIXMLItem *xroot;
-
 	if(pressed==MSGBOX_OK)
 	{
+		kGUIXMLItem *xroot;
+		HashEntry *he;
+		unsigned int i,num;
+
 		xroot=m_tempxml->GetRootItem()->Locate("gpx");
 		if(xroot)
-			m_tracks.LoadPrefs(xroot,&m_temphash);
+		{
+			/* iterate through the hash table and load all the selected tracks */
+			num=m_temphash.GetNum();
+			he=m_temphash.GetFirst();
+			for(i=0;i<num;++i)
+			{
+				m_tracks.LoadTrack(he->m_string,*((kGUIXMLItem **)(he->m_data)));
+				he=he->GetNext();
+			}
+		}
 	}
 	delete m_tempxml;
 	m_tempxml=0;
@@ -5143,10 +5171,10 @@ void GPX::MoveDivider(int delta)
 	int newy;
 
 	newy=currenty+delta;
-	if(newy<100)
-		newy=100;
-	else if(newy>(kGUI::GetFullScreenHeight()-100))
-		newy=kGUI::GetFullScreenHeight()-100;
+	if(newy<150)
+		newy=150;
+	else if(newy>(m_tabs.GetZoneH()-50))
+		newy=m_tabs.GetZoneH()-50;
 
 	if(newy!=currenty)
 	{
@@ -6603,9 +6631,11 @@ void GPX::SavePrefs(void)
 void GPX::UpdateMacroButtons(void)
 {
 	unsigned int i;
+	int oldy,newy,changey;
 	MacroButton *bb;
 	kGUIButtonObj *b;
 	kGUITextObj *t;
+	int bh=kGUI::GetBackground()->GetChildZoneH();
 
 	m_macrocontrols.DeleteChildren();
 	m_macrocontrols.Reset();
@@ -6624,14 +6654,51 @@ void GPX::UpdateMacroButtons(void)
 	{
 		bb=m_macrobuttons.GetEntryPtr(i);
 		b=new kGUIButtonObj();
-		b->SetString(bb->GetButtonText());
-		b->SetSize(b->GetWidth()+8,b->GetHeight()+8);
+		if(bb->GetUseImage() && bb->GetImage()->IsValid())
+		{
+			kGUIImage *i;
+
+			i=bb->GetImage();
+			b->SetImage(i);
+			b->SetSize(min(i->GetImageWidth(),64),min(i->GetImageHeight(),32));
+		}
+		else
+		{
+			b->SetString(bb->GetButtonText());
+			b->SetSize(b->GetWidth()+8,b->GetHeight()+8);
+		}
+		b->SetHint(bb->GetButtonText());
 		b->SetShowCurrent(false);	/* don't draw 'current' object frame on this button */
 		bb->SetButton(b);
 		m_macrocontrols.AddObject(b);
 		b->SetEventHandler(this,CALLBACKNAME(MacroButtonEvent));
 	}
 	m_macrocontrols.SetRedo(false);
+
+	/* move down tabs if need be */
+	oldy=m_tabs.GetZoneY();
+	newy=max(m_logo.GetImageHeight()-m_tabs.GetTabRowHeight(),m_macrocontrols.GetZoneBY());
+	if(oldy!=newy)
+	{
+		changey=oldy-newy;
+
+		m_tabs.SetZoneY(newy);
+		m_tabs.SetZoneH(m_tabs.GetZoneH()+changey);
+		m_grid.SetZoneH(m_grid.GetZoneH()+changey);
+		m_debug.SetZoneH(m_debug.GetZoneH()+changey);
+
+		m_routes.Resize(changey);
+		m_lines.Resize(changey);
+		m_filters.Resize(changey);
+		/* draw settings */
+//		m_gpsr.Resize(changey);
+		/* solver */
+		m_stickers.Resize(changey);
+		m_tracks.Resize(changey);
+		m_notes.Resize(changey);
+//		m_download.Resize(changey);
+		m_basicoutput.SetZoneH(m_basicoutput.GetZoneH()+changey);
+	}
 }
 
 /* run the macro */
@@ -6964,46 +7031,65 @@ void MacroButton::Load(kGUIXMLItem *xml)
 	gpx->Get(xml,"buttontext",&m_buttontext);
 	gpx->Get(xml,"useimage",&m_useimage);
 
-	/* todo: load a base64 encoded image */
-//	gpx->Get(xml,"image",&m_image);
+	if(xml->Locate("base64image"))
+	{
+		unsigned int j;
+		unsigned int binarylen;
+		kGUIString *b;
+		Array<unsigned char>base64image;
+		Array<unsigned char>binaryimage;
+
+		/* convert from base64 encoded to binary */
+		b=xml->Locate("base64image")->GetValue();
+		
+		base64image.Init(b->GetLen(),1);
+		for(j=0;j<b->GetLen();++j)
+			base64image.SetEntry(j,b->GetChar(j));
+
+		binarylen=kGUI::Base64Decode(b->GetLen(),&base64image,&binaryimage);
+
+		m_image.SetMemory();
+		m_image.OpenWrite("wb",binarylen);
+		m_image.Write(binaryimage.GetArrayPtr(),(unsigned long)binarylen);
+		m_image.Close();
+	}
 }
 
 void MacroButton::Save(kGUIXMLItem *xml)
 {
-	kGUIBitStream bs;
-	unsigned long fs;
-	kGUIString base64image;
-	unsigned int i,bits,c;
-	unsigned char *imgdata;
-
 	xml->AddChild("funcname",&m_funcname);
 	xml->AddChild("buttontext",&m_buttontext);
 	xml->AddChild("useimage",m_useimage==true?1:0);
 
-	fs=m_image.GetLoadableSize();
-	if(fs)
+	/* is this a valid image */
+	if(m_image.IsValid() && m_image.GetLoadableSize())
 	{
-		imgdata=new unsigned char[fs];
+		unsigned int j;
+		unsigned int binarylen;
+		unsigned int base64len;
+		unsigned char c;
+		kGUIString bs;
+		Array<unsigned char>binaryimage;
+		Array<unsigned char>base64image;
+		
+		binarylen=m_image.GetLoadableSize();
+
+		/* fill the binary array */
 		m_image.Open();
-		m_image.Read(imgdata,fs);
-		m_image.Close();
-
-		/* generate base64 string for the image */
-		bs.SetReverseOut();
-		bs.SetReverseIn();
-		bs.Set(imgdata);
-		bits=(unsigned int)fs*8;
-		for(i=0;i<bits;i+=6)
+		binaryimage.Init(binarylen,1);
+		for(j=0;j<binarylen;++j)
 		{
-			c=bs.ReadU(6);
-			base64image.Append(b64[c]);
+			m_image.Read(&c,(unsigned long)1L);
+			binaryimage.SetEntry(j,c);
 		}
+		m_image.Close();
+		
+		base64len=kGUI::Base64Encode(binarylen,&binaryimage,&base64image);
+		bs.SetString((const char *)base64image.GetArrayPtr(),base64len);
+
+		xml->AddParm("base64image",&bs);
 	}
-
-	xml->AddChild("image",&base64image);
 }
-
-
 
 EditButtonRowObj::EditButtonRowObj(EditButtonWindowObj *w,MacroButton *bb)
 {
@@ -7029,7 +7115,27 @@ EditButtonRowObj::EditButtonRowObj(EditButtonWindowObj *w,MacroButton *bb)
 		m_useimage.SetSelected(bb->GetUseImage());
 		m_image.Copy(bb->GetImage());
 	}
+	m_browse.SetEventHandler(this,CALLBACKNAME(Browse));
 	SetRowHeight(24);
+}
+
+void EditButtonRowObj::Browse(kGUIEvent *event)
+{
+	if(event->GetEvent()==EVENT_PRESSED)
+	{
+		kGUIFileReq *fr;
+
+		fr=new kGUIFileReq(FILEREQ_OPEN,"",".jpg;.gif;.bmp;.png",this,CALLBACKNAME(GotFilename));
+	}
+}
+
+void EditButtonRowObj::GotFilename(kGUIFileReq *fr,int pressed)
+{
+	if(pressed==MSGBOX_OK)
+	{
+		m_image.SetFilename(fr->GetFilename());
+		m_useimage.SetSelected(m_image.IsValid());
+	}
 }
 
 #if 0

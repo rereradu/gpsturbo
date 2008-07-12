@@ -38,6 +38,7 @@ public:
 	kGUIString m_type;
 	kGUIString m_color;
 	kGUIString m_text;	/* text or picture filename */
+	kGUIImage m_image;
 	int m_x;
 	int m_y;
 	int m_w;
@@ -222,7 +223,6 @@ void StickersPage::Init(kGUIContainerObj *obj)
 	obj->AddObject(&m_editstickercontrols);
 	
 	y=m_editstickercontrols.GetZoneH();
-	bh=(obj->GetChildZoneH()-y);
 
 	/* preview image for sticker */
 	m_previewstickersurface.Init(350,100);
@@ -232,8 +232,9 @@ void StickersPage::Init(kGUIContainerObj *obj)
 	m_previewsticker.SetMemImage(0,m_previewstickersurface.GetFormat(),m_previewstickersurface.GetWidth(),m_previewstickersurface.GetHeight(),m_previewstickersurface.GetBPP(),(unsigned char *)m_previewstickersurface.GetSurfacePtrABS(0,0));
 	y+=110;
 
+	bh=(obj->GetChildZoneH()-y);
 	m_stickertable.SetPos(0,y);
-	m_stickertable.SetSize(bw,bh-y);
+	m_stickertable.SetSize(bw,bh);
 
 	m_stickertable.SetNumCols(STICKERCOL_NUMCOLUMNS);
 	for(i=0;i<STICKERCOL_NUMCOLUMNS;++i)
@@ -252,6 +253,11 @@ void StickersPage::Init(kGUIContainerObj *obj)
 	obj->AddObject(&m_previewsticker);
 	obj->AddObject(&m_stickertable);
 	PreviewSticker();
+}
+
+void StickersPage::Resize(int changey)
+{
+	m_stickertable.SetZoneH(m_stickertable.GetZoneH()+changey);
 }
 
 void StickersPage::TableEvent(kGUIEvent *event)
@@ -327,6 +333,8 @@ void GPXStickerRow::GotFilename(kGUIFileReq *fr,int pressed)
 	if(pressed==MSGBOX_OK)
 	{
 		m_text.SetString(fr->GetFilename());
+
+		m_image.SetFilename(fr->GetFilename());
 		//trigger table callback to redraw
 		m_text.CallAfterUpdate();
 	}
@@ -343,6 +351,35 @@ void GPXStickerEntry::Load(class kGUIXMLItem *wpr)
 	m_w=wpr->Locate("w")->GetValueInt();
 	m_h=wpr->Locate("h")->GetValueInt();
 	m_size=wpr->Locate("size")->GetValueDouble();
+
+	/* load the base64 encoded image */
+	if(!strcmp(m_type.GetString(),stprimnames[STICKERPRIM_IMAGE]))
+	{
+		if(wpr->Locate("base64image"))
+		{
+			unsigned int j;
+			unsigned int binarylen;
+			kGUIString *b;
+			Array<unsigned char>base64image;
+			Array<unsigned char>binaryimage;
+
+			/* convert from base64 encoded to binary */
+			b=wpr->Locate("base64image")->GetValue();
+			
+			base64image.Init(b->GetLen(),1);
+			for(j=0;j<b->GetLen();++j)
+				base64image.SetEntry(j,b->GetChar(j));
+
+			binarylen=kGUI::Base64Decode(b->GetLen(),&base64image,&binaryimage);
+
+			m_image.SetMemory();
+			m_image.OpenWrite("wb",binarylen);
+			m_image.Write(binaryimage.GetArrayPtr(),(unsigned long)binarylen);
+			m_image.Close();
+		}
+		else
+			m_image.SetFilename(m_text.GetString());
+	}
 }
 
 /* save to prefs file */
@@ -356,6 +393,39 @@ void GPXStickerEntry::Save(class kGUIXMLItem *wpr)
 	wpr->AddParm("w",m_w);
 	wpr->AddParm("h",m_h);
 	wpr->AddParm("size",m_size);
+
+	/* if this is an image then save the base64 encoded version */
+	if(!strcmp(m_type.GetString(),stprimnames[STICKERPRIM_IMAGE]))
+	{
+		/* is this a valid image */
+		if(m_image.IsValid() && m_image.GetLoadableSize())
+		{
+			unsigned int j;
+			unsigned int binarylen;
+			unsigned int base64len;
+			unsigned char c;
+			kGUIString bs;
+			Array<unsigned char>binaryimage;
+			Array<unsigned char>base64image;
+			
+			binarylen=m_image.GetLoadableSize();
+
+			/* fill the binary array */
+			m_image.Open();
+			binaryimage.Init(binarylen,1);
+			for(j=0;j<binarylen;++j)
+			{
+				m_image.Read(&c,(unsigned long)1L);
+				binaryimage.SetEntry(j,c);
+			}
+			m_image.Close();
+			
+			base64len=kGUI::Base64Encode(binarylen,&binaryimage,&base64image);
+			bs.SetString((const char *)base64image.GetArrayPtr(),base64len);
+
+			wpr->AddParm("base64image",&bs);
+		}
+	}
 }
 
 void StickersPage::EditStickersChanged(void)
@@ -424,7 +494,7 @@ void StickersPage::PreviewSticker(void)
 			t.Draw(row->m_x.GetInt(),row->m_y.GetInt(),row->m_w.GetInt(),row->m_h.GetInt(),GPX::GetTableColor(row->m_color.GetSelection()));
 		break;
 		case STICKERPRIM_IMAGE:
-			row->m_image.SetFilename(row->m_text.GetString());
+//			row->m_image.SetFilename(row->m_text.GetString());
 			row->m_image.SetScale(row->m_size.GetDouble(),row->m_size.GetDouble());
 			row->m_image.Draw(0,row->m_x.GetInt(),row->m_y.GetInt());
 		break;
@@ -660,6 +730,8 @@ void GPXSticker::Load(kGUITableObj *table)
 		row->m_w.SetInt(re->m_w);
 		row->m_h.SetInt(re->m_h);
 		row->m_size.SetDouble("%.2f",re->m_size);
+		if(re->m_image.IsValid())
+			row->m_image.Copy(&re->m_image);
 		table->AddRow(row);
 	}
 }
