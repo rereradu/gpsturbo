@@ -33,6 +33,7 @@ public:
 	void InitControls(kGUIControlBoxObj *obj);
 	kGUITableObj *InitTable(kGUIContainerObj *obj,int y,int h);
 	void Init(kGUIContainerObj *obj);
+	void Resize(int changey);
 	void InitDefaultFilters(void);					/* called if no prefs file exists */
 	void Purge(void);
 	void LoadPrefs(kGUIXMLItem *root);

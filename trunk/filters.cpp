@@ -434,6 +434,11 @@ void FiltersPage::Init(kGUIContainerObj *obj)
 	obj->AddObject(&m_table);
 }
 
+void FiltersPage::Resize(int changey)
+{
+	m_table.SetZoneH(m_table.GetZoneH()+changey);
+}
+
 void FiltersPage::TableEvent(kGUIEvent *event)
 {
 	switch(event->GetEvent())

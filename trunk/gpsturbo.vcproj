@@ -32,9 +32,10 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="setupapi.lib"
+				AdditionalOptions=" setupapi.lib"
 				OutputFile="$(OutDir)/gpsturbo.exe"
 				LinkIncremental="2"
+				IgnoreAllDefaultLibraries="FALSE"
 				IgnoreDefaultLibraryNames="LIBCD.lib;LIBC.lib"
 				AddModuleNamesToAssembly=""
 				GenerateDebugInformation="TRUE"

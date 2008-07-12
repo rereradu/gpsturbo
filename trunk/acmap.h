@@ -1,3 +1,4 @@
+#if 1
 /*********************************************************************************/
 /* GPSTurbo                                                                      */
 /*                                                                               */
@@ -47,4 +48,5 @@ private:
 	kGUIImage m_image;	
 	kGUIString m_copyright;
 };
+#endif
 #endif

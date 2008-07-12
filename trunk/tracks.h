@@ -31,8 +31,10 @@ public:
 	TracksPage();
 	~TracksPage();
 	void Init(kGUIContainerObj *obj);
+	void Resize(int changey);
 	void Purge(void);
 	void LoadPrefs(kGUIXMLItem *root,Hash *hash=0);
+	void LoadTrack(const char *name,kGUIXMLItem *item);
 	int SavePrefs(kGUIXMLItem *root,Hash *hash=0,GPXBounds *bounds=0);
 	unsigned int GetNumTracks(void) {return m_numtracks;}
 	const char *GetTrackName(int index);

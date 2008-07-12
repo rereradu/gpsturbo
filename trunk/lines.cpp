@@ -239,7 +239,7 @@ void LinesPage::Init(kGUIContainerObj *obj)
 	bh=(obj->GetChildZoneH()-y);
 
 	m_linetable.SetPos(0,y);
-	m_linetable.SetSize(bw,bh-y);
+	m_linetable.SetSize(bw,bh);
 
 	m_linetable.SetNumCols(LINECOL_NUMCOLUMNS);
 	for(i=0;i<LINECOL_NUMCOLUMNS;++i)
@@ -262,6 +262,11 @@ void LinesPage::Init(kGUIContainerObj *obj)
 
 	obj->AddObject(&m_editlinecontrols);
 	obj->AddObject(&m_linetable);
+}
+
+void LinesPage::Resize(int changey)
+{
+	m_linetable.SetZoneH(m_linetable.GetZoneH()+changey);
 }
 
 void LinesPage::TableEvent(kGUIEvent *event)
