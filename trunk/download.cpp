@@ -33,8 +33,8 @@ DOWNLOAD_NUM
 };
 
 static const char *dlnames[]={
-	{"Ibycus's TOPO Canada Maps"},
-	{"Ibycus's TOPO USA Maps"}};
+	"Ibycus's TOPO Canada Maps",
+	"Ibycus's TOPO USA Maps"};
 
 enum
 {
@@ -318,10 +318,10 @@ void DownloadWindow::Update(void)
 }
 
 static const char *canbasefiles[]={
-	{"NTDBDATA.mdx"},
-	{"NTDBData.img"},
-	{"NTDBDATA_MDR.img"},
-	{"NTDBData.TDB"}};
+	"NTDBDATA.mdx",
+	"NTDBData.img",
+	"NTDBDATA_MDR.img",
+	"NTDBData.TDB"};
 
 void DownloadWindow::DownloadThread(void)
 {
@@ -332,9 +332,10 @@ void DownloadWindow::DownloadThread(void)
 	int status;
 	kGUICSV csv;
 	kGUIString *s;
-	int i,dlsize;
+	unsigned int i;
+	int j,dlsize;
 	int dlerror=0;
-	int numlines,numcols;
+	unsigned int numlines,numcols;
 	kGUIString filename;
 	kGUIString mapdir;
 	kGUIString fullfilename;
@@ -405,7 +406,7 @@ void DownloadWindow::DownloadThread(void)
 						if(wdh.OpenWrite("wb",dlsize)==true)
 						{
 							dh.Open();
-							for(i=0;i<dlsize;++i)
+							for(j=0;j<dlsize;++j)
 							{
 								dh.Read(&c,(unsigned long)1L);
 								wdh.Write(&c,1L);
@@ -483,7 +484,7 @@ void DownloadWindow::DownloadThread(void)
 							if(wdh.OpenWrite("wb",dlsize)==true)
 							{
 								dh.Open();
-								for(i=0;i<dlsize;++i)
+								for(j=0;j<dlsize;++j)
 								{
 									dh.Read(&c,(unsigned long)1L);
 									wdh.Write(&c,1L);

@@ -1595,7 +1595,7 @@ void MSGPXMap::DrawPoly(POLYSORT_DEF *ps)
 void MSGPXMap::DrawPolyLabel(POLYSORT_DEF *ps)
 {
 	int l;
-	double ah=ps->corners.by-ps->corners.ty; /* height of poly area */
+	//double ah=ps->corners.by-ps->corners.ty; /* height of poly area */
 	double aw=ps->corners.rx-ps->corners.lx; /* width of poly area */
 	double lgh;	/* label group height */
 	double cx,y,lw,lh;

@@ -199,7 +199,6 @@ void TracksPage::LoadPrefs(kGUIXMLItem *root,Hash *hash)
 /* if the hash table is passed, then only load tracks whose names are in it */
 void TracksPage::LoadTrack(const char *name,kGUIXMLItem *item)
 {
-	bool add=true;
 	kGUIString trackname;
 	int version;
 	GPXTrack *s;
