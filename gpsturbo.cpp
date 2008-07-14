@@ -6635,7 +6635,6 @@ void GPX::UpdateMacroButtons(void)
 	MacroButton *bb;
 	kGUIButtonObj *b;
 	kGUITextObj *t;
-	int bh=kGUI::GetBackground()->GetChildZoneH();
 
 	m_macrocontrols.DeleteChildren();
 	m_macrocontrols.Reset();
@@ -7022,8 +7021,6 @@ void GPX::Browse(int mode,kGUIString *s)
 	break;
 	}
 }
-
-static unsigned char b64[]={"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"};
 
 void MacroButton::Load(kGUIXMLItem *xml)
 {

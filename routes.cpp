@@ -315,7 +315,7 @@ double RoutesPage::UpdateInfo(void)
 {
 	unsigned int e;
 	GPXRow *row;
-	GPXRow *lrow;
+	GPXRow *lrow=0;
 	double dist=0.0f,d;
 	double ratio,eval1,eval2;
 	/* generate results report */
