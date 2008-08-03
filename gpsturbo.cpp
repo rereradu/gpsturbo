@@ -509,21 +509,20 @@ void GPX::InitPopMenu(kGUIMenuColObj *menu,int numentries,int *entrylist)
 	for(i=0;i<numentries;++i)
 	{
 		e=entrylist[i];
-		/* all entries default initially to enabled */
-		menu->SetEntryEnable(i,true,true);
 		/* handle special cases */
 		switch(e)
 		{
 		case MAPMENU_NAME:
 			menu->SetEntry(i,&m_currow->m_name,e);
 			menu->SetBGColor(i,DrawColor(255,255,0));
-			menu->SetEntryEnable(i,false,false);
+			menu->SetEntryEnable(e,false,false);
 		break;
 		case MAPMENU_ADDTOROUTE:
 		case MAPMENU_REMOVEFROMROUTE:
 		case MAPMENU_ADDNEARTOROUTE:
 			s.Sprintf(mapmenutxt[e],m_routes.GetCurrentName());
 			menu->SetEntry(i,s.GetString(),e);
+			menu->SetEntryEnable(e,true,true);
 
 			if(e!=MAPMENU_ADDNEARTOROUTE)
 			{
@@ -534,29 +533,33 @@ void GPX::InitPopMenu(kGUIMenuColObj *menu,int numentries,int *entrylist)
 					in=false;
 				if(e!=MAPMENU_REMOVEFROMROUTE)
 					in=!in;
-				menu->SetEntryEnable(i,in,true);
+				menu->SetEntryEnable(e,in,true);
 			}
 		break;
 		case MAPMENU_TOGGLEFOUND:
 			s.Sprintf(mapmenutxt[e],m_currow->m_found.GetSelected()?"Clear":"Set");
 			menu->SetEntry(i,s.GetString(),e);
+			menu->SetEntryEnable(e,true,true);
 		break;
 		case MAPMENU_TOGGLEUSERTICKED:
 			s.Sprintf(mapmenutxt[e],m_currow->m_user[0].GetSelected()?"Clear":"Set");
 			menu->SetEntry(i,s.GetString(),e);
+			menu->SetEntryEnable(e,true,true);
 		break;
 		case MAPMENU_TOGGLENA:
 			s.Sprintf(mapmenutxt[e],m_currow->m_na.GetSelected()?"Clear":"Set");
 			menu->SetEntry(i,s.GetString(),e);
+			menu->SetEntryEnable(e,true,true);
 		break;
 		case MAPMENU_SELECTNEARESTTRACKPIECE:
 			menu->SetEntry(i,mapmenutxt[e],e);
-			if(!m_tracks.GetNumTableEntries())	/* if no entries in the track table then disable */
-				menu->SetEntryEnable(i,false,true);
+			/* if no entries in the track table then disable */
+			menu->SetEntryEnable(e,m_tracks.GetNumTableEntries()!=0,true);
 		break;
 		case MAPMENU_ADDTOTRACK:
 			s.Sprintf(mapmenutxt[e],m_tracks.GetCurrentName());
 			menu->SetEntry(i,s.GetString(),e);
+			menu->SetEntryEnable(e,true,true);
 		break;
 		case MAPMENU_ADDTOLINE:
 			if(m_currow)
@@ -564,9 +567,11 @@ void GPX::InitPopMenu(kGUIMenuColObj *menu,int numentries,int *entrylist)
 			else
 				s.Sprintf(mapmenutxt[e],"Point",m_lines.GetCurrentName());
 			menu->SetEntry(i,s.GetString(),e);
+			menu->SetEntryEnable(e,true,true);
 		break;
 		default:
 			menu->SetEntry(i,mapmenutxt[e],e);
+			menu->SetEntryEnable(e,true,true);
 		break;
 		}
 	}
@@ -1393,6 +1398,7 @@ void GPX::InitColorCombo(kGUIComboBoxObj *box)
 {
 	unsigned int e;
 
+	box->SetNumEntries(0);
 	box->SetColorMode(96);
 	box->SetNumEntries(WPTCOLOURS_NUMCOLOURS);		/* list of select filters */
 	for(e=0;e<WPTCOLOURS_NUMCOLOURS;++e)
@@ -1469,13 +1475,12 @@ const char *tabnames[]={
 	"Filters",
 	"Draw Settings",
 	"GPSRs",
-	"Download",
+	"Map Download",
 	"Solver",
 	"Stickers",
 	"Notes",
 	"Basic",
 	"Debug"};
-
 
 enum
 {
@@ -1483,6 +1488,7 @@ MAINMENU_LOAD,
 MAINMENU_SAVE,
 MAINMENU_LOADOTHER,
 MAINMENU_SAVEOTHER,
+MAINMENU_SAVECHANGES,
 MAINMENU_RENAMEDATABASE,
 MAINMENU_VIEWGENERATED,
 MAINMENU_PRINTTABLE,
@@ -1499,6 +1505,7 @@ static const char *menutext[]={
 	"Save GPX file",
 	"Load As ...",
 	"Save As ...",
+	"Save Changes",
 	"Rename Database",
 	"Remove Stale Waypoints",
 	"Print Table",
@@ -1509,15 +1516,35 @@ static const char *menutext[]={
 	"View Help",
 	"Quit"};
 
+static const char *menuicon[]={
+	"micon_load.gif",
+	"micon_save.gif",
+	"micon_load.gif",
+	"micon_save.gif",
+	"micon_save.gif",
+	"micon_rename.gif",			//rename database
+	"micon_delete.gif",			//remove stale waypoints
+	"micon_print.gif",			//print map
+	"micon_print.gif",			//print table
+	"micon_save.gif",			//save map as jpg
+	"micon_page.gif",			//view cache pages in browser
+	"micon_credits.gif",		//credits
+	"micon_help.gif",			//help
+	"micon_exit.gif"};			//quit
+
 int filemenu[]={
 	MAINMENU_LOAD,
 	MAINMENU_SAVE,
 	MAINMENU_LOADOTHER,
 	MAINMENU_SAVEOTHER,
-	MAINMENU_RENAMEDATABASE,
-	MAINMENU_VIEWGENERATED,
+	-1,
+	MAINMENU_SAVECHANGES,
+	-1,
 	MAINMENU_PRINTTABLE,
 	MAINMENU_PRINTMAP,
+	-1,
+	MAINMENU_RENAMEDATABASE,
+	MAINMENU_VIEWGENERATED,
 	MAINMENU_SAVEMAPBITMAP,
 	MAINMENU_VIEWPAGES,
 	MAINMENU_QUIT};
@@ -1774,8 +1801,10 @@ void GPX::PreInit(void)
 
 	//set default versions for google map tiles
 	GGPXMap::InitVersions();
+#if 0
 	if(xmlstatus==true)
 		GGPXMap::LoadVersions(xml.GetRootItem()->Locate("gtp"));
+#endif
 
 	/* traverse the map directory and add all maps found as well */
 
@@ -1848,8 +1877,13 @@ void GPX::PreInit(void)
 	endtime.SetToday();
 	m_debug.ASprintf("Start seconds=%d\n",m_starttime.GetDiffSeconds(&endtime));
 
+#if 0
 	//trigger async thread
 	GGPXMap::CheckVersions();
+#endif
+
+	/* call this shutdown func if a fatal error occurs */
+	kGUI::SetPanic(this,CALLBACKNAME(Panic));
 }
 
 /* add maps found in directory to the map list */
@@ -1976,39 +2010,71 @@ void GPX::Init(void)
 	m_logo.SetEventHandler(this,CALLBACKNAME(ShowGeocaching));
 	kGUI::GetBackground()->AddObject(&m_logo);
 
-	m_maincontrols.SetPos(m_logo.GetImageWidth()+15,0);
+	m_maincontrols.SetPos(m_logo.GetImageWidth()+8,0);
 	m_maincontrols.SetMaxWidth(bw);
 
-	m_filemenulabel.SetFontSize(20);
-	m_filemenulabel.SetFontID(1);
-	m_filemenulabel.SetString("File");
-	m_filemenulabel.SetEventHandler(this,CALLBACKNAME(ShowFileMenu));
-	m_maincontrols.AddObject(&m_filemenulabel);
+	m_mainmenu.SetFontSize(20);
+	m_mainmenu.SetFontID(1);
+	m_mainmenu.SetNumEntries(2);
+	m_mainmenu.GetTitle(0)->SetString("File");
+	m_mainmenu.GetTitle(1)->SetString("Help");
+	m_mainmenu.SetEntry(0,&m_filemenu);
+	m_mainmenu.SetEntry(1,&m_helpmenu);
+	m_mainmenu.SetEventHandler(this,CALLBACKNAME(DoMainMenu));
 
-	m_helpmenulabel.SetFontSize(20);
-	m_helpmenulabel.SetFontID(1);
-	m_helpmenulabel.SetString("Help");
-	m_helpmenulabel.SetEventHandler(this,CALLBACKNAME(ShowHelpMenu));
-	m_maincontrols.AddObject(&m_helpmenulabel);
+	m_filemenu.SetIconWidth(22);
+	m_helpmenu.SetIconWidth(22);
+
+	m_maincontrols.SetDrawBG(false);
+	m_maincontrols.SetDrawFrame(false);
+	m_maincontrols.AddObject(&m_mainmenu);
 	m_maincontrols.NextLine();
 
-	m_filemenu.SetFontSize(14);
+	m_filemenu.SetFontSize(16);
 	m_filemenu.Init(sizeof(filemenu)/sizeof(int));
 	for(i=0;i<sizeof(filemenu)/sizeof(int);++i)
 	{
-		m_filemenu.SetEntry(i,menutext[filemenu[i]],filemenu[i]);
-		m_filemenu.SetEntryEnable(i,true);
-	}
-	m_filemenu.SetEventHandler(this,CALLBACKNAME(DoFileMenu));
+		kGUIImageObj *icon;
+		const char *iconfn;
 
-	m_helpmenu.SetFontSize(14);
+		if(filemenu[i]<0)
+			m_filemenu.GetEntry(i)->SetIsBar(true);
+		else
+		{
+			m_filemenu.SetEntry(i,menutext[filemenu[i]],filemenu[i]);
+			m_filemenu.SetEntryEnable(filemenu[i],true);
+			
+			iconfn=menuicon[filemenu[i]];
+			if(strlen(iconfn))
+			{
+				icon=m_filemenu.GetEntry(i)->GetIconObj();
+				icon->SetFilename(iconfn);
+				icon->SetSize(16+2,16);
+				icon->SetXOffset(-2);	/* move over 2 pix to the right */
+			}
+		}
+	}
+
+	m_helpmenu.SetFontSize(16);
 	m_helpmenu.Init(sizeof(helpmenu)/sizeof(int));
 	for(i=0;i<sizeof(helpmenu)/sizeof(int);++i)
 	{
+		kGUIImageObj *icon;
+		const char *iconfn;
+
 		m_helpmenu.SetEntry(i,menutext[helpmenu[i]],helpmenu[i]);
-		m_helpmenu.SetEntryEnable(i,true);
+		m_helpmenu.SetEntryEnable(helpmenu[i],true);
+
+		iconfn=menuicon[helpmenu[i]];
+		if(strlen(iconfn))
+		{
+			icon=m_helpmenu.GetEntry(i)->GetIconObj();
+			icon->SetFilename(iconfn);
+			icon->SetSize(16+2,16);
+			icon->SetXOffset(-2);	/* move over 2 pix to the right */
+		}
+
 	}
-	m_helpmenu.SetEventHandler(this,CALLBACKNAME(DoHelpMenu));
 
 	m_colmenu.SetFontSize(14);
 	m_colmenu.SetEventHandler(this,CALLBACKNAME(DoColMenu));
@@ -2745,7 +2811,7 @@ Credits::Credits()
 	m_window.SetAllowButtons(WINDOWBUTTON_CLOSE);
 	m_name.SetPos(0,0);
 	m_name.SetFontSize(20);
-	m_name.SetString("GPSTurbo v0.97");
+	m_name.SetString("GPSTurbo v0.98");
 	m_name.SetColor(DrawColor(255,0,0));
 	m_window.AddObject(&m_name);
 	m_window.SetPos( (kGUI::GetSurfaceWidth()-w)/2,(kGUI::GetSurfaceHeight()-h)/2);
@@ -2827,17 +2893,30 @@ void Credits::GetCreditString(kGUIString *s)
 	s->ASprintf("Clive, author of GSAK.\r\n");
 }
 
-
-void GPX::DoFileMenu(kGUIEvent *event)
+void GPX::DoMainMenu(kGUIEvent *event)
 {
-	if(event->GetEvent()==EVENT_SELECTED)
-		DoMenu(m_filemenu.GetSelection());
-}
+	switch(event->GetEvent())
+	{
+	case EVENT_ENTER:
+	{
+		kGUITableObj *table;
 
-void GPX::DoHelpMenu(kGUIEvent *event)
-{
-	if(event->GetEvent()==EVENT_SELECTED)
-		DoMenu(m_helpmenu.GetSelection());
+		/* are both corners set? */
+		m_filemenu.SetEntryEnable(MAINMENU_SAVEMAPBITMAP,m_mapsel==3);
+
+		/* if numfiltered < 100 then enable show */
+		if(m_tabs.CurrentGroup()==TAB_ROUTE)
+			table=m_routes.GetTable();
+		else
+			table=m_fwt;
+
+		m_filemenu.SetEntryEnable(MAINMENU_VIEWPAGES,table->GetNumChildren()<100);
+	}
+	break;
+	case EVENT_SELECTED:
+		DoMenu(event->m_value[0].i);
+	break;
+	}
 }
 
 void GPX::DoMenu(int selection)
@@ -2875,6 +2954,9 @@ void GPX::DoMenu(int selection)
 		
 		req=new kGUIFileReq(FILEREQ_SAVE,m_defpath.GetString(),0,this,CALLBACKNAME(DoSaveAs));
 	}
+	break;
+	case MAINMENU_SAVECHANGES:
+		SavePrefs(true);
 	break;
 	case MAINMENU_RENAMEDATABASE:
 	{
@@ -3575,14 +3657,6 @@ const int rscolwidths[REMOVESTALE_NUMCOLUMNS]={60,125,75};
 RemoveStale::RemoveStale()
 {
 	int i;
-	int w=400,h=300;
-
-	m_window.SetTitle("Remove Stale Waypoints");
-	m_window.SetEventHandler(this,CALLBACKNAME(WindowEvent));
-	m_window.SetSize(w,h);
-	m_window.SetPos( (kGUI::GetSurfaceWidth()-w)/2,(kGUI::GetSurfaceHeight()-h)/2);
-	m_window.SetTop(true);
-	kGUI::AddWindow(&m_window);
 
 	m_all.SetSelected(true);
 	m_all.SetPos(0,10);
@@ -3630,7 +3704,13 @@ RemoveStale::RemoveStale()
 	m_controls.NextLine();
 
 	m_window.AddObject(&m_controls);
+	m_window.SetTitle("Remove Stale Waypoints");
+	m_window.SetEventHandler(this,CALLBACKNAME(WindowEvent));
+	m_window.SetSize(100,100);
 	m_window.ExpandToFit();
+	m_window.SetPos( (kGUI::GetSurfaceWidth()-m_window.GetZoneW())/2,(kGUI::GetSurfaceHeight()-m_window.GetZoneH())/2);
+	m_window.SetTop(true);
+	kGUI::AddWindow(&m_window);
 }
 
 void RemoveStale::WindowEvent(kGUIEvent *event)
@@ -3725,6 +3805,9 @@ void RemoveStale::PressRemove(kGUIEvent *event)
 		GPXRow *row;
 		int rflag;
 		int *dp;
+		kGUITableObj *ft;
+			
+		ft=gpx->m_fwt;
 
 		/* remove any selected waypoints */
 		hash.Init(12,sizeof(int));
@@ -3748,10 +3831,14 @@ void RemoveStale::PressRemove(kGUIEvent *event)
 				{
 					if(*(dp)==1)
 					{
+						/* if this row is in the filtered results table */
+						/* then remove it but don't free it */
+						ft->DeleteRowz(row,false);
+
 						gpx->m_wptlist.DeleteEntry(i);
 						--gpx->m_numwpts;
-						--i;
 						delete row;
+						--i;
 					}
 				}
 				++i;
@@ -3760,10 +3847,6 @@ void RemoveStale::PressRemove(kGUIEvent *event)
 		else	/* use current filtered results list */
 		{
 			i=0;
-
-			kGUITableObj *ft;
-			
-			ft=gpx->m_fwt;
 			while(i<ft->GetNumChildren())
 			{
 				row=static_cast<GPXRow *>(ft->GetChild(i));
@@ -6484,22 +6567,32 @@ void GPX::LoadPrefs(kGUIXML *xml,bool xmlstatus)
 	}
 }
 
-void GPX::SavePrefs(void)
+void GPX::SavePrefs(bool showbusy)
 {
 	unsigned int i;
 	int sx,sy;
 	GPXCoord c;
-	kGUIXML xml;
 	kGUIXMLItem *root;
 	kGUIObj *obj;
+	kGUIXML xml;
 	kGUIMsgBoxReq *box;
+	kGUIBusy *busy=0;
+
+	if(showbusy)
+	{
+		busy=new kGUIBusy(500);
+		busy->GetTitle()->SetString("Saving...");
+		busy->SetMax(100);
+	}
 
 	xml.SetEncoding(ENCODING_UTF8);
 	root=xml.GetRootItem()->AddChild("gtp");
 	root->AddChild("zoom",m_zoom);
 	m_grid.GetScrollCorner(&sx,&sy);
 	m_curmap->FromMap(sx,sy,&c);
+#if 0
 	GGPXMap::SaveVersions(root);
+#endif
 	root->AddChild("scrolllat",c.GetLat());
 	root->AddChild("scrolllon",c.GetLon());
 	root->AddChild("centerlon",m_clon.GetString());
@@ -6551,6 +6644,8 @@ void GPX::SavePrefs(void)
 	m_filters.SavePrefs(root);
 	/* save GPSr definitions and current gpsr */
 	m_gpsr.SavePrefs(root);
+	if(busy)
+		busy->SetCur(10);
 
 	/* filter->color table */
 	for(i=0;i<m_labelcolourtable.GetNumChildren(0);++i)
@@ -6573,11 +6668,17 @@ void GPX::SavePrefs(void)
 		if(rrow->GetPath()->GetLen())
 			rrow->Save(root->AddChild("mappath"));
 	}
+	if(busy)
+		busy->SetCur(20);
 
 	m_stickers.SavePrefs(root);
 	m_routes.SavePrefs(root);
+	if(busy)
+		busy->SetCur(30);
 	m_lines.SavePrefs(root);
 	m_tracks.SavePrefs(root);
+	if(busy)
+		busy->SetCur(40);
 	m_notes.SavePrefs(root);
 	m_download.SavePrefs(root);
 
@@ -6611,22 +6712,40 @@ void GPX::SavePrefs(void)
 
 	/* save the full waypoint list */
 	for(i=0;i<m_numwpts;++i)
+	{
+		if(busy)
+			busy->SetCur(40+((i*40)/m_numwpts));
 		m_wptlist.GetEntry(i)->Save(root->AddChild("wpt"));
+	}
 
 	m_browsersettings.Save(root);
 
 	/* copy prefs to backup incase save crashes */
 
+	if(busy)
+		busy->SetCur(80);
 	kGUI::FileCopy(PROFILEFILE,PROFILEFILEBACKUP);
+	if(busy)
+		busy->SetCur(90);
 
 	if(xml.Save(PROFILEFILETEMP)==false)
-		box=new kGUIMsgBoxReq(MSGBOX_OK,false,"Error saving file!");
+	{
+		if(busy)
+			delete busy;
+		if(showbusy)
+			box=new kGUIMsgBoxReq(MSGBOX_OK,false,"Error saving file!");
+	}
 	else
 	{
+		if(busy)
+			busy->SetCur(95);
 		kGUI::FileCopy(PROFILEFILETEMP,PROFILEFILE);
 		kGUI::FileDelete(PROFILEFILETEMP);
+		if(busy)
+			delete busy;
 	}
 }
+
 
 void GPX::UpdateMacroButtons(void)
 {
@@ -6690,6 +6809,7 @@ void GPX::UpdateMacroButtons(void)
 		m_lines.Resize(changey);
 		m_filters.Resize(changey);
 		/* draw settings */
+		m_drawsettingsarea.SetZoneH(m_drawsettingsarea.GetZoneH()+changey);
 //		m_gpsr.Resize(changey);
 		/* solver */
 		m_stickers.Resize(changey);
@@ -6865,9 +6985,15 @@ void AppInit(void)
 	gpx->PreInit();
 }
 
+void GPX::Panic(void)
+{
+	SavePrefs(false);
+}
+
 void AppClose(void)
 {
-	gpx->SavePrefs();
+	kGUI::SetPanic(0,0);
+	gpx->SavePrefs(false);
 	delete gpx;
 	MSGPXFName::Purge();
 	MSGPXMap::Purge();

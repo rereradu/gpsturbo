@@ -31,29 +31,26 @@ const int wprwidths[WPRENDER_NUMCOLUMNS]={200,300,80};
 void GPX::InitSettings(void)
 {
 	unsigned int i;
-	int y;
 	int bw=m_tabs.GetChildZoneW();
+	int bh=m_tabs.GetChildZoneH();
 
-	m_labelcontrols.SetPos(0,0);
-	m_labelcontrols.SetSize(bw,20);
+	m_drawsettingcontrols.SetPos(0,0);
+	m_drawsettingcontrols.SetSize(bw,0);
 
 	m_labelup.SetFontSize(11);
 	m_labelup.SetSize(30,25);
 	m_labelup.SetString("Up");
 	m_labelup.SetEventHandler(this,CALLBACKNAME(LabelUp));
-	m_labelcontrols.AddObject(&m_labelup);
+	m_drawsettingcontrols.AddObject(&m_labelup);
 
 	m_labeldown.SetFontSize(11);
 	m_labeldown.SetSize(30,25);
 	m_labeldown.SetString("Dn");
 	m_labeldown.SetEventHandler(this,CALLBACKNAME(LabelDown));
-	m_labelcontrols.AddObject(&m_labeldown);
+	m_drawsettingcontrols.AddObject(&m_labeldown);
+	m_drawsettingcontrols.NextLine();
 
 	/* labels table */
-	m_tabs.AddObject(&m_labelcontrols);
-	y=m_labelcontrols.GetZoneH();
-
-	m_labelcolourtable.SetPos(0,y);
 	m_labelcolourtable.SetSize(625,215);
 	m_labelcolourtable.SetNumCols(WPRENDER_NUMCOLUMNS);
 	for(i=0;i<WPRENDER_NUMCOLUMNS;++i)
@@ -63,12 +60,10 @@ void GPX::InitSettings(void)
 	}
 	m_labelcolourtable.SetAllowAddNewRow(true);
 	m_labelcolourtable.SetEventHandler(this,CALLBACKNAME(WPTableEvent));
-	m_tabs.AddObject(&m_labelcolourtable);
-
-	y=m_labelcolourtable.GetZoneBY()+10;
+	m_drawsettingcontrols.AddObject(&m_labelcolourtable);
+	m_drawsettingcontrols.NextLine();
 
 	/* map path table */
-	m_mapdirstable.SetPos(0,y);
 	m_mapdirstable.SetSize(625,100);
 	m_mapdirstable.SetNumCols(2);
 	m_mapdirstable.SetColTitle(0,"Map Path");
@@ -78,121 +73,112 @@ void GPX::InitSettings(void)
 
 	m_mapdirstable.SetAllowAddNewRow(true);
 	m_mapdirstable.SetEventHandler(this,CALLBACKNAME(NewMapPathEntry));
-	m_tabs.AddObject(&m_mapdirstable);
+	m_drawsettingcontrols.AddObject(&m_mapdirstable);
+	m_drawsettingcontrols.NextLine();
 
-	y=m_mapdirstable.GetZoneBY()+10;
-
-	m_usebrowser.SetPos(10,y);
-	m_usebrowserlabel.SetPos(30,y);
+	m_usebrowser.SetPos(10,0);
+	m_usebrowserlabel.SetPos(30,0);
 	m_usebrowserlabel.SetString("Use Built-In Browser");
-	m_tabs.AddObject(&m_usebrowser);
-	m_tabs.AddObject(&m_usebrowserlabel);
-	y+=25;
+	m_drawsettingcontrols.AddObjects(2,&m_usebrowser,&m_usebrowserlabel);
+	m_drawsettingcontrols.NextLine();
 
 	m_maxdownloads.SetString("8");
-	m_maxdownloads.SetPos(10,y);
+	m_maxdownloads.SetPos(10,0);
 	m_maxdownloads.SetSize(40,20);
-	m_maxdownloadslabel.SetPos(50,y);
+	m_maxdownloadslabel.SetPos(50,0);
 	m_maxdownloadslabel.SetString("Maximum Concurrent Internet Downloads");
-	m_tabs.AddObject(&m_maxdownloads);
-	m_tabs.AddObject(&m_maxdownloadslabel);
-	y+=25;
+	m_drawsettingcontrols.AddObjects(2,&m_maxdownloads,&m_maxdownloadslabel);
+	m_drawsettingcontrols.NextLine();
 
 	m_tablefontsize.SetString("12");
-	m_tablefontsize.SetPos(10,y);
+	m_tablefontsize.SetPos(10,0);
 	m_tablefontsize.SetSize(40,20);
 	m_tablefontsize.SetEventHandler(this,CALLBACKNAME(TableFontSizeChangedEvent));
-	m_tablefontsizelabel.SetPos(50,y);
+	m_tablefontsizelabel.SetPos(50,0);
 	m_tablefontsizelabel.SetString("Font Size for Waypoint Tables");
-	m_tabs.AddObject(&m_tablefontsize);
-	m_tabs.AddObject(&m_tablefontsizelabel);
-	y+=25;
+	m_drawsettingcontrols.AddObjects(2,&m_tablefontsize,&m_tablefontsizelabel);
+	m_drawsettingcontrols.NextLine();
 
 	m_labelfontsize.SetString("12");
-	m_labelfontsize.SetPos(10,y);
+	m_labelfontsize.SetPos(10,0);
 	m_labelfontsize.SetSize(40,20);
 	m_labelfontsize.SetEventHandler(this,CALLBACKNAME(LabelFontSizeChangedEvent));
-	m_labelfontsizelabel.SetPos(50,y);
+	m_labelfontsizelabel.SetPos(50,0);
 	m_labelfontsizelabel.SetString("Font Size for Waypoint Labels on Map");
-	m_tabs.AddObject(&m_labelfontsize);
-	m_tabs.AddObject(&m_labelfontsizelabel);
+	m_drawsettingcontrols.AddObjects(2,&m_labelfontsize,&m_labelfontsizelabel);
 
-	m_labelalpha.SetPos(m_labelfontsizelabel.GetZoneRX()+10,y);
 	GPX::InitAlphaCombo(&m_labelalpha);
 	m_labelalpha.SetSelection(70);
-	m_tabs.AddObject(&m_labelalpha);
 	m_labelalpha.SetEventHandler(this,CALLBACKNAME(MapDirtyEvent));
-	y+=25;
+	m_drawsettingcontrols.AddObject(&m_labelalpha);
+	m_drawsettingcontrols.NextLine();
 
 	m_shownumticks.SetString("0");
-	m_shownumticks.SetPos(10,y);
+	m_shownumticks.SetPos(10,0);
 	m_shownumticks.SetSize(40,20);
 	m_shownumticks.SetEventHandler(this,CALLBACKNAME(LabelFontSizeChangedEvent));
-	m_shownumtickslabel.SetPos(50,y);
+	m_shownumtickslabel.SetPos(50,0);
 	m_shownumtickslabel.SetString("Number of User Ticks to show beside Label on Map");
-	m_tabs.AddObject(&m_shownumticks);
-	m_tabs.AddObject(&m_shownumtickslabel);
-	y+=25;
+	m_drawsettingcontrols.AddObjects(2,&m_shownumticks,&m_shownumtickslabel);
+	m_drawsettingcontrols.NextLine();
 
-	m_wptnamelabel.SetPos(10,y);
+	m_wptnamelabel.SetPos(10,0);
 	m_wptnamelabel.SetString("Waypoint name to use on Map");
-	m_wptname.SetPos(200,y);
+	m_wptname.SetPos(200,0);
 	m_wptname.SetSize(400,20);
 	m_wptname.SetEventHandler(this,CALLBACKNAME(LabelNamesChangedEvent));
-	m_tabs.AddObject(&m_wptname);
-	m_tabs.AddObject(&m_wptnamelabel);
-	y+=25;
+	m_drawsettingcontrols.AddObjects(2,&m_wptname,&m_wptnamelabel);
+	m_drawsettingcontrols.NextLine();
 
-	m_showchildren.SetPos(10,y);
+	m_showchildren.SetPos(10,0);
 	m_showchildren.SetEventHandler(this,CALLBACKNAME(BSPDirtyEvent));
-	m_showchildrenlabel.SetPos(30,y);
+	m_showchildrenlabel.SetPos(30,0);
 	m_showchildrenlabel.SetString("Show Labels for Additional Waypoints on Map");
-	m_tabs.AddObject(&m_showchildren);
-	m_tabs.AddObject(&m_showchildrenlabel);
-	y+=25;
+	m_drawsettingcontrols.AddObjects(2,&m_showchildren,&m_showchildrenlabel);
+	m_drawsettingcontrols.NextLine();
 
-	m_movelabels.SetPos(10,y);
+	m_movelabels.SetPos(10,0);
 	m_movelabels.SetSelected(true);	/* default to selected */
 	m_movelabels.SetEventHandler(this,CALLBACKNAME(BSPDirtyEvent));
-	m_movelabelslabel.SetPos(30,y);
+	m_movelabelslabel.SetPos(30,0);
 	m_movelabelslabel.SetString("Move Overlapping Labels");
-	m_tabs.AddObject(&m_movelabels);
-	m_tabs.AddObject(&m_movelabelslabel);
-	y+=25;
+	m_drawsettingcontrols.AddObjects(2,&m_movelabels,&m_movelabelslabel);
+	m_drawsettingcontrols.NextLine();
 
-	m_movelabelsmax.SetPos(10,y);
+	m_movelabelsmax.SetPos(10,0);
 	m_movelabelsmax.SetSize(40,20);
 	m_movelabelsmax.SetString("128");
 	m_movelabelsmax.SetEventHandler(this,CALLBACKNAME(BSPDirtyEvent));
-	m_movelabelsmaxlabel.SetPos(50,y);
+	m_movelabelsmaxlabel.SetPos(50,0);
 	m_movelabelsmaxlabel.SetString("Move Overlapping Labels, Maximum number of pixels");
-
-	m_tabs.AddObject(&m_movelabelsmax);
-	m_tabs.AddObject(&m_movelabelsmaxlabel);
-	y+=25;
+	m_drawsettingcontrols.AddObjects(2,&m_movelabelsmax,&m_movelabelsmaxlabel);
+	m_drawsettingcontrols.NextLine();
 
 	m_labelzoomsize.SetString("10");
-	m_labelzoomsize.SetPos(10,y);
+	m_labelzoomsize.SetPos(10,0);
 	m_labelzoomsize.SetSize(40,20);
-	m_labelzoomsizelabel.SetPos(50,y);
+	m_labelzoomsizelabel.SetPos(50,0);
 	m_labelzoomsizelabel.SetString("Zoom level to start drawing labels at");
-	m_tabs.AddObject(&m_labelzoomsize);
-	m_tabs.AddObject(&m_labelzoomsizelabel);
-	y+=25;
+	m_drawsettingcontrols.AddObjects(2,&m_labelzoomsize,&m_labelzoomsizelabel);
+	m_drawsettingcontrols.NextLine();
 
 	/* distance units on map */
-	m_disttype.SetPos(10,y);
+	m_disttype.SetPos(10,0);
 	m_disttype.SetSize(100,20);
 	InitDistCombo(&m_disttype);
-
 	m_disttype.SetEventHandler(this,CALLBACKNAME(ReCalcDistsEvent));
 
-	m_distcaption.SetPos(150,y);
+	m_distcaption.SetPos(150,0);
 	m_distcaption.SetString("Distance units");
-	m_tabs.AddObject(&m_distcaption);
-	m_tabs.AddObject(&m_disttype);
-	y+=25;
+	m_drawsettingcontrols.AddObjects(2,&m_distcaption,&m_disttype);
+	m_drawsettingcontrols.NextLine();
 
+	m_drawsettingsarea.SetPos(0,0);
+	m_drawsettingsarea.SetMaxWidth(m_drawsettingcontrols.GetZoneW());
+	m_drawsettingsarea.SetMaxHeight(m_drawsettingcontrols.GetZoneH());
+	m_drawsettingsarea.SetSize(bw,bh);
+	m_drawsettingsarea.AddObject(&m_drawsettingcontrols);
+	m_tabs.AddObject(&m_drawsettingsarea);
 }
 
 void GPX::WPTableEvent(kGUIEvent *event)

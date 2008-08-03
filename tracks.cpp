@@ -509,7 +509,22 @@ void GPXTrackEntry::Load(class kGUIXMLItem *wpr)
 	else
 		m_elev=0.0f;
 	if(wpr->Locate("time"))
+	{
 		m_time.SetString(wpr->Locate("time")->GetValue());
+
+		if(m_time.GetLen())
+		{
+			if(m_time.GetChar(m_time.GetLen()-1)=='Z')
+			{
+				/* convert from GMT to local time */
+				kGUIDate d;
+
+				d.Setz(m_time.GetString());
+				d.GMTtoLocal();
+				d.ShortDateTime(&m_time);
+			}
+		}
+	}
 }
 
 /* save to prefs file */
