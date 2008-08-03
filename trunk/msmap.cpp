@@ -2291,9 +2291,21 @@ void MSGPXMap::DrawLabel(kGUIText *t,double lx,double ly,double lw,double lh,dou
 				ip.icon=m_labelicon;
 				m_iconpos.SetEntry(m_numiconsdrawn++,ip);
 
-				icon->Draw(0,(int)lx,(int)ly);
-				lx+=icx-(lw/2);
-				ly+=icy-(lh/2);
+				if((lw+4)>icon->GetImageWidth())
+				{
+					icon->SetScale((double)(lw+4)/(double)icon->GetImageWidth(),1.0f);
+					icon->Draw(0,(int)lx,(int)ly);
+					ly+=icy-(lh/2);
+					lx+=2;
+				}
+				else
+				{
+					icon->SetScale(1.0f,1.0f);
+					icon->Draw(0,(int)lx,(int)ly);
+					lx+=icx-(lw/2);
+					ly+=icy-(lh/2);
+				}
+
 			}
 			t->DrawRot(lx,ly,0.0f,DrawColor(0,0,0),1.0f);
 		}

@@ -1106,7 +1106,6 @@ void GPSrPage::UpdateGPSList(void)
 		gpx->m_realtimegps.SetNumEntries(1);			/* no valid entry flag */
 		gpx->m_realtimegps.SetEntry(0,"No GPSrs defined",-1);
 		gpx->m_realtimegps.SetSelection(-1);
-
 	}
 	else
 	{

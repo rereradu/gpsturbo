@@ -472,7 +472,7 @@ public:
 	int GetColNumz(const char *colname);
 	void LoadMapPaths(kGUIXML *xml,bool xmlstatus);
 	void LoadPrefs(kGUIXML *xml,bool xmlstatus);
-	void SavePrefs(void);
+	void SavePrefs(bool showbusy);
 	void UpdateMacroButtons(void);
 	bool IsOnline(void) {return m_online.GetSelected();}
 	void SetScrollCenter(GPXCoord *c);
@@ -636,6 +636,8 @@ public:
 	//this is public since if a new map data is downloaded then this is called to flush
 	void ChangeMapType(void);
 private:
+	CALLBACKGLUE(GPX,Panic)
+	void Panic(void);
 	kGUIString m_newname;	/* used for saving filters, routes etc */
 	void MoveDividerEvent(kGUIEvent *event);
 	void MoveDivider(int delta);
@@ -690,8 +692,7 @@ private:
 	void ShowFileMenu(kGUIEvent *event);
 	void ShowHelpMenu(kGUIEvent *event);
 	void ShowGeocaching(kGUIEvent *event);
-	void DoFileMenu(kGUIEvent *event);
-	void DoHelpMenu(kGUIEvent *event);
+	void DoMainMenu(kGUIEvent *event);
 	void DoMenu(int selection);
 	void DoColMenu(kGUIEvent *event);
 	void PreLoadXML(int current,int size);
@@ -743,7 +744,8 @@ private:
 	NotesPage m_notes;
 	DownloadPage m_download;
 
-	kGUIControlBoxObj m_labelcontrols;
+	kGUIScrollContainerObj m_drawsettingsarea;
+	kGUIControlBoxObj m_drawsettingcontrols;
 	kGUIButtonObj m_labelup;
 	kGUIButtonObj m_labeldown;
 	kGUITableObj m_labelcolourtable;
@@ -790,8 +792,7 @@ private:
 	kGUIGridObj m_grid;
 	kGUIImageObj m_logo;
 	kGUITextObj m_defdb;
-	kGUITextObj m_filemenulabel;
-	kGUITextObj m_helpmenulabel;
+	kGUIMenuObj m_mainmenu;
 
 	kGUITabObj m_tabs;
 	kGUITabObj m_solvertabs;
@@ -1005,8 +1006,7 @@ private:
 	CALLBACKGLUEPTR(GPX,ShowFileMenu,kGUIEvent)
 	CALLBACKGLUEPTR(GPX,ShowHelpMenu,kGUIEvent)
 	CALLBACKGLUEPTR(GPX,ShowGeocaching,kGUIEvent)
-	CALLBACKGLUEPTR(GPX,DoFileMenu,kGUIEvent)
-	CALLBACKGLUEPTR(GPX,DoHelpMenu,kGUIEvent)
+	CALLBACKGLUEPTR(GPX,DoMainMenu,kGUIEvent)
 	CALLBACKGLUEPTR(GPX,DoColMenu,kGUIEvent)
 
 	CALLBACKGLUEVALVAL(GPX,PreLoadXML,int,int)
