@@ -2817,7 +2817,7 @@ Credits::Credits()
 	int warea;
 
 	m_window.SetAllowButtons(WINDOWBUTTON_CLOSE);
-	m_window.SetPos(100,100);
+	m_window.SetSize(600,100);
 	m_name.SetPos(0,0);
 	m_name.SetFontSize(20);
 	m_name.SetString("GPSTurbo v0.98");
