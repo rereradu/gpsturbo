@@ -167,15 +167,15 @@ void LinesPage::Init(kGUIContainerObj *obj)
 
 	m_editlinecontrols.SetSize(bw,20);
 
-	m_lineup.SetFontSize(11);
-	m_lineup.SetSize(30,25);
-	m_lineup.SetString("Up");
+	m_lineup.SetFontSize(BUTTONFONTSIZE);
+	m_lineup.SetString(gpx->GetString(STRING_UP));
+	m_lineup.Contain();
 	m_lineup.SetEventHandler(this,CALLBACKNAME(ClickUp));
 	m_editlinecontrols.AddObject(&m_lineup);
 
-	m_linedown.SetFontSize(11);
-	m_linedown.SetSize(30,25);
-	m_linedown.SetString("Dn");
+	m_linedown.SetFontSize(BUTTONFONTSIZE);
+	m_linedown.SetString(gpx->GetString(STRING_DOWN));
+	m_linedown.Contain();
 	m_linedown.SetEventHandler(this,CALLBACKNAME(ClickDown));
 	m_editlinecontrols.AddObject(&m_linedown);
 
@@ -217,7 +217,7 @@ void LinesPage::Init(kGUIContainerObj *obj)
 	m_editlinecontrols.NextLine();
 
 	m_drawlinecaption.SetPos(0,0);
-	m_drawlinecaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_drawlinecaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_drawlinecaption.SetFontID(SMALLCAPTIONFONT);
 	m_drawlinecaption.SetString("Draw Lines on Map");
 	m_drawline.SetPos(0,15);
@@ -225,7 +225,7 @@ void LinesPage::Init(kGUIContainerObj *obj)
 	m_editlinecontrols.AddObjects(2,&m_drawlinecaption,&m_drawline);
 
 	m_settingscaption.SetPos(0,0);
-	m_settingscaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_settingscaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_settingscaption.SetFontID(SMALLCAPTIONFONT);
 	m_settingscaption.SetString("Settings after cursor line");
 	m_settings.SetLocked(true);

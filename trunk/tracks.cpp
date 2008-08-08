@@ -307,7 +307,7 @@ void TracksPage::Init(kGUIContainerObj *obj)
 	m_editcontrols.NextLine();
 
 	m_drawcaption.SetPos(0,0);
-	m_drawcaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_drawcaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_drawcaption.SetFontID(SMALLCAPTIONFONT);
 	m_drawcaption.SetString("Draw Track Mode");
 	m_draw.SetPos(0,15);
@@ -320,7 +320,7 @@ void TracksPage::Init(kGUIContainerObj *obj)
 	m_editcontrols.AddObjects(2,&m_drawcaption,&m_draw);
 
 	m_colorcaption.SetPos(0,0);
-	m_colorcaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_colorcaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_colorcaption.SetFontID(SMALLCAPTIONFONT);
 	m_colorcaption.SetString("Track color");
 
@@ -332,7 +332,7 @@ void TracksPage::Init(kGUIContainerObj *obj)
 	m_editcontrols.AddObjects(2,&m_colorcaption,&m_color);
 
 	m_alphacaption.SetPos(0,0);
-	m_alphacaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_alphacaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_alphacaption.SetFontID(SMALLCAPTIONFONT);
 	m_alphacaption.SetString("Track transparency");
 
@@ -345,7 +345,7 @@ void TracksPage::Init(kGUIContainerObj *obj)
 
 	/* display info for track, not editable */
 	m_numcaption.SetPos(0,0);
-	m_numcaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_numcaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_numcaption.SetFontID(SMALLCAPTIONFONT);
 	m_numcaption.SetString("Total Track Points");
 
@@ -356,7 +356,7 @@ void TracksPage::Init(kGUIContainerObj *obj)
 	m_editcontrols.AddObjects(2,&m_numcaption,&m_num);
 
 	m_distcaption.SetPos(0,0);
-	m_distcaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_distcaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_distcaption.SetFontID(SMALLCAPTIONFONT);
 	m_distcaption.SetString("Total Track Distance");
 
@@ -367,7 +367,7 @@ void TracksPage::Init(kGUIContainerObj *obj)
 	m_editcontrols.AddObjects(2,&m_distcaption,&m_dist);
 
 	m_timecaption.SetPos(0,0);
-	m_timecaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_timecaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_timecaption.SetFontID(SMALLCAPTIONFONT);
 	m_timecaption.SetString("Total Track Time");
 

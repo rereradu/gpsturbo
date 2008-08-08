@@ -1,0 +1,42 @@
+ID	English	French	German	Swedish
+LOADGPX	Load GPX file	Chargez le fichier GPX	GPX-Datei laden	Load GPX-fil
+SAVEGPX	Save GPX file	Sauver le fichier GPX	GPX-Datei speichern	Spara GPX-fil
+LOADAS	Load As ...	En Charger ...	Geladen ...	Load Som ...
+SAVEAS	Save As ...	Enregistrer sous ...	Speichern unter ...	Spara som ...
+SAVECHANGES	Save Changes	Enregistrer les modifications	Änderungen speichern	Spara ändringar
+RENAMEDATABASE	Rename Database	Renommer la base de données	Benennen Database	Byt namn Database
+REMOVESTALEWAYPOINTS	Remove Stale Waypoints	Supprimer vicié waypoints	Entfernen Sie Stale Wegpunkte	Ta bort Stale Riktmärken
+PRINTTABLE	Print Table	Imprimer le tableau	Tabelle drucken	Skriv ut tabellen
+PRINTMAP	Print Map	Imprimer la carte	Karte drucken	Skriv ut kartan
+SAVESELECTEDSHAPE	Save Selected Map area as Shape	Sauver sélectionné de la carte domaine que la forme	Speichern Ausgewählte Karte als Shape	Spara markerade Karta område som Shape
+VIEWFILTEREDCACHEPAGES	View Filtered Cache Pages	Voir filtré cache pages	Sehen Sie gefiltert Cache-Seiten	Visa Filtrerat Cache Pages
+CREDITS	Credits	Crédits	Impressum	Poäng
+VIEWHELP	View Help	Voir Aide	Hilfe anzeigen	Visa Hjälp
+QUIT	Quit	Quitter	Beenden	Avsluta
+FILTEREDANDMAP	Filtered / Map	Filtré / Carte	Gefiltert / Karte	Filtrerat / Karta
+ROUTES	Routes	Routes	Routen	Rutter
+TRACKS	Tracks	Tracks	Touren	Tracks
+LINES	Lines	Lignes	Lines	Lines
+FILTERS	Filters	Filtres	Filter	Filter
+DRAWSETTINGS	Draw Settings	Dessiner Paramètres	Draw-Einstellungen	Oavgjort Inställningar
+GPSRS	GPSRs	GPSRs	GPSRs	GPSRs
+MAPDOWNLOAD	Map Download	Plan d'accès Télécharger	Map Download	Karta Download
+SOLVER	Solver	Solver	Solver	Solver
+STICKERS	Stickers	Flyers	Stickers	Stickers
+NOTES	Notes	Notes	Hinweise	Notes
+BASIC	Basic	De base	Basic	Basic
+DEBUG	Debug	Debug	Debug	Debug
+CURRENTMAP	Current Map	La carte actuelle	Aktuelle Karte	Aktuell Map
+CURRENTMAPHINT	Click to change the current map.	Cliquez pour modifier la carte actuelle.	Klicken Sie zum Ändern der aktuellen Karte.	Klicka för att ändra den aktuella kartan.
+ZOOM	Zoom	Zoom	Zoom	Zoom
+ZOOMGOTOHINT	Goto a zoom level.	Vers un niveau de zoom.	Springen ein Zoom-Stufe.	Gå till en zoomnivå.
+ZOOMINHINT	Zoom In on the map.	Zoom avant sur la carte.	In der Zoom auf die Karte.	Zooma in på kartan.
+ZOOMOUTHINT	Zoom Out on the map.	Zoom arrière sur la carte.	Zoom-Out auf der Karte.	Zooma ut på kartan.
+UP	Up	Vers le haut	Nach oben	Upp
+DOWN	Down	Vers le bas	Abwärts	Nere
+AUTOORDER	Auto Order	Auto Commander	Bestell-Auto	Auto Beställ
+SAVEROUTE	Save Route	Enregistrer	Speichern Route	Spara Route
+UNDOCHANGES	Undo Changes	Annuler les changements	Änderungen rückgängig	Ångra ändringarna
+DELETEROUTE	Delete Route	Supprimer l'itinéraire	Route löschen	Delete Route
+RENAMEROUTE	Rename Route	Renommer la route	Benennen Route	Byt namn Route
+COPYROUTE	Copy Route	Route de copie	Kopieren Route	Kopiera Route

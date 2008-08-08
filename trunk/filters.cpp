@@ -227,7 +227,7 @@ void FiltersPage::Purge(void)
 void FiltersPage::InitControls(kGUIControlBoxObj *obj)
 {
 	m_filterlistcaption.SetPos(0,0);
-	m_filterlistcaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_filterlistcaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_filterlistcaption.SetFontID(SMALLCAPTIONFONT);
 	m_filterlistcaption.SetString("Current Filter");
 
@@ -239,7 +239,7 @@ void FiltersPage::InitControls(kGUIControlBoxObj *obj)
 	m_filterlist.SetHint("Click to change the current filter.");
 
 	m_currentdbcaption.SetPos(200+10,0);
-	m_currentdbcaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_currentdbcaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_currentdbcaption.SetFontID(SMALLCAPTIONFONT);
 	m_currentdbcaption.SetString("Current Database");
 
@@ -253,7 +253,7 @@ void FiltersPage::InitControls(kGUIControlBoxObj *obj)
 
 	/* reverse tickbox */
 	m_revfiltercaption.SetPos(0,0);
-	m_revfiltercaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_revfiltercaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_revfiltercaption.SetFontID(SMALLCAPTIONFONT);
 	m_revfiltercaption.SetString("Reverse");
 
@@ -264,7 +264,7 @@ void FiltersPage::InitControls(kGUIControlBoxObj *obj)
 
 	/* quick filter search string */
 	m_quickfiltercaption.SetPos(0,0);
-	m_quickfiltercaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_quickfiltercaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_quickfiltercaption.SetFontID(SMALLCAPTIONFONT);
 	m_quickfiltercaption.SetString("Search String");
 
@@ -278,7 +278,7 @@ void FiltersPage::InitControls(kGUIControlBoxObj *obj)
 
 	/* results of filter */
 	m_resultsfiltercaption.SetPos(0,0);
-	m_resultsfiltercaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_resultsfiltercaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_resultsfiltercaption.SetFontID(SMALLCAPTIONFONT);
 	m_resultsfiltercaption.SetString("Filter Results");
 
@@ -398,8 +398,9 @@ void FiltersPage::Init(kGUIContainerObj *obj)
 	m_save.SetEventHandler(this,CALLBACKNAME(ClickSave));
 	m_editcontrols.AddObject(&m_save);
 
-	m_undo.SetSize(140,25);
-	m_undo.SetString("Undo Changes");
+	m_undo.SetFontSize(BUTTONFONTSIZE);
+	m_undo.SetString(gpx->GetString(STRING_UNDOCHANGES));
+	m_undo.Contain();
 	m_undo.SetEventHandler(this,CALLBACKNAME(ClickUndo));
 	m_editcontrols.AddObject(&m_undo);
 
