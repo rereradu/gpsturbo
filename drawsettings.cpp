@@ -37,15 +37,15 @@ void GPX::InitSettings(void)
 	m_drawsettingcontrols.SetPos(0,0);
 	m_drawsettingcontrols.SetSize(bw,0);
 
-	m_labelup.SetFontSize(11);
-	m_labelup.SetSize(30,25);
-	m_labelup.SetString("Up");
+	m_labelup.SetFontSize(BUTTONFONTSIZE);
+	m_labelup.SetString(gpx->GetString(STRING_UP));
+	m_labelup.Contain();
 	m_labelup.SetEventHandler(this,CALLBACKNAME(LabelUp));
 	m_drawsettingcontrols.AddObject(&m_labelup);
 
-	m_labeldown.SetFontSize(11);
-	m_labeldown.SetSize(30,25);
-	m_labeldown.SetString("Dn");
+	m_labeldown.SetFontSize(BUTTONFONTSIZE);
+	m_labeldown.SetString(gpx->GetString(STRING_DOWN));
+	m_labeldown.Contain();
 	m_labeldown.SetEventHandler(this,CALLBACKNAME(LabelDown));
 	m_drawsettingcontrols.AddObject(&m_labeldown);
 	m_drawsettingcontrols.NextLine();
@@ -74,6 +74,18 @@ void GPX::InitSettings(void)
 	m_mapdirstable.SetAllowAddNewRow(true);
 	m_mapdirstable.SetEventHandler(this,CALLBACKNAME(NewMapPathEntry));
 	m_drawsettingcontrols.AddObject(&m_mapdirstable);
+	m_drawsettingcontrols.NextLine();
+
+	m_language.SetNumEntries(m_locstrings.GetNumLanguages());
+	for(i=0;i<m_locstrings.GetNumLanguages();++i)
+		m_language.SetEntry(i,kGUI::GetString(KGUISTRING_ENGLISH+i),i);
+	m_language.SetSize(200,25);
+
+	m_languagelabel.SetString(kGUI::GetString(KGUISTRING_LANGUAGE));
+//	m_language.SetSize(200,25);
+//	m_languagelabel.Contain();
+	m_drawsettingcontrols.AddObject(&m_language);
+	m_drawsettingcontrols.AddObject(&m_languagelabel);
 	m_drawsettingcontrols.NextLine();
 
 	m_usebrowser.SetPos(10,0);

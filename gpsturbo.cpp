@@ -34,7 +34,9 @@
 #include "zlib/zlib.h"
 
 BigFile *g_bf;
+double GPX::m_adjust=1.0f;
 
+#include "_text.cpp"
 
 /* initial popup screen size */
 #define DEFSCREENWIDTH 320
@@ -1467,20 +1469,20 @@ unsigned int GPX::GetTableColorIndex(const char *c)
 	return(0);
 }
 
-const char *tabnames[]={
-	"Filtered/Map",
-	"Routes",
-	"Tracks",
-	"Lines",
-	"Filters",
-	"Draw Settings",
-	"GPSRs",
-	"Map Download",
-	"Solver",
-	"Stickers",
-	"Notes",
-	"Basic",
-	"Debug"};
+const int tabnames[]={
+STRING_FILTEREDANDMAP,
+STRING_ROUTES,
+STRING_TRACKS,
+STRING_LINES,
+STRING_FILTERS,
+STRING_DRAWSETTINGS,
+STRING_GPSRS,
+STRING_MAPDOWNLOAD,
+STRING_SOLVER,
+STRING_STICKERS,
+STRING_NOTES,
+STRING_BASIC,
+STRING_DEBUG};
 
 enum
 {
@@ -1500,21 +1502,21 @@ MAINMENU_HELP,
 MAINMENU_QUIT,
 MAINMENU_NUM};
 
-static const char *menutext[]={
-	"Load GPX file",
-	"Save GPX file",
-	"Load As ...",
-	"Save As ...",
-	"Save Changes",
-	"Rename Database",
-	"Remove Stale Waypoints",
-	"Print Table",
-	"Print Map",
-	"Save Selected Map area as Shape",
-	"View Filtered Cache Pages",
-	"Credits",
-	"View Help",
-	"Quit"};
+static const int menutext[]={
+STRING_LOADGPX,
+STRING_SAVEGPX,
+STRING_LOADAS,
+STRING_SAVEAS,
+STRING_SAVECHANGES,
+STRING_RENAMEDATABASE,
+STRING_REMOVESTALEWAYPOINTS,
+STRING_PRINTTABLE,
+STRING_PRINTMAP,
+STRING_SAVESELECTEDSHAPE,
+STRING_VIEWFILTEREDCACHEPAGES,
+STRING_CREDITS,
+STRING_VIEWHELP,
+STRING_QUIT};
 
 static const char *menuicon[]={
 	"micon_load.gif",
@@ -1984,6 +1986,14 @@ void GPX::Init(void)
 	kGUIString s;
 	kGUIText *t;
 
+	m_locstrings.Init(&STRING_DEF);	/* generated data in _text.cpp */
+
+#if 0
+	kGUI::SetLanguage(KGUILANG_GERMAN);
+	m_locstrings.SetLanguage(KGUILANG_GERMAN);
+#endif
+
+
 	m_nummacrobuttons=0;
 	m_macrobuttons.Init(16,16);
 
@@ -2041,7 +2051,7 @@ void GPX::Init(void)
 			m_filemenu.GetEntry(i)->SetIsBar(true);
 		else
 		{
-			m_filemenu.SetEntry(i,menutext[filemenu[i]],filemenu[i]);
+			m_filemenu.SetEntry(i,GetString(menutext[filemenu[i]]),filemenu[i]);
 			m_filemenu.SetEntryEnable(filemenu[i],true);
 			
 			iconfn=menuicon[filemenu[i]];
@@ -2062,7 +2072,7 @@ void GPX::Init(void)
 		kGUIImageObj *icon;
 		const char *iconfn;
 
-		m_helpmenu.SetEntry(i,menutext[helpmenu[i]],helpmenu[i]);
+		m_helpmenu.SetEntry(i,GetString(menutext[helpmenu[i]]),helpmenu[i]);
 		m_helpmenu.SetEntryEnable(helpmenu[i],true);
 
 		iconfn=menuicon[helpmenu[i]];
@@ -2073,7 +2083,6 @@ void GPX::Init(void)
 			icon->SetSize(16+2,16);
 			icon->SetXOffset(-2);	/* move over 2 pix to the right */
 		}
-
 	}
 
 	m_colmenu.SetFontSize(14);
@@ -2094,14 +2103,14 @@ void GPX::Init(void)
 	m_tabs.SetStartTabX(m_logo.GetImageWidth()+10);
 	m_tabs.SetSize(bw,bh-y-5);
 	m_tabs.SetNumTabs(TAB_NUMTABS);
-	assert((sizeof(tabnames)/sizeof(char *))==TAB_NUMTABS,"Not enough strings in the tabname array!");
+	assert((sizeof(tabnames)/sizeof(int))==TAB_NUMTABS,"Not enough strings in the tabname array!");
 	for(i=0;i<TAB_NUMTABS;++i)
 	{
 		t=m_tabs.GetTabTextPtr(i);
 
-		t->SetFontSize(16);
+		t->SetFontSize(BUTTONFONTSIZE);
 		t->SetFontID(1);	/* bold */
-		m_tabs.SetTabName(i,tabnames[i]);
+		m_tabs.SetTabName(i,GetString(tabnames[i]));
 	}
 	m_tabs.SetEventHandler(this,CALLBACKNAME(TabChanged));
 	kGUI::GetBackground()->AddObject(&m_tabs);
@@ -2115,48 +2124,47 @@ void GPX::Init(void)
 	m_controls.SetPos(0,0);
 	m_controls.SetMaxWidth(bw);
 	m_controls.SetBorderGap(0);
-//	m_tabs.AddObject(&m_controls);
 
 	m_mapcontrols.SetMaxWidth(bw);
 
 	m_maptype=0;	/* change to load from prefs file */
 	m_maptypecaption.SetPos(0,0);
-	m_maptypecaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_maptypecaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_maptypecaption.SetFontID(SMALLCAPTIONFONT);
-	m_maptypecaption.SetString("Current Map");
+	m_maptypecaption.SetString(gpx->GetString(STRING_CURRENTMAP));
 
 	m_maptypes.SetPos(0,15);
 	m_maptypes.SetSize(250,20);
 	m_maptypes.SetNumEntries(m_nummaps);
-	m_maptypes.SetHint("Click to change the current map.");
+	m_maptypes.SetHint(gpx->GetString(STRING_CURRENTMAPHINT));
 	m_maptypes.SetEventHandler(this,CALLBACKNAME(ChangeMapTypeEvent));
 	m_mapcontrols.AddObjects(2,&m_maptypecaption,&m_maptypes);
 
 	m_zoomcaption.SetPos(0,0);
-	m_zoomcaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_zoomcaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_zoomcaption.SetFontID(SMALLCAPTIONFONT);
-	m_zoomcaption.SetString("Zoom");
+	m_zoomcaption.SetString(gpx->GetString(STRING_ZOOM));
 
 	m_zoomgoto.SetPos(0,15);
 	m_zoomgoto.SetSize(150,20);
 	m_zoomgoto.SetEventHandler(this,CALLBACKNAME(ZoomGoto));
-	m_zoomgoto.SetHint("Goto a zoom level.");
+	m_zoomgoto.SetHint(gpx->GetString(STRING_ZOOMGOTOHINT));
 
 	m_zoomin.SetPos(160,15);
-	m_zoomin.SetHint("Zoom In on the map.");
+	m_zoomin.SetHint(gpx->GetString(STRING_ZOOMINHINT));
 	m_zoomin.SetImage(&m_zin);
-	m_zoomin.SetSize(m_zin.GetImageWidth()+6,m_zin.GetImageHeight()+6);
+	m_zoomin.Contain();
 	m_zoomin.SetEventHandler(this,CALLBACKNAME(ClickZoomIn));
 
 	m_zoomout.SetPos(190,15);
-	m_zoomout.SetHint("Zoom Out on the map.");
+	m_zoomout.SetHint(gpx->GetString(STRING_ZOOMOUTHINT));
 	m_zoomout.SetImage(&m_zout);
-	m_zoomout.SetSize(m_zout.GetImageWidth()+6,m_zout.GetImageHeight()+6);
+	m_zoomout.Contain();
 	m_zoomout.SetEventHandler(this,CALLBACKNAME(ClickZoomOut));
 	m_mapcontrols.AddObjects(4,&m_zoomcaption,&m_zoomgoto,&m_zoomin,&m_zoomout);
 
 	m_onlinecaption.SetPos(0,0);
-	m_onlinecaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_onlinecaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_onlinecaption.SetFontID(SMALLCAPTIONFONT);
 	m_onlinecaption.SetString("Online");
 
@@ -2174,7 +2182,7 @@ void GPX::Init(void)
 	// not implemented yet
 	/* search map for text input */
 	m_quicksearchmapcaption.SetPos(0,0);
-	m_quicksearchmapcaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_quicksearchmapcaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_quicksearchmapcaption.SetFontID(SMALLCAPTIONFONT);
 	m_quicksearchmapcaption.SetString("Search Map");
 
@@ -2188,7 +2196,7 @@ void GPX::Init(void)
 
 	/* position under mouse pointer */
 	m_ucaption.SetPos(0,0);
-	m_ucaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_ucaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_ucaption.SetFontID(SMALLCAPTIONFONT);
 	m_ucaption.SetString("Map Position under Mouse");
 
@@ -2196,13 +2204,13 @@ void GPX::Init(void)
 
 	m_ulat.SetPos(0,15);
 	m_ulat.SetHint("Latitude on map under Mouse.");
-	m_ulat.SetFontSize(13);
+	m_ulat.SetFontSize(BUTTONFONTSIZE);
 	m_ulat.SetSize(100,20);
 	m_ulat.SetLocked(true);
 
 	m_ulon.SetPos(110,15);
 	m_ulon.SetHint("Longitude on map under Mouse.");
-	m_ulon.SetFontSize(13);
+	m_ulon.SetFontSize(BUTTONFONTSIZE);
 	m_ulon.SetSize(100,20);
 	m_ulon.SetLocked(true);
 	m_mapcontrols.AddObjects(3,&m_ucaption,&m_ulat,&m_ulon);
@@ -2210,40 +2218,40 @@ void GPX::Init(void)
 	/* Map controls */
 
 	m_cposcaption.SetPos(0,0);
-	m_cposcaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_cposcaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_cposcaption.SetFontID(SMALLCAPTIONFONT);
 	m_cposcaption.SetString("Current Center Position");
 
 	m_clat.SetPos(0,15);
 	m_clat.SetHint("Current center latitude.");
-	m_clat.SetFontSize(13);
+	m_clat.SetFontSize(BUTTONFONTSIZE);
 	m_clat.SetSize(100,20);
 	m_clat.SetEventHandler(this,CALLBACKNAME(UpdateCenter));
 
 	m_clon.SetPos(110,15);
 	m_clon.SetHint("Current center longitude.");
-	m_clon.SetFontSize(13);
+	m_clon.SetFontSize(BUTTONFONTSIZE);
 	m_clon.SetSize(100,20);
 	m_clon.SetEventHandler(this,CALLBACKNAME(UpdateCenter));
 
 	m_mapcontrols.AddObjects(3,&m_cposcaption,&m_clat,&m_clon);
 
 	m_nearcaption.SetPos(0,0);
-	m_nearcaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_nearcaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_nearcaption.SetFontID(SMALLCAPTIONFONT);
 	m_nearcaption.SetString("Near Distance");
 
 	m_neardist.Sprintf("%d",2);
 	m_neardist.SetPos(0,15);
 	m_neardist.SetHint("Distance for Near calculation using current draw units.");
-	m_neardist.SetFontSize(13);
+	m_neardist.SetFontSize(BUTTONFONTSIZE);
 	m_neardist.SetSize(100,20);
 	m_neardist.SetEventHandler(this,CALLBACKNAME(ReCalcNearEvent));
 
 	m_mapcontrols.AddObjects(2,&m_nearcaption,&m_neardist);
 
 	m_gpscaption.SetPos(0,0);
-	m_gpscaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_gpscaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_gpscaption.SetFontID(SMALLCAPTIONFONT);
 	m_gpscaption.SetString("Realtime Tracking: GPSr Name / Connect / Track on Map / Position");
 
@@ -2262,13 +2270,13 @@ void GPX::Init(void)
 
 	m_gpslat.SetPos(210+15+15,15);
 	m_gpslat.SetHint("GPS latitude.");
-	m_gpslat.SetFontSize(13);
+	m_gpslat.SetFontSize(BUTTONFONTSIZE);
 	m_gpslat.SetSize(100,20);
 	m_gpslat.SetLocked(true);
 
 	m_gpslon.SetPos(210+110+15+15,15);
 	m_gpslon.SetHint("GPS longitude.");
-	m_gpslon.SetFontSize(13);
+	m_gpslon.SetFontSize(BUTTONFONTSIZE);
 	m_gpslon.SetSize(100,20);
 	m_gpslon.SetLocked(true);
 	m_mapcontrols.AddObjects(6,&m_gpscaption,&m_realtimegps,&m_gpsconnect,&m_gpsfollow,&m_gpslat,&m_gpslon);
@@ -2543,7 +2551,7 @@ void MacroButtonEdit::Init(void)
 	m_controls.SetPos(0,0);
 
 	m_subcaption.SetPos(0,0);
-	m_subcaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_subcaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_subcaption.SetFontID(SMALLCAPTIONFONT);
 	m_subcaption.SetString("Subroutine");
 
@@ -2559,7 +2567,7 @@ void MacroButtonEdit::Init(void)
 	m_controls.AddObjects(2,&m_subcaption,&m_sublist);
 
 	m_buttoncaption.SetPos(0,0);
-	m_buttoncaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_buttoncaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_buttoncaption.SetFontID(SMALLCAPTIONFONT);
 	m_buttoncaption.SetString("Button Text");
 
@@ -2805,17 +2813,16 @@ private:
 
 Credits::Credits()
 {
-	int w=550,h=380,dh;
+	int dh;
 	int warea;
 
 	m_window.SetAllowButtons(WINDOWBUTTON_CLOSE);
+	m_window.SetPos(100,100);
 	m_name.SetPos(0,0);
 	m_name.SetFontSize(20);
 	m_name.SetString("GPSTurbo v0.98");
 	m_name.SetColor(DrawColor(255,0,0));
 	m_window.AddObject(&m_name);
-	m_window.SetPos( (kGUI::GetSurfaceWidth()-w)/2,(kGUI::GetSurfaceHeight()-h)/2);
-	m_window.SetSize(w,h);
 	
 	warea=m_window.GetChildZoneW()-10;
 	m_desc.SetFontSize(14);
@@ -2838,6 +2845,8 @@ Credits::Credits()
 	m_window.SetEventHandler(this,CALLBACKNAME(WindowEvent));
 	m_window.SetTop(true);
 	m_window.ExpandToFit();
+	m_window.Center();
+
 	kGUI::AddWindow(&m_window);
 }
 
@@ -5682,6 +5691,14 @@ int GPX::SortEntry(const void *o1,const void *o2)
 	return(0);
 }
 
+GPXLabel::GPXLabel()
+{
+	m_row=0;
+	m_draw=false;
+	m_wasdrawn=-1;
+	SetFontSize(WPTNAMEFONTSIZE);
+}
+
 void GPXLabel::Changed(void)
 {
 	m_lw=GetWidth()+4;
@@ -6865,7 +6882,7 @@ kGUIRenameDBReq::kGUIRenameDBReq()
 	m_controls.SetPos(0,0);
 
 	m_fromcaption.SetPos(0,0);
-	m_fromcaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_fromcaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_fromcaption.SetFontID(SMALLCAPTIONFONT);
 	m_fromcaption.SetString("From");
 
@@ -6902,7 +6919,7 @@ kGUIRenameDBReq::kGUIRenameDBReq()
 	m_controls.AddObjects(2,&m_fromcaption,&m_fromdb);
 
 	m_tocaption.SetPos(0,0);
-	m_tocaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_tocaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_tocaption.SetFontID(SMALLCAPTIONFONT);
 	m_tocaption.SetString("To");
 
@@ -6972,15 +6989,23 @@ kGUIRenameDBReq::~kGUIRenameDBReq()
 
 void AppInit(void)
 {
-//	kGUIXMLItem::InitPool();
 	kGUIXMLCODES::Init();
-	kGUI::SetDefFontSize(11);
+
+	if(kGUI::GetFullScreenWidth()>1024)
+	{
+		kGUI::SetDefFontSize(11);
+		GPX::SetAdjust(1.0f);
+	}
+	else
+	{
+		kGUI::SetDefFontSize(9);
+		GPX::SetAdjust(0.85f);
+	}
 	kGUI::SetDefReportFontSize(11);
 	assert((sizeof(shapenames)/sizeof(char *))==SHAPE_NUMSHAPES,"Shapes table and defines list not sync'd!");
 
 	kGUI::SetCookieJar(new kGUICookieJar());
 
-//	GPXCoord::Init();
 	gpx=new GPX();
 	gpx->PreInit();
 }
@@ -7284,9 +7309,9 @@ EditButtonWindowObj::EditButtonWindowObj(unsigned int numsubs,ClassArray<kGUIStr
 	for(i=0;i<numsubs;++i)
 		m_sublist.GetEntryPtr(i)->SetString(sublist->GetEntryPtr(i));
 
-	m_up.SetString("Up");
 	m_up.SetPos(10,10);
-	m_up.SetSize(60,20);
+	m_up.SetString(gpx->GetString(STRING_UP));
+	m_up.Contain();
 	m_up.SetEventHandler(this,CALLBACKNAME(PressUp));
 	m_window.AddObject(&m_up);
 
@@ -7422,3 +7447,4 @@ void EditButtonWindowObj::PressSave(kGUIEvent *event)
 		m_window.Close();
 	}
 }
+

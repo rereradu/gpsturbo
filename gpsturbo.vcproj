@@ -49,7 +49,8 @@
 				CommandLine="copy Debug\gpsturbo.exe \gpsturbo\gpsturbo.exe"/>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="..\kgui\Debug\kguibig data.big big big/
+				CommandLine="..\kgui\Debug\kguilocstr -i gpsloc.txt -p STRING_ -h _text.h -c _text.cpp
+..\kgui\Debug\kguibig data.big big big/
 ..\kgui\Debug\bintoc data.big data.cpp
 "/>
 			<Tool

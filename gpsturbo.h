@@ -36,6 +36,9 @@
 #include "kguibrowse.h"
 #include <math.h>
 
+#include "kguitext.h"
+#include "_text.h"
+
 /* my other classes */
 #include "gcoords.h"
 
@@ -131,14 +134,12 @@ GPXCOL_NUMNEAR,
 GPXCOL_NUMCOLUMNS
 };
 
-#define WPTNAMEFONTSIZE 9
-
 /* used for each row and for each child */
 
 class GPXLabel : public kGUIBSPRectEntry, public kGUIText
 {
 public:
-	GPXLabel() {m_row=0;m_draw=false;m_wasdrawn=-1;SetFontSize(WPTNAMEFONTSIZE);}
+	GPXLabel();
 	void SetRow(class GPXRow *row) {m_row=row;}
 	void Draw(int cxpix,int cypix);
 	bool m_draw;
@@ -542,9 +543,8 @@ public:
 #if USESHAREDCOMBOS
 	kGUISharedComboEntries m_sharedcontainer;
 #endif
-
-//	bool CallBabel(kGUIBusy *busy,int argc, char *argv[]);
-//	static int GetBabelInputFormats(int index,const char **name,const char **desc,const char **ext);
+	inline static void SetAdjust(double adjust) {m_adjust=adjust;}
+	inline static int GetAdjust(int size) {return ((int)(size*m_adjust));}
 
 	static int GetIndex(const char *t,int num,const char **strings);
 	static int GetIndexz(const char *t,int num,const char **strings,int nomatchval);
@@ -632,7 +632,7 @@ public:
 	kGUIHTMLItemCache m_browseritemcache;
 	kGUIHTMLVisitedCache m_browservisitedcache;
 	Hash m_xmlnamecache;
-
+	kGUIString *GetString(int word) {return m_locstrings.GetString(word);}
 	//this is public since if a new map data is downloaded then this is called to flush
 	void ChangeMapType(void);
 private:
@@ -668,7 +668,6 @@ private:
 	kGUIString *GetMapPath(unsigned int index);
 
 	void SelectLoadTracks(void);
-	
 
 	int MapEntryUnderMouse(int mx,int my);
 	void OverMap(int mx,int my);
@@ -735,6 +734,8 @@ private:
 
 	Array<ROWY_DEF>m_swptlist;	/* sorted by Label Y */
 
+	kGUILocStrings m_locstrings;
+
 	RoutesPage m_routes;
 	TracksPage m_tracks;
 	LinesPage m_lines;
@@ -776,7 +777,10 @@ private:
 	int m_numshowticks;					/* this is the same as above just cached for speed */
 	kGUITextObj m_shownumtickslabel;
 
-	kGUITickBoxObj m_usebrowser;		/* move overlapping labels */
+	kGUIComboBoxObj m_language;			/* select language */
+	kGUITextObj m_languagelabel;	
+
+	kGUITickBoxObj m_usebrowser;		/* use built-in webbrowser */
 	kGUITextObj m_usebrowserlabel;	
 
 	kGUITickBoxObj m_movelabels;		/* move overlapping labels */
@@ -883,7 +887,6 @@ private:
 	kGUITextObj m_solvsszenithcaption;
 	kGUIComboBoxObj m_solvsszenithtype;
 
-
 	kGUIButtonObj m_solvssbutton;
 
 	kGUITextObj m_solvssrisecaption;
@@ -984,6 +987,8 @@ private:
 	int m_clipfoundlogs;
 	int m_clipnotfoundlogs;
 	kGUIBusy *m_busy;
+
+	static double m_adjust;
 
 	CALLBACKGLUEPTR(GPX,UpdateCenter,kGUIEvent)
 	CALLBACKGLUEPTR(GPX,DrawMapCell,kGUICellObj)
@@ -1243,9 +1248,6 @@ SOLVERHEAD_DEGREES,
 SOLVERHEAD_DEGREESMAGNETIC,
 SOLVERHEAD_NUMTYPES};
 
-#define SMALLCAPTIONFONT 1
-#define SMALLCAPTIONSIZE 9
-
 extern void DebugPrint(const char *message,...);
 
 #define sgn(x) (x)==0?0:(x>0?1:-1)
@@ -1254,5 +1256,9 @@ extern void DebugPrint(const char *message,...);
 extern GPX *gpx;
 extern bool g_isonline;
 
+#define SMALLCAPTIONFONT 1
+#define SMALLCAPTIONFONTSIZE GPX::GetAdjust(9)
+#define WPTNAMEFONTSIZE GPX::GetAdjust(9)
+#define BUTTONFONTSIZE GPX::GetAdjust(15)
 
 #endif

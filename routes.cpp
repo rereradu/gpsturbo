@@ -156,21 +156,21 @@ void RoutesPage::Init(kGUIContainerObj *obj)
 	/* route table */
 	m_editcontrols.SetSize(bw,20);
 
-	m_pntup.SetFontSize(11);
-	m_pntup.SetSize(30,25);
-	m_pntup.SetString("Up");
+	m_pntup.SetFontSize(BUTTONFONTSIZE);
+	m_pntup.SetString(gpx->GetString(STRING_UP));
+	m_pntup.Contain();
 	m_pntup.SetEventHandler(this,CALLBACKNAME(ClickWpntUp));
 	m_editcontrols.AddObject(&m_pntup);
 
-	m_pntdown.SetFontSize(11);
-	m_pntdown.SetSize(30,25);
-	m_pntdown.SetString("Dn");
+	m_pntdown.SetFontSize(BUTTONFONTSIZE);
+	m_pntdown.SetString(gpx->GetString(STRING_DOWN));
+	m_pntdown.Contain();
 	m_pntdown.SetEventHandler(this,CALLBACKNAME(ClickWpntDown));
 	m_editcontrols.AddObject(&m_pntdown);
 
-	m_autoorder.SetFontSize(11);
-	m_autoorder.SetSize(100,25);
-	m_autoorder.SetString("Auto Order");
+	m_autoorder.SetFontSize(BUTTONFONTSIZE);
+	m_autoorder.SetString(gpx->GetString(STRING_AUTOORDER));
+	m_autoorder.Contain();
 	m_autoorder.SetEventHandler(this,CALLBACKNAME(ClickAutoOrder));
 	m_editcontrols.AddObject(&m_autoorder);
 
@@ -180,27 +180,33 @@ void RoutesPage::Init(kGUIContainerObj *obj)
 	m_editroutelist.SetEventHandler(this,CALLBACKNAME(LoadEvent));
 	m_editcontrols.AddObject(&m_editroutelist);
 
-	m_save.SetSize(100,25);
-	m_save.SetString("Save Route");
+	m_save.SetFontSize(BUTTONFONTSIZE);
+	m_save.SetString(gpx->GetString(STRING_SAVEROUTE));
+	m_save.Contain();
 	m_save.SetEventHandler(this,CALLBACKNAME(ClickSave));
 	m_editcontrols.AddObject(&m_save);
 
-	m_undo.SetSize(100,25);
-	m_undo.SetString("Undo Changes");
+	m_undo.SetFontSize(BUTTONFONTSIZE);
+	m_undo.SetString(gpx->GetString(STRING_UNDOCHANGES));
+	m_undo.Contain();
 	m_undo.SetEventHandler(this,CALLBACKNAME(ClickUndo));
 	m_editcontrols.AddObject(&m_undo);
 
-	m_delete.SetSize(100,25);
-	m_delete.SetString("Delete Route");
+	m_delete.SetFontSize(BUTTONFONTSIZE);
+	m_delete.SetString(gpx->GetString(STRING_DELETEROUTE));
+	m_delete.Contain();
 	m_delete.SetEventHandler(this,CALLBACKNAME(ClickDelete));
 	m_editcontrols.AddObject(&m_delete);
 
-	m_rename.SetSize(100,25);
-	m_rename.SetString("Rename Route");
+	m_rename.SetFontSize(BUTTONFONTSIZE);
+	m_rename.SetString(gpx->GetString(STRING_RENAMEROUTE));
+	m_rename.Contain();
 	m_rename.SetEventHandler(this,CALLBACKNAME(ClickRename));
 	m_editcontrols.AddObject(&m_rename);
 
-	m_copy.SetSize(100,25);
+	m_copy.SetFontSize(BUTTONFONTSIZE);
+	m_copy.SetString(gpx->GetString(STRING_COPYROUTE));
+	m_copy.Contain();
 	m_copy.SetString("Copy Route");
 	m_copy.SetEventHandler(this,CALLBACKNAME(ClickCopy));
 	m_editcontrols.AddObject(&m_copy);
@@ -212,7 +218,7 @@ void RoutesPage::Init(kGUIContainerObj *obj)
 	m_editcontrols.NextLine();
 
 	m_drawcaption.SetPos(0,0);
-	m_drawcaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_drawcaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_drawcaption.SetFontID(SMALLCAPTIONFONT);
 	m_drawcaption.SetString("Draw ");
 	m_draw.SetPos(0,15);
@@ -220,7 +226,7 @@ void RoutesPage::Init(kGUIContainerObj *obj)
 	m_editcontrols.AddObjects(2,&m_drawcaption,&m_draw);
 
 	m_colorcaption.SetPos(0,0);
-	m_colorcaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_colorcaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_colorcaption.SetFontID(SMALLCAPTIONFONT);
 	m_colorcaption.SetString(" color");
 
@@ -235,7 +241,7 @@ void RoutesPage::Init(kGUIContainerObj *obj)
 
 	/* display info for , not editable */
 	m_numcaption.SetPos(0,0);
-	m_numcaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_numcaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_numcaption.SetFontID(SMALLCAPTIONFONT);
 	m_numcaption.SetString("Total  Points");
 
@@ -246,7 +252,7 @@ void RoutesPage::Init(kGUIContainerObj *obj)
 	m_editcontrols.AddObjects(2,&m_numcaption,&m_num);
 
 	m_distcaption.SetPos(0,0);
-	m_distcaption.SetFontSize(SMALLCAPTIONSIZE);
+	m_distcaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_distcaption.SetFontID(SMALLCAPTIONFONT);
 	m_distcaption.SetString("Total Route Distance");
 
