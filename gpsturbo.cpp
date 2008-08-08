@@ -36,7 +36,7 @@
 BigFile *g_bf;
 double GPX::m_adjust=1.0f;
 
-#include "_text.cpp"
+#include "_gtext.cpp"
 
 /* initial popup screen size */
 #define DEFSCREENWIDTH 320

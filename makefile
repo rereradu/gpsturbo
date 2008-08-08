@@ -18,7 +18,7 @@ $(OBJDIR)/%.o: %.cpp         # combined w/ next line will compile recently chang
 	$(CC) $(CCOPTS) $(SYS) $(KGUILIB_INCLUDES) -o $@ -c $<
 
 .PHONY : all					# .PHONY ignores files named all
-all: data.cpp $(PROGRAM)		# all is dependent on $(PROGRAM) to be complete
+all: data.cpp _gtext.cpp $(PROGRAM)		# all is dependent on $(PROGRAM) to be complete
 
 ifeq ($(SYS),-DMINGW)
 
@@ -38,13 +38,16 @@ data.cpp:
 
 .PHONY : clean   # .PHONY ignores files named clean
 clean:
-	-$(RM) $(OBJ) $(RESOBJ) $(PROGRAM) data.cpp data.big $(DEP) # '-' causes errors not to exit the process
+	-$(RM) $(OBJ) $(RESOBJ) $(PROGRAM) data.cpp data.big _gtext.h _gtext.cpp $(DEP) # '-' causes errors not to exit the process
 
 $(DEP): data.cpp
 	@echo "Generating Dependencies"
 	-mkdir $(OBJDIR)
 	-$(CC) $(KGUILIB_INCLUDES) -E -MM $(SYS) $(CFLAGS) $(SRC) >>$(DEP)
 	$(KGUILOC)$(OBJDIR)/fixdep$(EXE) $(DEP) $(OBJDIR)/
+
+_gtext.cpp: $(KGUILOCSTR_OUT) gpsloc.txt
+	$(KGUILOC)$(OBJDIR)/kguilocstr$(EXE) -i gpsloc.txt -p STRING_ -h _gtext.h -c _gtext.cpp
 	
 
 ifeq (,$(findstring clean,$(MAKECMDGOALS)))
