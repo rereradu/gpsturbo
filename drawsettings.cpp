@@ -36,6 +36,7 @@ void GPX::InitSettings(void)
 
 	m_drawsettingcontrols.SetPos(0,0);
 	m_drawsettingcontrols.SetSize(bw,0);
+	m_drawsettingcontrols.SetMaxHeight(9999);
 
 	m_labelup.SetFontSize(BUTTONFONTSIZE);
 	m_labelup.SetString(gpx->GetString(STRING_UP));
