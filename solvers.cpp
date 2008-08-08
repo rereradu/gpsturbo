@@ -275,7 +275,7 @@ void GPX::InitSolvers(void)
 	m_solvdecodein.SetFontID(FONT_COURIER);
 	m_solvdecodein.SetFontSize(20);
 	m_solvdecodein.SetPos(0,25);
-	m_solvdecodein.SetSize(bw-10,200);
+	m_solvdecodein.SetSize(bw-10,100);
 	m_solvdecodecontrols.AddObjects(2,&m_solvdecodeincaption,&m_solvdecodein);
 
 	m_solvdecodetype.SetSize(200,20);
@@ -318,7 +318,7 @@ void GPX::InitSolvers(void)
 	m_solvdecodeout.SetFontID(FONT_COURIER);
 	m_solvdecodeout.SetFontSize(20);
 	m_solvdecodeout.SetPos(0,25);
-	m_solvdecodeout.SetSize(bw-10,200);
+	m_solvdecodeout.SetSize(bw-10,100);
 	m_solvdecodecontrols.AddObjects(2,&m_solvdecodeoutcaption,&m_solvdecodeout);
 
 	m_solvertabs.AddObject(&m_solvdecodecontrols);

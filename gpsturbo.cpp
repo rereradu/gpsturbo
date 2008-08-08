@@ -6989,6 +6989,8 @@ kGUIRenameDBReq::~kGUIRenameDBReq()
 
 void AppInit(void)
 {
+	umask(0);
+
 	kGUIXMLCODES::Init();
 
 	if(kGUI::GetFullScreenWidth()>1024)
