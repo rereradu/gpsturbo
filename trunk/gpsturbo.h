@@ -37,7 +37,7 @@
 #include <math.h>
 
 #include "kguitext.h"
-#include "_text.h"
+#include "_gtext.h"
 
 /* my other classes */
 #include "gcoords.h"
