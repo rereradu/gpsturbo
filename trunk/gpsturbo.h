@@ -1257,8 +1257,8 @@ extern GPX *gpx;
 extern bool g_isonline;
 
 #define SMALLCAPTIONFONT 1
-#define SMALLCAPTIONFONTSIZE GPX::GetAdjust(9)
-#define WPTNAMEFONTSIZE GPX::GetAdjust(9)
+#define SMALLCAPTIONFONTSIZE GPX::GetAdjust(10)
+#define WPTNAMEFONTSIZE GPX::GetAdjust(10)
 #define BUTTONFONTSIZE GPX::GetAdjust(15)
 
 #endif

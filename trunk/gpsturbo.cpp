@@ -1154,21 +1154,21 @@ void GPXRow::UpdateLogColors(void)
 }
 
 #define MAXRH 64
+#define MINRH 16
 
-extern int wpcolwidths[GPXCOL_NUMCOLUMNS];
 
 void GPXRow::CalcHeight(void)
 {
 	int h;
 	int h2;
 
-	h=m_name.CalcHeight(wpcolwidths[GPXCOL_NAME]-8)+2;
-	h2=m_hint.CalcHeight(wpcolwidths[GPXCOL_HINT]-8)+2;
+	h=m_name.CalcHeight(gpx->m_fwt->GetColWidth(GPXCOL_NAME)-8)+2;
+	h2=m_hint.CalcHeight(gpx->m_fwt->GetColWidth(GPXCOL_HINT)-8)+2;
 	if(h2>h)
 		h=h2;
 	
-	if(h>MAXRH)
-		h=MAXRH;
+	h=min(h,MAXRH);
+	h=max(h,MINRH);
 
 	SetRowHeight(h);
 }
@@ -2015,12 +2015,18 @@ void GPX::Init(void)
 	m_curmap=new GGPXMap(MAPTYPE_GOOGLEHYBRID);
 
 	m_logo.SetPos(0,0);
-	m_logo.SetSize(m_logo.GetImageWidth(),m_logo.GetImageHeight());
+	if(bh<800)
+	{
+		m_logo.SetScale(0.75f,0.75f);
+		m_logo.SetSize((int)(m_logo.GetImageWidth()*0.75f),(int)(m_logo.GetImageHeight()*0.75f));
+	}
+	else
+		m_logo.SetSize(m_logo.GetImageWidth(),m_logo.GetImageHeight());
 	m_logo.SetHint("Click to visit geocaching.com");
 	m_logo.SetEventHandler(this,CALLBACKNAME(ShowGeocaching));
 	kGUI::GetBackground()->AddObject(&m_logo);
 
-	m_maincontrols.SetPos(m_logo.GetImageWidth()+8,0);
+	m_maincontrols.SetPos(m_logo.GetZoneW()+8,0);
 	m_maincontrols.SetMaxWidth(bw);
 
 	m_mainmenu.SetFontSize(20);
@@ -2097,10 +2103,10 @@ void GPX::Init(void)
 	m_macrocontrols.SetZoneH(24);
 	kGUI::GetBackground()->AddObject(&m_macrocontrols);
 
-	y=m_logo.GetImageHeight()-m_tabs.GetTabRowHeight();
+	y=m_logo.GetZoneH()-m_tabs.GetTabRowHeight();
 	/* font size on tabs? */
 	m_tabs.SetPos(0,y);
-	m_tabs.SetStartTabX(m_logo.GetImageWidth()+10);
+	m_tabs.SetStartTabX(m_logo.GetZoneW()+10);
 	m_tabs.SetSize(bw,bh-y-5);
 	m_tabs.SetNumTabs(TAB_NUMTABS);
 	assert((sizeof(tabnames)/sizeof(int))==TAB_NUMTABS,"Not enough strings in the tabname array!");
@@ -6775,44 +6781,54 @@ void GPX::UpdateMacroButtons(void)
 	m_macrocontrols.DeleteChildren();
 	m_macrocontrols.Reset();
 	m_macrocontrols.SetRedo(true);
-	m_macrocontrols.SetObjectGap(10);
 
 	if(m_nummacrobuttons)
 	{
+		m_macrocontrols.SetBorderGap(3);
+		m_macrocontrols.SetObjectGap(8);
+
 		t=new kGUITextObj();
 		t->SetString("Macros:");
 		t->SetSize(t->GetWidth()+8,t->GetHeight()+8);
 		m_macrocontrols.AddObject(t);
-	}
 
-	for(i=0;i<m_nummacrobuttons;++i)
+		for(i=0;i<m_nummacrobuttons;++i)
+		{
+			bb=m_macrobuttons.GetEntryPtr(i);
+			b=new kGUIButtonObj();
+			if(bb->GetUseImage() && bb->GetImage()->IsValid())
+			{
+				kGUIImage *i;
+	
+				i=bb->GetImage();
+				b->SetImage(i);
+				b->SetSize(min(i->GetImageWidth(),64),min(i->GetImageHeight(),32));
+			}
+			else
+			{
+				b->SetString(bb->GetButtonText());
+				b->SetSize(b->GetWidth()+8,b->GetHeight()+8);
+			}
+			b->SetHint(bb->GetButtonText());
+			b->SetShowCurrent(false);	/* don't draw 'current' object frame on this button */
+			bb->SetButton(b);
+			m_macrocontrols.AddObject(b);
+			b->SetEventHandler(this,CALLBACKNAME(MacroButtonEvent));
+		}
+	}
+	else
 	{
-		bb=m_macrobuttons.GetEntryPtr(i);
-		b=new kGUIButtonObj();
-		if(bb->GetUseImage() && bb->GetImage()->IsValid())
-		{
-			kGUIImage *i;
-
-			i=bb->GetImage();
-			b->SetImage(i);
-			b->SetSize(min(i->GetImageWidth(),64),min(i->GetImageHeight(),32));
-		}
-		else
-		{
-			b->SetString(bb->GetButtonText());
-			b->SetSize(b->GetWidth()+8,b->GetHeight()+8);
-		}
-		b->SetHint(bb->GetButtonText());
-		b->SetShowCurrent(false);	/* don't draw 'current' object frame on this button */
-		bb->SetButton(b);
-		m_macrocontrols.AddObject(b);
-		b->SetEventHandler(this,CALLBACKNAME(MacroButtonEvent));
+		m_macrocontrols.SetBorderGap(0);
+		m_macrocontrols.SetObjectGap(0);
+		m_macrocontrols.SetSize(0,0);
 	}
+
 	m_macrocontrols.SetRedo(false);
 
 	/* move down tabs if need be */
 	oldy=m_tabs.GetZoneY();
-	newy=max(m_logo.GetImageHeight()-m_tabs.GetTabRowHeight(),m_macrocontrols.GetZoneBY());
+	newy=max(m_logo.GetZoneBY()-m_tabs.GetTabRowHeight(),m_macrocontrols.GetZoneBY());
+	printf("mctop=%d,mcbot=%d,oldy=%d,newy=%d\n",m_macrocontrols.GetZoneY(),m_macrocontrols.GetZoneBY(),oldy,newy);
 	if(oldy!=newy)
 	{
 		changey=oldy-newy;

@@ -222,7 +222,7 @@ bool BabelGlue::Call(bool build,kGUIBusy *busy)
 #if defined(LINUX) || defined(MACINTOSH)
 	//errors are also redirected to gpsbabel.err so append these to output if found
 	{
-		long fs;
+		unsigned long fs;
 		const char *file;
 
 		file=(const char *)kGUI::LoadFile("gpsbabel.err",&fs);
