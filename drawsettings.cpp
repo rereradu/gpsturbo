@@ -190,6 +190,8 @@ void GPX::InitSettings(void)
 	m_drawsettingsarea.SetMaxWidth(m_drawsettingcontrols.GetZoneW());
 	m_drawsettingsarea.SetMaxHeight(m_drawsettingcontrols.GetZoneH());
 	m_drawsettingsarea.SetSize(bw,bh);
+	printf("bw=%d,bh=%d,maxw=%d,maxh=%d\n",bw,bh,m_drawsettingcontrols.GetZoneW(),m_drawsettingcontrols.GetZoneH());
+	fflush(stdout);
 	m_drawsettingsarea.AddObject(&m_drawsettingcontrols);
 	m_tabs.AddObject(&m_drawsettingsarea);
 }
