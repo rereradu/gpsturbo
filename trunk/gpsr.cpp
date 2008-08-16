@@ -996,6 +996,7 @@ GPXGPSRow::GPXGPSRow()
 	m_port.SetEntry(6,"COM7",6);
 	m_port.SetEntry(7,"COM8",7);
 	m_port.SetEntry(8,"USB",8);
+	m_port.SetEntry(9,"/dev/ttyUSB0",9);
 
 	m_rate.SetNumEntries(7);		/* list of rates */
 	m_rate.SetEntry(0,"1200",0);
