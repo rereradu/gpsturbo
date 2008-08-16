@@ -981,9 +981,10 @@ GPXGPSRow::GPXGPSRow()
 	m_brand.SetEventHandler(this,CALLBACKNAME(BPChanged));
 	m_port.SetEventHandler(this,CALLBACKNAME(BPChanged));
 	
-	m_brand.SetNumEntries(2);		/* list of brands */
+	m_brand.SetNumEntries(3);		/* list of brands */
 	m_brand.SetEntry(0,"Garmin",0);
 	m_brand.SetEntry(1,"Magellan",0);
+	m_brand.SetEntry(2,"nmea",0);
 
 	m_port.SetNumEntries(9);		/* list of ports */
 	m_port.SetEntry(0,"COM1",0);

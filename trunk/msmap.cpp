@@ -190,38 +190,45 @@ const char *MSGPXFName::GetFName(int mapnum)
 /* static function */
 void MSGPXMap::GetLongName(const char *fn,kGUIString *longname)
 {
-	unsigned long filesize;
-	char *fp;
 	kGUIString tdbfn;
+	DataHandle dh;
 
 	longname->Clear();
 	tdbfn.SetString(fn);
 	tdbfn.Replace(".img",".tdb");
 
-	fp=(char *)kGUI::LoadFile(tdbfn.GetString(),&filesize);
-	if(fp)
+	dh.SetFilename(tdbfn.GetString());
+	if(dh.Open())
 	{
-		const char *cfp;
-		const char *efp=fp+filesize;
 		int blocklen;
 		unsigned char blockid;
+		unsigned char v1;
+		unsigned char v2;
+		unsigned long long index;
 
-		/* look for map header block */
-		cfp=fp;
-		while(cfp<efp)
+		index=0;
+		while(index<dh.GetSize())
 		{
-			blockid=cfp[0];
-			blocklen=ReadU16(cfp+1);
-			cfp+=3;
+			dh.Seek(index);
+			dh.Read(&blockid,(unsigned long long)1L);
+			dh.Read(&v1,(unsigned long long)1L);
+			dh.Read(&v2,(unsigned long long)1L);
+			blocklen=((int)v1|((int)v2<<8));
+			index+=3;
+
 			if(blockid==0x50)
 			{
-				longname->SetString(cfp+6);	/* get long name for this map */
+				index+=6;
+
+				dh.Seek(index);
+				dh.ReadLine(longname);
 				break;
 			}
-			cfp+=blocklen;
+			/* skip block */
+			index+=blocklen;
 		}
+		dh.Close();
 	}
-	delete []fp;
 }
 
 #define FAT_SIZE 512
