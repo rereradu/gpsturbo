@@ -132,7 +132,9 @@ void BabelGlue::BuildParms(void)
 
 	s=m_strings.GetEntryPtr(m_argc++);
 	s->SetString(m_inname.GetString());
+#ifdef WINDOZE
 	s->Replace("USB","usb:");
+#endif
 
 	switch(m_filter)
 	{
@@ -170,7 +172,9 @@ void BabelGlue::BuildParms(void)
 
 		s=m_strings.GetEntryPtr(m_argc++);
 		s->SetString(m_outname.GetString());
+#ifdef WINDOZE
 		s->Replace("USB","usb:");
+#endif
 	}
 }
 
