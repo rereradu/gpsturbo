@@ -986,7 +986,7 @@ GPXGPSRow::GPXGPSRow()
 	m_brand.SetEntry(1,"Magellan",0);
 	m_brand.SetEntry(2,"nmea",0);
 
-	m_port.SetNumEntries(9);		/* list of ports */
+	m_port.SetNumEntries(10);		/* list of ports */
 	m_port.SetEntry(0,"COM1",0);
 	m_port.SetEntry(1,"COM2",1);
 	m_port.SetEntry(2,"COM3",2);
