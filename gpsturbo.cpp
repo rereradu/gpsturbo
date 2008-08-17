@@ -4375,6 +4375,8 @@ GPX::~GPX()
 {
 	unsigned int x;
 
+	if(m_realtime->IsTracking())
+		m_realtime->StopTracking();
 	delete m_realtime;
 	kGUI::SetInputCallback(0,0);
 

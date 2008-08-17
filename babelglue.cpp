@@ -194,7 +194,9 @@ bool BabelGlue::Call(bool build,kGUIBusy *busy)
 	//trap errors!
 #if defined(LINUX) || defined(MACINTOSH)
 	kGUI::FileDelete("gpsbabel.err");
+#if 0
 	m_strings.GetEntryPtr(m_argc++)->SetString("2>gpsbabel.err");
+#endif
 #endif
 
 	m_output.Clear();
@@ -220,6 +222,7 @@ bool BabelGlue::Call(bool build,kGUIBusy *busy)
 	m_busy=busy;
 	if(build)
 		m_ct.SetUpdateCallback(this,CALLBACKNAME(OutputChanged));
+	//printf("line=%s\n",line.GetString());
 	rc=m_ct.Start(line.GetString(),CALLTHREAD_READ);
 	m_output.SetString(m_ct.GetString());
 	m_output.Trim();
