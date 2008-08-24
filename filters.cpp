@@ -110,6 +110,10 @@ FILTEROP_CONTAINS,
 FILTEROP_DOESNTCONTAIN,
 FILTEROP_INSIDE,
 FILTEROP_OUTSIDE,
+FILTEROP_WEST,
+FILTEROP_EAST,
+FILTEROP_NORTH,
+FILTEROP_SOUTH,
 FILTEROP_NUMOPS};
 
 const char *filteropnames[FILTEROP_NUMOPS]={
@@ -122,13 +126,19 @@ const char *filteropnames[FILTEROP_NUMOPS]={
 	"contains",
 	"doesn't contain",
 	"is inside",
-	"is outside"};
+	"is outside",
+	"is west of",
+	"is east of",
+	"is north of",
+	"is south of"};
 
 #define OP_EQ (1<<FILTEROP_EQ)
 #define OP_COMBO (1<<FILTEROP_EQ)|(1<<FILTEROP_NEQ)
 #define OP_STRING (1<<FILTEROP_EQ)|(1<<FILTEROP_NEQ)|(1<<FILTEROP_CONTAINS)|(1<<FILTEROP_DOESNTCONTAIN)
 #define OP_NUM (1<<FILTEROP_EQ)|(1<<FILTEROP_NEQ)|(1<<FILTEROP_GT)|(1<<FILTEROP_GE)|(1<<FILTEROP_LT)|(1<<FILTEROP_LE)
 #define OP_INOUT (1<<FILTEROP_INSIDE)|(1<<FILTEROP_OUTSIDE)
+#define OP_LAT (1<<FILTEROP_EQ)|(1<<FILTEROP_NEQ)|(1<<FILTEROP_NORTH)|(1<<FILTEROP_SOUTH)
+#define OP_LON (1<<FILTEROP_EQ)|(1<<FILTEROP_NEQ)|(1<<FILTEROP_EAST)|(1<<FILTEROP_WEST)
 
 enum
 {
@@ -171,8 +181,8 @@ FF_DEF ffslist[FILTERFIELD_NUMFILTERS]={
 	{"Difficulty",CMPTYPE_NUM,OP_NUM,0,0},
 	{"Terrain",CMPTYPE_NUM,OP_NUM,0,0},
 	{"Name",CMPTYPE_STRING,OP_STRING,0,0},
-	{"Latitude",CMPTYPE_COORD,OP_NUM,0,0},
-	{"Longitude",CMPTYPE_COORD,OP_NUM,0,0},
+	{"Latitude",CMPTYPE_COORD,OP_LAT,0,0},
+	{"Longitude",CMPTYPE_COORD,OP_LON,0,0},
 	{"State",CMPTYPE_STRING,OP_STRING,0,0},
 	{"Country",CMPTYPE_STRING,OP_STRING,0,0},
 	{"Position",CMPTYPE_TRACKCOMBO,OP_INOUT,0,0}};
@@ -229,36 +239,36 @@ void FiltersPage::InitControls(kGUIControlBoxObj *obj)
 	m_filterlistcaption.SetPos(0,0);
 	m_filterlistcaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_filterlistcaption.SetFontID(SMALLCAPTIONFONT);
-	m_filterlistcaption.SetString("Current Filter");
+	m_filterlistcaption.SetString(gpx->GetString(STRING_CURRENTFILTER));
 
 	m_filterlist.SetPos(0,15);
 	m_filterlist.SetSize(200,20);
 	m_filterlist.SetNumEntries(1);				/* list of filters */
-	m_filterlist.SetEntry(0,"Show All",0);
+	m_filterlist.SetEntry(0,gpx->GetString(STRING_SHOWALL),0);
 	m_filterlist.SetEventHandler(this,CALLBACKNAME(ReFilterEvent));
-	m_filterlist.SetHint("Click to change the current filter.");
+	m_filterlist.SetHint(gpx->GetString(STRING_CURRENTFILTERHINT));
 
 	m_currentdbcaption.SetPos(200+10,0);
 	m_currentdbcaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_currentdbcaption.SetFontID(SMALLCAPTIONFONT);
-	m_currentdbcaption.SetString("Current Database");
+	m_currentdbcaption.SetString(gpx->GetString(STRING_CURRENTDATABASE));
 
 	m_currentdb.SetPos(200+10,15);
 	m_currentdb.SetSize(200,20);
 	m_currentdb.SetNumEntries(1);				/* list of databases */
-	m_currentdb.SetEntry(0,"All Databases",0);
+	m_currentdb.SetEntry(0,gpx->GetString(STRING_ALLDATABASES),0);
 	m_currentdb.SetEventHandler(this,CALLBACKNAME(ReFilterEvent));
-	m_currentdb.SetHint("Click to change the current database.");
+	m_currentdb.SetHint(gpx->GetString(STRING_CURRENTDATABASEHINT));
 	obj->AddObjects(4,&m_filterlistcaption,&m_currentdbcaption,&m_filterlist,&m_currentdb);
 
 	/* reverse tickbox */
 	m_revfiltercaption.SetPos(0,0);
 	m_revfiltercaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_revfiltercaption.SetFontID(SMALLCAPTIONFONT);
-	m_revfiltercaption.SetString("Reverse");
+	m_revfiltercaption.SetString(gpx->GetString(STRING_REVERSE));
 
 	m_revfilter.SetPos(0,15);
-	m_revfilter.SetHint("Select to display the reverse filter results.");
+	m_revfilter.SetHint(gpx->GetString(STRING_REVERSEHINT));
 	m_revfilter.SetEventHandler(this,CALLBACKNAME(ReFilterEvent));
 	obj->AddObjects(2,&m_revfiltercaption,&m_revfilter);
 
@@ -266,13 +276,12 @@ void FiltersPage::InitControls(kGUIControlBoxObj *obj)
 	m_quickfiltercaption.SetPos(0,0);
 	m_quickfiltercaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_quickfiltercaption.SetFontID(SMALLCAPTIONFONT);
-	m_quickfiltercaption.SetString("Search String");
+	m_quickfiltercaption.SetString(gpx->GetString(STRING_SEARCHSTRING));
 
 	m_quickfilter.SetPos(0,15);
 	m_quickfilter.SetHint("Enter search text for comparison to waypoint names.");
 	m_quickfilter.SetSize(200,20);
 	m_quickfilter.SetEventHandler(this,CALLBACKNAME(ReFilterEvent));
-//	m_quickfilter.SetMoved(this,CALLBACKNAME(ReFilter));
 
 	obj->AddObjects(2,&m_quickfiltercaption,&m_quickfilter);
 
@@ -280,7 +289,7 @@ void FiltersPage::InitControls(kGUIControlBoxObj *obj)
 	m_resultsfiltercaption.SetPos(0,0);
 	m_resultsfiltercaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_resultsfiltercaption.SetFontID(SMALLCAPTIONFONT);
-	m_resultsfiltercaption.SetString("Filter Results");
+	m_resultsfiltercaption.SetString(gpx->GetString(STRING_FILTERRESULTS));
 
 	m_resultsfilter.SetPos(0,15);
 	m_resultsfilter.SetHint("Number of waypoints that match current filter.");
@@ -309,8 +318,6 @@ kGUITableObj *FiltersPage::InitTable(kGUIContainerObj *obj,int y,int h)
 		m_filteredwptable.SetColHint(i,wpcoldesc[i]);
 		m_filteredwptable.SetColWidth(i,wpcolwidths[i]);
 	}
-//	m_filteredwptable.SetColHeaderCallBack(gpx,CALLBACKCLASSNAME(GPX,ColClick));
-//	m_filteredwptable.SetDeleteRowCallBack(this,CALLBACKNAME(DeleteFRow));
 	m_filteredwptable.SetEventHandler(this,CALLBACKNAME(MainTableEvent));
 
 	obj->AddObject(&m_filteredwptable);
@@ -387,14 +394,16 @@ void FiltersPage::Init(kGUIContainerObj *obj)
 	m_editcontrols.SetPos(0,0);
 	m_editcontrols.SetSize(bw,20);
 
+	m_editfilterlist.SetFontSize(BUTTONFONTSIZE);
 	m_editfilterlist.SetSize(300,20);
 	m_editfilterlist.SetNumEntries(1);				/* list of filters */
-	m_editfilterlist.SetEntry(0,"new filter",0);
+	m_editfilterlist.SetEntry(0,gpx->GetString(STRING_NEWFILTER),0);
 	m_editfilterlist.SetEventHandler(this,CALLBACKNAME(EditFilterChangedEvent));
 	m_editcontrols.AddObject(&m_editfilterlist);
 
-	m_save.SetSize(140,25);
-	m_save.SetString("Save Filter");
+	m_save.SetFontSize(BUTTONFONTSIZE);
+	m_save.SetString(gpx->GetString(STRING_SAVEFILTER));
+	m_save.Contain();
 	m_save.SetEventHandler(this,CALLBACKNAME(ClickSave));
 	m_editcontrols.AddObject(&m_save);
 
@@ -404,18 +413,21 @@ void FiltersPage::Init(kGUIContainerObj *obj)
 	m_undo.SetEventHandler(this,CALLBACKNAME(ClickUndo));
 	m_editcontrols.AddObject(&m_undo);
 
-	m_delete.SetSize(140,25);
-	m_delete.SetString("Delete Filter");
+	m_delete.SetFontSize(BUTTONFONTSIZE);
+	m_delete.SetString(gpx->GetString(STRING_DELETEFILTER));
+	m_delete.Contain();
 	m_delete.SetEventHandler(this,CALLBACKNAME(ClickDelete));
 	m_editcontrols.AddObject(&m_delete);
 
-	m_rename.SetSize(140,25);
-	m_rename.SetString("Rename Filter");
+	m_rename.SetFontSize(BUTTONFONTSIZE);
+	m_rename.SetString(gpx->GetString(STRING_RENAMEFILTER));
+	m_rename.Contain();
 	m_rename.SetEventHandler(this,CALLBACKNAME(ClickRename));
 	m_editcontrols.AddObject(&m_rename);
 
-	m_copy.SetSize(140,25);
-	m_copy.SetString("Copy Filter");
+	m_copy.SetFontSize(BUTTONFONTSIZE);
+	m_copy.SetString(gpx->GetString(STRING_COPYFILTER));
+	m_copy.Contain();
 	m_copy.SetEventHandler(this,CALLBACKNAME(ClickCopy));
 	m_editcontrols.AddObject(&m_copy);
 
@@ -844,10 +856,11 @@ void GPXFilter::Load(kGUITableObj *table)
 	for(e=0;e<m_numentries;++e)
 	{
 		fe=m_entries.GetEntry(e);	/* filter record */
-		row=new GPXFilterRow();		/* make new table record */
+		row=new GPXFilterRow();		/* m
+									ake new table record */
 		row->m_fieldcombo.SetSelection(fe->m_fieldnum);
 		row->FieldChanged();	/* select proper combo box for this field and variable type */
-		row->m_opcombo.SetSelection(fe->m_opnum);
+		row->m_opcombo.SetSelectionz(fe->m_opnum);
 		switch(ffslist[fe->m_fieldnum].cmptype)
 		{
 		case CMPTYPE_COMBO:
@@ -1163,6 +1176,22 @@ bool GPXFilter::FilterRow(GPXRow *trow)
 		neg=false;
 		switch(fe->m_opnum)
 		{
+		case FILTEROP_WEST:
+			op=FILTEROP_LT;
+			neg=false;
+		break;
+		case FILTEROP_EAST:
+			op=FILTEROP_LT;
+			neg=true;
+		break;
+		case FILTEROP_NORTH:
+			op=FILTEROP_LT;
+			neg=true;
+		break;
+		case FILTEROP_SOUTH:
+			op=FILTEROP_LT;
+			neg=false;
+		break;
 		case FILTEROP_NEQ:
 			op=FILTEROP_EQ;
 			neg=true;
@@ -1543,7 +1572,7 @@ void FiltersPage::UpdateFilterList(void)
 	m_filterlist.SetNumEntries(m_numfilters+1);			/* list of select filters */
 	m_editfilterlist.SetNumEntries(m_numfilters+1);		/* list of edit filters */
 	m_filterlist.SetEntry(0,"Show All",0);
-	m_editfilterlist.SetEntry(0,"New Filter",0);
+	m_editfilterlist.SetEntry(0,gpx->GetString(STRING_NEWFILTER),0);
 	for(e=0;e<m_numfilters;++e)
 	{
 		m_filterlist.SetEntry(e+1,m_filters.GetEntry(e)->GetName(),e+1);
@@ -1593,7 +1622,7 @@ void FiltersPage::UpdateDBList(void)
 
 	num=names.GetNum();
 	m_currentdb.SetNumEntries(num+1);				/* list of filters */
-	m_currentdb.SetEntry(0,"All Databases",0);
+	m_currentdb.SetEntry(0,gpx->GetString(STRING_ALLDATABASES),0);
 	he=names.GetFirst();
 	for(e=0;e<num;++e)
 	{

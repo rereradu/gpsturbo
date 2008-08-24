@@ -179,34 +179,40 @@ void LinesPage::Init(kGUIContainerObj *obj)
 	m_linedown.SetEventHandler(this,CALLBACKNAME(ClickDown));
 	m_editlinecontrols.AddObject(&m_linedown);
 
+	m_editlinelist.SetFontSize(BUTTONFONTSIZE);
 	m_editlinelist.SetSize(300,20);
 	m_editlinelist.SetNumEntries(1);				/* list of Lines */
-	m_editlinelist.SetEntry(0,"New Line",0);
+	m_editlinelist.SetEntry(0,gpx->GetString(STRING_NEWLINE),0);
 	m_editlinelist.SetEventHandler(this,CALLBACKNAME(LoadEvent));
 	m_editlinecontrols.AddObject(&m_editlinelist);
 
-	m_saveline.SetSize(100,25);
-	m_saveline.SetString("Save Lines");
+	m_saveline.SetFontSize(BUTTONFONTSIZE);
+	m_saveline.SetString(gpx->GetString(STRING_SAVELINES));
+	m_saveline.Contain();
 	m_saveline.SetEventHandler(this,CALLBACKNAME(ClickSave));
 	m_editlinecontrols.AddObject(&m_saveline);
 
-	m_undoline.SetSize(100,25);
-	m_undoline.SetString("Undo Changes");
+	m_undoline.SetFontSize(BUTTONFONTSIZE);
+	m_undoline.SetString(gpx->GetString(STRING_UNDOCHANGES));
+	m_undoline.Contain();
 	m_undoline.SetEventHandler(this,CALLBACKNAME(ClickUndo));
 	m_editlinecontrols.AddObject(&m_undoline);
 
-	m_deleteline.SetSize(100,25);
-	m_deleteline.SetString("Delete Lines");
+	m_deleteline.SetFontSize(BUTTONFONTSIZE);
+	m_deleteline.SetString(gpx->GetString(STRING_DELETELINES));
+	m_deleteline.Contain();
 	m_deleteline.SetEventHandler(this,CALLBACKNAME(ClickDelete));
 	m_editlinecontrols.AddObject(&m_deleteline);
 
-	m_renameline.SetSize(100,25);
-	m_renameline.SetString("Rename Lines");
+	m_renameline.SetFontSize(BUTTONFONTSIZE);
+	m_renameline.SetString(gpx->GetString(STRING_RENAMELINES));
+	m_renameline.Contain();
 	m_renameline.SetEventHandler(this,CALLBACKNAME(ClickRename));
 	m_editlinecontrols.AddObject(&m_renameline);
 
-	m_copyline.SetSize(100,25);
-	m_copyline.SetString("Copy Lines");
+	m_copyline.SetFontSize(BUTTONFONTSIZE);
+	m_copyline.SetString(gpx->GetString(STRING_COPYLINES));
+	m_copyline.Contain();
 	m_copyline.SetEventHandler(this,CALLBACKNAME(ClickCopy));
 	m_editlinecontrols.AddObject(&m_copyline);
 
@@ -778,7 +784,7 @@ void LinesPage::UpdateList(void)
 	editLines.SetString(m_editlinelist.GetSelectionString());
 
 	m_editlinelist.SetNumEntries(m_numlines+1);			/* list of select Liness */
-	m_editlinelist.SetEntry(0,"New Line",0);
+	m_editlinelist.SetEntry(0,gpx->GetString(STRING_NEWLINE),0);
 	for(e=0;e<m_numlines;++e)
 		m_editlinelist.SetEntry(e+1,m_lines.GetEntry(e)->GetName(),e+1);
 	m_editlinelist.SetSelection(editLines.GetString());

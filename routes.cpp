@@ -174,9 +174,10 @@ void RoutesPage::Init(kGUIContainerObj *obj)
 	m_autoorder.SetEventHandler(this,CALLBACKNAME(ClickAutoOrder));
 	m_editcontrols.AddObject(&m_autoorder);
 
+	m_editroutelist.SetFontSize(BUTTONFONTSIZE);
 	m_editroutelist.SetSize(300,20);
 	m_editroutelist.SetNumEntries(1);				/* list of routes */
-	m_editroutelist.SetEntry(0,"New Route",0);
+	m_editroutelist.SetEntry(0,gpx->GetString(STRING_NEWROUTE),0);
 	m_editroutelist.SetEventHandler(this,CALLBACKNAME(LoadEvent));
 	m_editcontrols.AddObject(&m_editroutelist);
 
@@ -670,7 +671,7 @@ void RoutesPage::UpdateRouteList(void)
 	editroute.SetString(m_editroutelist.GetSelectionString());
 
 	m_editroutelist.SetNumEntries(m_numroutes+1);			/* list of select routes */
-	m_editroutelist.SetEntry(0,"New Route",0);
+	m_editroutelist.SetEntry(0,gpx->GetString(STRING_NEWROUTE),0);
 	for(e=0;e<m_numroutes;++e)
 		m_editroutelist.SetEntry(e+1,m_routes.GetEntry(e)->GetName(),e+1);
 	m_editroutelist.SetSelection(editroute.GetString());

@@ -132,7 +132,7 @@ void BabelGlue::BuildParms(void)
 
 	s=m_strings.GetEntryPtr(m_argc++);
 	s->SetString(m_inname.GetString());
-#ifdef WINDOZE
+#if defined(WIN32) || defined(MINGW)
 	s->Replace("USB","usb:");
 #endif
 
@@ -172,7 +172,7 @@ void BabelGlue::BuildParms(void)
 
 		s=m_strings.GetEntryPtr(m_argc++);
 		s->SetString(m_outname.GetString());
-#ifdef WINDOZE
+#if defined(WIN32) || defined(MINGW)
 		s->Replace("USB","usb:");
 #endif
 	}
@@ -222,7 +222,10 @@ bool BabelGlue::Call(bool build,kGUIBusy *busy)
 	m_busy=busy;
 	if(build)
 		m_ct.SetUpdateCallback(this,CALLBACKNAME(OutputChanged));
+
 	//printf("line=%s\n",line.GetString());
+	DebugPrint(line.GetString());
+
 	rc=m_ct.Start(line.GetString(),CALLTHREAD_READ);
 	m_output.SetString(m_ct.GetString());
 	m_output.Trim();

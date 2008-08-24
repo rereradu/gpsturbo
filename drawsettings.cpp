@@ -81,6 +81,7 @@ void GPX::InitSettings(void)
 	for(i=0;i<m_locstrings.GetNumLanguages();++i)
 		m_language.SetEntry(i,kGUI::GetString(KGUISTRING_ENGLISH+i),i);
 	m_language.SetSize(200,25);
+	m_language.SetSelection(kGUI::GetLanguage());
 
 	m_languagelabel.SetString(kGUI::GetString(KGUISTRING_LANGUAGE));
 //	m_language.SetSize(200,25);

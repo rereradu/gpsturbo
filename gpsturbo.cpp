@@ -1626,6 +1626,7 @@ void GPX::PreInit(void)
 	bool xmlstatus;
 	DefSkin *skin;
 	kGUIDate endtime;
+	int language=0;		/* default to english */
 
 	m_starttime.SetToday();
 
@@ -1798,6 +1799,18 @@ void GPX::PreInit(void)
 	endtime.SetToday();
 	m_debug.ASprintf("Start-XML Loaded seconds=%d\n",m_starttime.GetDiffSeconds(&endtime));
 
+	/* get language now before we build the gui */
+	if(xmlstatus==true)
+	{
+		kGUIXMLItem *root;
+		kGUIXMLItem *item;
+
+		root=xml.GetRootItem()->Locate("gtp");
+		item=root->Locate("language");
+		if(item)
+			language=item->GetValueInt();
+	}
+
 	/* extract map paths first */
 	LoadMapPaths(&xml,xmlstatus);
 
@@ -1858,7 +1871,7 @@ void GPX::PreInit(void)
 	kGUI::ShowWindow();
 
 	/* add gui items to full screen window */
-	Init();
+	Init(language);
 
 	/* rebuild combo box */
 	UpdateMapMenu();
@@ -1977,7 +1990,7 @@ void GPX::UpdateMapMenu(void)
 	m_maptypes.SetSelectionz(name.GetString());
 }
 
-void GPX::Init(void)
+void GPX::Init(int language)
 {
 	unsigned int i;
 	int y;
@@ -1988,11 +2001,8 @@ void GPX::Init(void)
 
 	m_locstrings.Init(&STRING_DEF);	/* generated data in _text.cpp */
 
-#if 0
-	kGUI::SetLanguage(KGUILANG_GERMAN);
-	m_locstrings.SetLanguage(KGUILANG_GERMAN);
-#endif
-
+	kGUI::SetLanguage(language);
+	m_locstrings.SetLanguage(language);
 
 	m_nummacrobuttons=0;
 	m_macrobuttons.Init(16,16);
@@ -2355,31 +2365,37 @@ void GPX::Init(void)
 
 	/***************************************************************/
 	m_tabs.SetCurrentTab(TAB_BASIC);
-	m_basicstart.SetPos(5,5);
-	m_basicstart.SetSize(100,20);
-	m_basicstart.SetString("Start");
-	m_basicstart.SetEventHandler(this,CALLBACKNAME(StartBasic));
-	m_tabs.AddObject(&m_basicstart);
 
-	m_basiccancel.SetPos(115,5);
-	m_basiccancel.SetSize(100,20);
-	m_basiccancel.SetString("Abort");
+	m_basiccontrol.SetPos(0,0);
+	m_basiccontrol.SetSize(bw,20);
+
+	m_basicstart.SetFontSize(BUTTONFONTSIZE);
+	m_basicstart.SetString(gpx->GetString(STRING_START));
+	m_basicstart.Contain();
+	m_basicstart.SetEventHandler(this,CALLBACKNAME(StartBasic));
+	m_basiccontrol.AddObject(&m_basicstart);
+
+	m_basiccancel.SetFontSize(BUTTONFONTSIZE);
+	m_basiccancel.SetString(gpx->GetString(STRING_ABORT));
+	m_basiccancel.Contain();
 	m_basiccancel.SetEventHandler(this,CALLBACKNAME(BasicCancel));
 	m_basiccancel.SetEnabled(false);
-	m_tabs.AddObject(&m_basiccancel);
+	m_basiccontrol.AddObject(&m_basiccancel);
 
-	m_basicaddbutton.SetPos(225,5);
-	m_basicaddbutton.SetSize(150,20);
-	m_basicaddbutton.SetString("Add/Edit Macro Buttons");
+	m_basicaddbutton.SetFontSize(BUTTONFONTSIZE);
+	m_basicaddbutton.SetString(gpx->GetString(STRING_ADDEDITMACROBUTTONS));
+	m_basicaddbutton.Contain();
 	m_basicaddbutton.SetEventHandler(this,CALLBACKNAME(BasicAddButton));
 	m_basicaddbutton.SetEnabled(true);
-	m_tabs.AddObject(&m_basicaddbutton);
+	m_basiccontrol.AddObject(&m_basicaddbutton);
+	m_basiccontrol.NextLine();
+	m_tabs.AddObject(&m_basiccontrol);
 
 	m_basic.SetDoneCallback(this,CALLBACKNAME(BasicDone));
 	m_basic.SetErrorCallback(this,CALLBACKNAME(BasicError));
 	m_basicstartmenu.SetEventHandler(this,CALLBACKNAME(StartBasicMenuDone));
 
-	bh=m_tabs.GetChildZoneH()-40;
+	bh=m_tabs.GetChildZoneH()-m_basiccontrol.GetZoneH();
 	m_basicsource.SetFontID(2);		/* courier */
 	m_basicsource.SetFontSize(20);
 	m_basicsource.SetPos(0,30);
@@ -4877,6 +4893,9 @@ void GPX::OverMap(int mx,int my)
 				if(bspe)
 				{
 					GPXLabel *label=static_cast<GPXLabel *>(bspe);
+					
+					DebugPrint("%s\n",label->GetString());
+
 					if(label->m_draw==true)
 					{
 						if(label->m_wasdrawn!=m_wasdrawn)
@@ -6612,6 +6631,7 @@ void GPX::SavePrefs(bool showbusy)
 
 	xml.SetEncoding(ENCODING_UTF8);
 	root=xml.GetRootItem()->AddChild("gtp");
+	root->AddChild("language",m_language.GetSelection());
 	root->AddChild("zoom",m_zoom);
 	m_grid.GetScrollCorner(&sx,&sy);
 	m_curmap->FromMap(sx,sy,&c);

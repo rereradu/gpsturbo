@@ -50,7 +50,13 @@ public:
 	//private:
 	kGUIInputBoxObj m_name;
 	kGUIComboBoxObj m_brand;
+#if defined(WIN32) || defined(MINGW)
 	kGUIComboBoxObj m_port;
+	const char *GetPort(void) {return m_port.GetSelectionString();} 
+#else
+	kGUIInputBoxObj m_port;
+	const char *GetPort(void) {return m_port.GetString();} 
+#endif
 	kGUIComboBoxObj m_rate;
 	kGUIInputBoxObj m_maxwpts;
 	kGUIInputBoxObj m_maxwptlen;
@@ -65,10 +71,11 @@ private:
 /* list of GPSRs */
 /*****************/
 
-const char *gpsnames[GPS_NUMCOLUMNS]={
-	"Name","Brand","Port","Rate","Max Waypoints","Max Name Length","Children","Name Format"};
+const int gpsnames[GPS_NUMCOLUMNS]={
+	STRING_NAME,STRING_BRAND,STRING_PORT,STRING_RATE,
+	STRING_MAXWAYPOINTS,STRING_MAXNAMELENGTH,STRING_CHILDREN,STRING_NAMEFORMAT};
 
-const int gpswidths[GPS_NUMCOLUMNS]={300,120,60,75,85,105,65,150};
+const int gpswidths[GPS_NUMCOLUMNS]={300,120,120,75,85,105,65,150};
 
 GPSrPage::GPSrPage()
 {
@@ -86,59 +93,59 @@ void GPSrPage::Init(kGUIContainerObj *obj)
 
 	bw=obj->GetChildZoneW();
 
-	m_currentgps.SetPos(5,5);
+	m_gpscontrols.SetPos(0,0);
+	m_gpscontrols.SetSize(bw,20);
+
+	m_currentgps.SetFontSize(BUTTONFONTSIZE);
 	m_currentgps.SetSize(250,20);
 	m_currentgps.SetNumEntries(1);				/* list of gpsrs */
-	m_currentgps.SetEntry(0,"No GPSrs defined",-1);
+	m_currentgps.SetEntry(0,gpx->GetString(STRING_NOGPSRSDEFINED),-1);
 	m_currentgps.SetSelection(-1);
-	obj->AddObject(&m_currentgps);
+	m_gpscontrols.AddObject(&m_currentgps);
 
-	m_uploadwptstogps.SetFontSize(11);
-	m_uploadwptstogps.SetPos(265,5);
-	m_uploadwptstogps.SetSize(150,30);
-	m_uploadwptstogps.SetString("Upload Waypoints to GPSr");
+	m_uploadwptstogps.SetFontSize(BUTTONFONTSIZE);
+	m_uploadwptstogps.SetString(gpx->GetString(STRING_UPLOADWAYPOINTS));
+	m_uploadwptstogps.Contain();
 	m_uploadwptstogps.SetEventHandler(this,CALLBACKNAME(ClickUploadWptsToGPSr));
-	obj->AddObject(&m_uploadwptstogps);
+	m_gpscontrols.AddObject(&m_uploadwptstogps);
 
-	m_downloadwptsfromgps.SetFontSize(11);
-	m_downloadwptsfromgps.SetPos(425,5);
-	m_downloadwptsfromgps.SetSize(150,30);
-	m_downloadwptsfromgps.SetString("Download Waypoints from GPSr");
+	m_downloadwptsfromgps.SetFontSize(BUTTONFONTSIZE);
+	m_downloadwptsfromgps.SetString(gpx->GetString(STRING_DOWNLOADWAYPOINTS));
+	m_downloadwptsfromgps.Contain();
 	m_downloadwptsfromgps.SetEventHandler(this,CALLBACKNAME(ClickDownloadWptsFromGPSr));
-	obj->AddObject(&m_downloadwptsfromgps);
+	m_gpscontrols.AddObject(&m_downloadwptsfromgps);
 
-	m_uploadtrackstogps.SetFontSize(11);
-	m_uploadtrackstogps.SetPos(585,5);
-	m_uploadtrackstogps.SetSize(150,30);
-	m_uploadtrackstogps.SetString("Upload Tracks to GPSr");
+	m_uploadtrackstogps.SetFontSize(BUTTONFONTSIZE);
+	m_uploadtrackstogps.SetString(gpx->GetString(STRING_UPLOADTRACKS));
+	m_uploadtrackstogps.Contain();
 	m_uploadtrackstogps.SetEventHandler(this,CALLBACKNAME(ClickUploadTracksToGPSr));
-	obj->AddObject(&m_uploadtrackstogps);
+	m_gpscontrols.AddObject(&m_uploadtrackstogps);
 
-	m_downloadtracksfromgps.SetFontSize(11);
-	m_downloadtracksfromgps.SetPos(745,5);
-	m_downloadtracksfromgps.SetSize(150,30);
-	m_downloadtracksfromgps.SetString("Download Tracks from GPSr");
+	m_downloadtracksfromgps.SetFontSize(BUTTONFONTSIZE);
+	m_downloadtracksfromgps.SetString(gpx->GetString(STRING_DOWNLOADTRACKS));
+	m_downloadtracksfromgps.Contain();
 	m_downloadtracksfromgps.SetEventHandler(this,CALLBACKNAME(ClickDownloadTracksFromGPSr));
-	obj->AddObject(&m_downloadtracksfromgps);
+	m_gpscontrols.AddObject(&m_downloadtracksfromgps);
 
-	m_downloadfindsfromgps.SetFontSize(11);
-	m_downloadfindsfromgps.SetPos(905,5);
-	m_downloadfindsfromgps.SetSize(150,30);
-	m_downloadfindsfromgps.SetString("Download Finds from GPSr");
+	m_downloadfindsfromgps.SetFontSize(BUTTONFONTSIZE);
+	m_downloadfindsfromgps.SetString(gpx->GetString(STRING_DOWNLOADFINDS));
+	m_downloadfindsfromgps.Contain();
 	m_downloadfindsfromgps.SetEventHandler(this,CALLBACKNAME(ClickDownloadFindsFromGPSr));
-	obj->AddObject(&m_downloadfindsfromgps);
+	m_gpscontrols.AddObject(&m_downloadfindsfromgps);
 
-	m_gpstable.SetPos(0,35);
-	m_gpstable.SetSize(bw,150);
+	m_gpscontrols.NextLine();
+	m_gpstable.SetSize(m_gpscontrols.GetChildZoneW(),150);
 	m_gpstable.SetNumCols(GPS_NUMCOLUMNS);
 	for(i=0;i<GPS_NUMCOLUMNS;++i)
 	{
-		m_gpstable.SetColTitle(i,gpsnames[i]);
+		m_gpstable.SetColTitle(i,gpx->GetString(gpsnames[i]));
 		m_gpstable.SetColWidth(i,gpswidths[i]);
 	}
 	m_gpstable.SetAllowAddNewRow(true);
 	m_gpstable.SetEventHandler(this,CALLBACKNAME(TableEvent));
-	obj->AddObject(&m_gpstable);
+	m_gpscontrols.AddObject(&m_gpstable);
+
+	obj->AddObject(&m_gpscontrols);
 }
 
 void GPSrPage::TableEvent(kGUIEvent *event)
@@ -352,7 +359,7 @@ bool GPSrPage::UploadToGPS(int what,GPXGPSRow *gpsrow,const char *filename,const
 		babel.AddType(BABELTYPE_TRACKS);
 	break;
 	}
-	babel.SetOutput(gpsrow->m_brand.GetSelectionString(),gpsrow->m_port.GetSelectionString(),gpsrow->m_rate.GetSelectionString());
+	babel.SetOutput(gpsrow->m_brand.GetSelectionString(),gpsrow->GetPort(),gpsrow->m_rate.GetSelectionString());
 
 	if(title)
 	{
@@ -792,7 +799,7 @@ bool GPSrPage::DownloadWptsFromGPSr(void)
 	busy->GetTitle()->SetString(title.GetString());
 	busy->SetMax(500);
 
-	babel.SetInput(gpsrow->m_brand.GetSelectionString(),gpsrow->m_port.GetSelectionString(),gpsrow->m_rate.GetSelectionString());
+	babel.SetInput(gpsrow->m_brand.GetSelectionString(),gpsrow->GetPort(),gpsrow->m_rate.GetSelectionString());
 	babel.AddType(BABELTYPE_WAYPOINTS);
 	babel.SetOutput("gpx","babel.gpx");
 
@@ -881,7 +888,7 @@ bool GPSrPage::DownloadTracksFromGPSr(void)
 	busy->GetTitle()->SetString(title.GetString());
 	busy->SetMax(500);
 
-	babel.SetInput(gpsrow->m_brand.GetSelectionString(),gpsrow->m_port.GetSelectionString(),gpsrow->m_rate.GetSelectionString());
+	babel.SetInput(gpsrow->m_brand.GetSelectionString(),gpsrow->GetPort(),gpsrow->m_rate.GetSelectionString());
 	babel.AddType(BABELTYPE_TRACKS);
 	babel.SetOutput("gpx","babel.gpx");
 
@@ -986,7 +993,8 @@ GPXGPSRow::GPXGPSRow()
 	m_brand.SetEntry(1,"Magellan",0);
 	m_brand.SetEntry(2,"nmea",0);
 
-	m_port.SetNumEntries(10);		/* list of ports */
+#if defined(WIN32) || defined(MINGW)
+	m_port.SetNumEntries(9);		/* list of ports */
 	m_port.SetEntry(0,"COM1",0);
 	m_port.SetEntry(1,"COM2",1);
 	m_port.SetEntry(2,"COM3",2);
@@ -996,7 +1004,7 @@ GPXGPSRow::GPXGPSRow()
 	m_port.SetEntry(6,"COM7",6);
 	m_port.SetEntry(7,"COM8",7);
 	m_port.SetEntry(8,"USB",8);
-	m_port.SetEntry(9,"/dev/ttyUSB0",9);
+#endif
 
 	m_rate.SetNumEntries(7);		/* list of rates */
 	m_rate.SetEntry(0,"1200",0);
@@ -1021,7 +1029,7 @@ void GPXGPSRow::BPChanged(kGUIEvent *event)
 	if(event->GetEvent()==EVENT_AFTERUPDATE)
 	{
 		/* if USB, then set rate to N/A */
-		if(m_port.GetSelection()==8)	/* USB? */
+		if(!strcmp("USB",GetPort()))
 		{
 			m_rate.SetSelection(6);
 			m_rate.SetLocked(true);
@@ -1048,7 +1056,11 @@ void GPXGPSRow::Load(class kGUIXMLItem *gpr)
 {
 	m_name.SetString(gpr->Locate("name")->GetValue());
 	m_brand.SetSelection(gpr->Locate("brand")->GetValueString());
+#if defined(WIN32) || defined(MINGW)
 	m_port.SetSelection(gpr->Locate("port")->GetValueString());
+#else
+	m_port.SetString(gpr->Locate("port")->GetValueString());
+#endif
 	m_rate.SetSelection(gpr->Locate("rate")->GetValueString());
 	m_maxwpts.SetString(gpr->Locate("maxwpnts")->GetValue());
 	m_maxwptlen.SetString(gpr->Locate("maxwpntlen")->GetValue());
@@ -1063,7 +1075,11 @@ void GPXGPSRow::Save(class kGUIXMLItem *gpr)
 {
 	gpr->AddParm("name",m_name.GetString());
 	gpr->AddParm("brand",m_brand.GetSelectionString());
+#if defined(WIN32) || defined(MINGW)
 	gpr->AddParm("port",m_port.GetSelectionString());
+#else
+	gpr->AddParm("port",m_port.GetString());
+#endif
 	gpr->AddParm("rate",m_rate.GetSelectionString());
 	gpr->AddParm("maxwpnts",m_maxwpts.GetString());
 	gpr->AddParm("maxwpntlen",m_maxwptlen.GetString());
@@ -1102,11 +1118,11 @@ void GPSrPage::UpdateGPSList(void)
 		m_downloadtracksfromgps.SetEnabled(false);
 
 		m_currentgps.SetNumEntries(1);			/* no valid entry flag */
-		m_currentgps.SetEntry(0,"No GPSrs defined",-1);
+		m_currentgps.SetEntry(0,gpx->GetString(STRING_NOGPSRSDEFINED),-1);
 		m_currentgps.SetSelection(-1);
 
 		gpx->m_realtimegps.SetNumEntries(1);			/* no valid entry flag */
-		gpx->m_realtimegps.SetEntry(0,"No GPSrs defined",-1);
+		gpx->m_realtimegps.SetEntry(0,gpx->GetString(STRING_NOGPSRSDEFINED),-1);
 		gpx->m_realtimegps.SetSelection(-1);
 	}
 	else
@@ -1215,5 +1231,5 @@ void GPSrPage::SetInput(int index,class BabelGlue *babel)
 
 	/* get pointer to selected gps */
 	gpsrow=static_cast<GPXGPSRow *>(m_gpstable.GetChild(index));
-	babel->SetInput(gpsrow->m_brand.GetSelectionString(),gpsrow->m_port.GetSelectionString(),gpsrow->m_rate.GetSelectionString());
+	babel->SetInput(gpsrow->m_brand.GetSelectionString(),gpsrow->GetPort(),gpsrow->m_rate.GetSelectionString());
 }

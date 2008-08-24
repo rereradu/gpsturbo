@@ -468,7 +468,7 @@ public:
 	void AddMaps(const char *path);
 	int FindMapz(const char *name);
 	void UpdateMapMenu(void);
-	void Init(void);
+	void Init(int language);
 	int GetColNum(const char *colname);
 	int GetColNumz(const char *colname);
 	void LoadMapPaths(kGUIXML *xml,bool xmlstatus);
@@ -496,6 +496,7 @@ public:
 	void MacroButtonEvent(kGUIEvent *event);
 	void StartBasic(kGUIEvent *event);
 	kGUIBasic m_basic;
+	kGUIControlBoxObj m_basiccontrol;
 	kGUIInputBoxObj m_basicsource;
 	kGUIButtonObj m_basicstart;
 	kGUIButtonObj m_basiccancel;
@@ -1255,6 +1256,8 @@ extern void DebugPrint(const char *message,...);
 
 extern GPX *gpx;
 extern bool g_isonline;
+
+#define GS(n) gpx->GetString(n)
 
 #define SMALLCAPTIONFONT 1
 #define SMALLCAPTIONFONTSIZE GPX::GetAdjust(10)
