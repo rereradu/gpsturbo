@@ -44,7 +44,7 @@ void GPXUnit::Set(const char *a)
 	m_value=0;
 	if(!a[0])
 		return;
-	if((a[0]=='W') || (a[0]=='S'))
+	if((a[0]=='W') || (a[0]=='S') || (a[0]=='w') || (a[0]=='s'))
 		neg=true;
 	else
 		neg=false;

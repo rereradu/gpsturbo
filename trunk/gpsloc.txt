@@ -34,9 +34,59 @@ ZOOMINHINT	Zoom In on the map.	Zoom avant sur la carte.	In der Zoom auf die Kart
 ZOOMOUTHINT	Zoom Out on the map.	Zoom arrière sur la carte.	Zoom-Out auf der Karte.	Zooma ut på kartan.
 UP	Up	Vers le haut	Nach oben	Upp
 DOWN	Down	Vers le bas	Abwärts	Nere
+NEWROUTE	New Route	New Route	New Route	Ny rutt
 AUTOORDER	Auto Order	Auto Commander	Bestell-Auto	Auto Beställ
 SAVEROUTE	Save Route	Enregistrer	Speichern Route	Spara Route
 UNDOCHANGES	Undo Changes	Annuler les changements	Änderungen rückgängig	Ångra ändringarna
 DELETEROUTE	Delete Route	Supprimer l'itinéraire	Route löschen	Delete Route
 RENAMEROUTE	Rename Route	Renommer la route	Benennen Route	Byt namn Route
 COPYROUTE	Copy Route	Route de copie	Kopieren Route	Kopiera Route
+NAME	Name	Nom	Name	Namn
+BRAND	Brand	Marque	Marke	Märke
+PORT	Port	Port	Port	Port
+RATE	Rate	Taux	Rate	Betygsätta
+MAXWAYPOINTS	Max Waypoints	Max Waypoints	Max Wegpunkte	Max Riktmärken
+MAXNAMELENGTH	Max Name Length	Max longueur du nom	Max-Name Länge	Max Namn Längd
+CHILDREN	Children	Enfants	Kinder	Barn
+NAMEFORMAT	Name Format	Nom Format	Name Format	Namn Format
+UPLOADWAYPOINTS	Upload Waypoints to GPSr	Envoyez points à GPSr	Hochladen Wegpunkte auf GPSr	Ladda upp Riktmärken till GPSr
+DOWNLOADWAYPOINTS	Download Waypoints from GPSr	Télécharger les waypoints de GPSr	Download von Wegpunkten GPSr	Hämta Riktmärken från GPSr
+UPLOADTRACKS	Upload Tracks to GPSr	Envoyez pistes à GPSr	Hochladen Touren auf GPSr	Ladda upp spår att GPSr
+DOWNLOADTRACKS	Download Tracks from GPSr	Télécharger les voies de GPSr	Download-Tracks aus GPSr	Ladda ner låtar från GPSr
+DOWNLOADFINDS	Download Finds from GPSr	Télécharger trouve à partir de GPSr	Download Funde aus GPSr	Hämta fynd från GPSr
+NEWTRACK	New Track	Nouvelle piste	Neue Spur	Nytt spår
+SAVETRACK	Save Track	Sauver la bonne voie	Speichern Track	Spara Track
+DELETETRACK	Delete Track	Supprimer la voie	Löschen Track	Ta bort Track
+RENAMETRACK	Rename Track	Renommer la bonne voie	Benennen Sie Track	Byt namn Track
+COPYTRACK	Copy Track	La voie de copie	Kopieren Track	Copy Track
+SIMPLIFYTRACK	Simplify Track	Simplifier la bonne voie	Vereinfachen Track	Förenkla Track
+NEWLINE	New Line	New Line	New Line	New Line
+SAVELINES	Save Lines	Sauver les lignes	Sparen Sie Lines	Spara Lines
+DELETELINES	Delete Lines	De supprimer des lignes	Löschen Lines	Ta bort Lines
+RENAMELINES	Rename Lines	Renommer Lines	Benennen Sie Lines	Byt namn Lines
+COPYLINES	Copy Lines	Les lignes de copie	Kopieren Sie Lines	Kopiera Lines
+NEWFILTER	New Filter	Nouveau filtre	Neuer Filter	Nya filter
+SAVEFILTER	Save Filter	Sauver Filtre	Speichern Filter	Spara Filter
+DELETEFILTER	Delete Filter	Supprimer le filtre	Filter löschen	Ta bort filtret
+RENAMEFILTER	Rename Filter	Renommer Filtre	Benennen Sie Filter	Byt filter
+COPYFILTER	Copy Filter	Filtre de copie	Kopieren Filter	Kopiera Filter
+ALLDATABASES	All Databases	Toutes les bases de données	Alle Datenbanken	Alla databaser
+NOGPSRSDEFINED	No GPSrs defined	Non défini GPSrs	Nr. GPSrs definiert	Nr GPSrs definieras
+NEWSTICKER	New Sticker	Nouvelle Sticker	Neue Sticker	Nya Sticker
+SAVESTICKER	Save Sticker	Sauver Sticker	Speichern Sticker	Spara Sticker
+DELETESTICKER	Delete Sticker	Supprimer la vignette	Löschen Sticker	Ta bort Sticker
+RENAMESTICKER	Rename Sticker	Renommer Sticker	Benennen Sticker	Byt namn Sticker
+COPYSTICKER	Copy Sticker	Autocollant de copie	Kopieren Sticker	Kopiera Sticker
+PRINTSTICKER	Print Sticker	Imprimer Sticker	Aufkleber drucken	Skriv ut Sticker
+START	Start	Démarrer	Start	Start
+ABORT	Abort	Abandonner	Abort	Abort
+ADDEDITMACROBUTTONS	Add/Edit Macro Buttons	Ajouter / modifier la macro boutons	Add / Edit-Makro-Tasten	Lägg till / redigera Makro Knappar
+CURRENTFILTER	Current Filter	Filtre actuelle	Aktuelle Filter	Aktuella filter
+CURRENTDATABASE	Current Database	Base de données	Aktuellen Datenbank	Aktuella Database
+REVERSE	Reverse	Inverser	Reverse	Omvänd
+SEARCHSTRING	Search String	Chaîne de recherche	String-Suche	Söksträng
+FILTERRESULTS	Filter Results	Filtrer les résultats	Filtern von Ergebnissen	Filtrera resultat
+CURRENTFILTERHINT	Click to change the current filter	Cliquez ici pour changer le filtre courant	Klicken Sie zum Ändern der aktuellen Filter	Klicka för att ändra nuvarande filter
+SHOWALL	Show All	Afficher tout	Alle anzeigen	Visa alla
+CURRENTDATABASEHINT	Click to change the current database.	Cliquez pour modifier l'actuelle base de données.	Klicken Sie zum Ändern der aktuellen Datenbank.	Klicka för att ändra den nuvarande databasen.
+REVERSEHINT	Select to display the reverse filter results.	Sélectionnez cette option pour afficher l'inverse de filtrer les résultats.	Wählen Sie zur Anzeige der Reverse-Filter Ergebnisse.	Välj att visa det omvända filter resultat.

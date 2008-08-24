@@ -268,39 +268,46 @@ void TracksPage::Init(kGUIContainerObj *obj)
 	m_editcontrols.SetPos(0,0);
 	m_editcontrols.SetSize(bw,20);
 
+	m_edittracklist.SetFontSize(BUTTONFONTSIZE);
 	m_edittracklist.SetSize(300,20);
 	m_edittracklist.SetNumEntries(1);				/* list of Tracks */
-	m_edittracklist.SetEntry(0,"New Track",0);
+	m_edittracklist.SetEntry(0,gpx->GetString(STRING_NEWTRACK),0);
 	m_edittracklist.SetEventHandler(this,CALLBACKNAME(LoadEvent));
 	m_editcontrols.AddObject(&m_edittracklist);
 
-	m_save.SetSize(100,25);
-	m_save.SetString("Save Track");
+	m_save.SetFontSize(BUTTONFONTSIZE);
+	m_save.SetString(gpx->GetString(STRING_SAVETRACK));
+	m_save.Contain();
 	m_save.SetEventHandler(this,CALLBACKNAME(ClickSave));
 	m_editcontrols.AddObject(&m_save);
 
-	m_undo.SetSize(100,25);
-	m_undo.SetString("Undo Changes");
+	m_undo.SetFontSize(BUTTONFONTSIZE);
+	m_undo.SetString(gpx->GetString(STRING_UNDOCHANGES));
+	m_undo.Contain();
 	m_undo.SetEventHandler(this,CALLBACKNAME(ClickUndo));
 	m_editcontrols.AddObject(&m_undo);
 
-	m_delete.SetSize(100,25);
-	m_delete.SetString("Delete Track");
+	m_delete.SetFontSize(BUTTONFONTSIZE);
+	m_delete.SetString(gpx->GetString(STRING_DELETETRACK));
+	m_delete.Contain();
 	m_delete.SetEventHandler(this,CALLBACKNAME(ClickDelete));
 	m_editcontrols.AddObject(&m_delete);
 
-	m_rename.SetSize(100,25);
-	m_rename.SetString("Rename Track");
+	m_rename.SetFontSize(BUTTONFONTSIZE);
+	m_rename.SetString(gpx->GetString(STRING_RENAMETRACK));
+	m_rename.Contain();
 	m_rename.SetEventHandler(this,CALLBACKNAME(ClickRename));
 	m_editcontrols.AddObject(&m_rename);
 
-	m_copy.SetSize(100,25);
-	m_copy.SetString("Copy Track");
+	m_copy.SetFontSize(BUTTONFONTSIZE);
+	m_copy.SetString(gpx->GetString(STRING_COPYTRACK));
+	m_copy.Contain();
 	m_copy.SetEventHandler(this,CALLBACKNAME(ClickCopy));
 	m_editcontrols.AddObject(&m_copy);
 
-	m_simplify.SetSize(100,25);
-	m_simplify.SetString("Simplify Track");
+	m_simplify.SetFontSize(BUTTONFONTSIZE);
+	m_simplify.SetString(gpx->GetString(STRING_SIMPLIFYTRACK));
+	m_simplify.Contain();
 	m_simplify.SetEventHandler(this,CALLBACKNAME(ClickSimplify));
 	m_editcontrols.AddObject(&m_simplify);
 
@@ -890,7 +897,7 @@ void TracksPage::UpdateTracksList(void)
 	editTracks.SetString(m_edittracklist.GetSelectionString());
 
 	m_edittracklist.SetNumEntries(m_numtracks+1);			/* list of select Trackss */
-	m_edittracklist.SetEntry(0,"New Track",0);
+	m_edittracklist.SetEntry(0,gpx->GetString(STRING_NEWTRACK),0);
 	for(e=0;e<m_numtracks;++e)
 		m_edittracklist.SetEntry(e+1,m_tracks.GetEntry(e)->GetName(),e+1);
 	m_edittracklist.SetSelectionz(editTracks.GetString());

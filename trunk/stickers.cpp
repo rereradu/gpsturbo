@@ -180,39 +180,46 @@ void StickersPage::Init(kGUIContainerObj *obj)
 
 	m_editstickercontrols.SetSize(bw,20);
 
+	m_editstickerlist.SetFontSize(BUTTONFONTSIZE);
 	m_editstickerlist.SetSize(300,20);
 	m_editstickerlist.SetNumEntries(1);				/* list of Stickers */
-	m_editstickerlist.SetEntry(0,"New Sticker",0);
+	m_editstickerlist.SetEntry(0,gpx->GetString(STRING_NEWSTICKER),0);
 	m_editstickerlist.SetEventHandler(this,CALLBACKNAME(EditStickersChangedEvent));
 	m_editstickercontrols.AddObject(&m_editstickerlist);
 
-	m_savesticker.SetSize(100,25);
-	m_savesticker.SetString("Save sticker");
+	m_savesticker.SetFontSize(BUTTONFONTSIZE);
+	m_savesticker.SetString(gpx->GetString(STRING_SAVESTICKER));
+	m_savesticker.Contain();
 	m_savesticker.SetEventHandler(this,CALLBACKNAME(ClickSaveSticker));
 	m_editstickercontrols.AddObject(&m_savesticker);
 
-	m_undosticker.SetSize(100,25);
-	m_undosticker.SetString("Undo Changes");
+	m_undosticker.SetFontSize(BUTTONFONTSIZE);
+	m_undosticker.SetString(gpx->GetString(STRING_UNDOCHANGES));
+	m_undosticker.Contain();
 	m_undosticker.SetEventHandler(this,CALLBACKNAME(ClickUndoStickers));
 	m_editstickercontrols.AddObject(&m_undosticker);
 
-	m_deletesticker.SetSize(100,25);
-	m_deletesticker.SetString("Delete sticker");
+	m_deletesticker.SetFontSize(BUTTONFONTSIZE);
+	m_deletesticker.SetString(gpx->GetString(STRING_DELETESTICKER));
+	m_deletesticker.Contain();
 	m_deletesticker.SetEventHandler(this,CALLBACKNAME(ClickDeleteStickers));
 	m_editstickercontrols.AddObject(&m_deletesticker);
 
-	m_renamesticker.SetSize(100,25);
-	m_renamesticker.SetString("Rename sticker");
+	m_renamesticker.SetFontSize(BUTTONFONTSIZE);
+	m_renamesticker.SetString(gpx->GetString(STRING_RENAMESTICKER));
+	m_renamesticker.Contain();
 	m_renamesticker.SetEventHandler(this,CALLBACKNAME(ClickRenameSticker));
 	m_editstickercontrols.AddObject(&m_renamesticker);
 
-	m_copysticker.SetSize(100,25);
-	m_copysticker.SetString("Copy sticker");
+	m_copysticker.SetFontSize(BUTTONFONTSIZE);
+	m_copysticker.SetString(gpx->GetString(STRING_COPYSTICKER));
+	m_copysticker.Contain();
 	m_copysticker.SetEventHandler(this,CALLBACKNAME(ClickCopySticker));
 	m_editstickercontrols.AddObject(&m_copysticker);
 
-	m_doprintsticker.SetSize(100,25);
-	m_doprintsticker.SetString("Print sticker");
+	m_doprintsticker.SetFontSize(BUTTONFONTSIZE);
+	m_doprintsticker.SetString(gpx->GetString(STRING_PRINTSTICKER));
+	m_doprintsticker.Contain();
 	m_doprintsticker.SetEventHandler(this,CALLBACKNAME(ClickPrintStickers));
 	m_editstickercontrols.AddObject(&m_doprintsticker);
 
@@ -696,7 +703,7 @@ void StickersPage::UpdateStickersList(void)
 	editStickers.SetString(m_editstickerlist.GetSelectionString());
 
 	m_editstickerlist.SetNumEntries(m_numstickers+1);			/* list of select Stickerss */
-	m_editstickerlist.SetEntry(0,"New Sticker",0);
+	m_editstickerlist.SetEntry(0,gpx->GetString(STRING_NEWSTICKER),0);
 	for(e=0;e<m_numstickers;++e)
 		m_editstickerlist.SetEntry(e+1,m_stickers.GetEntry(e)->GetName(),e+1);
 	m_editstickerlist.SetSelection(editStickers.GetString());

@@ -59,6 +59,7 @@ private:
 	void LoadWaypoints(void);
 
 	/* gui items */
+	kGUIControlBoxObj m_gpscontrols;
 	kGUIComboBoxObj m_currentgps;
 	kGUIButtonObj m_uploadwptstogps;
 	kGUIButtonObj m_downloadwptsfromgps;
