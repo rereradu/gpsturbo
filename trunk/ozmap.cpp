@@ -116,7 +116,6 @@ OZF2GPXMap::OZF2GPXMap(const char *fn)
 			//if (! FindOziDatumToWGS84 (strDatum.c_str (), m_pDatumTransformation)) {
 			//	m_pDatumTransformation = NULL;
 			//	ReportWarning ("Some unsupported datum is used: '%s'. No datum conversion performed.", strDatum.c_str ());
-			//fuck
 		}
 		else
 		{
@@ -181,7 +180,7 @@ OZF2GPXMap::OZF2GPXMap(const char *fn)
 		}
 	}
 
-	/* assume linear */
+	/* assume linear for now until I figure out the projection */
 	m_slx=(maxlon-m_minlon)/(maxx-m_minx);
 	m_sly=(maxlat-m_minlat)/(maxy-m_miny);
 	m_lsx=(maxx-m_minx)/(maxlon-m_minlon);
@@ -299,54 +298,3 @@ int OZF2GPXMap::DrawTile(int tx,int ty)
 	}
 	return(TILE_OK);
 }
-
-
-#if 0
-void COziMapLoader::ParseDatum (const char * _p, const char * _pNextLine) {
-	const char * strDatumEnd = _p;
-	while (strDatumEnd < _pNextLine) {
-		if (* strDatumEnd == ',' || * strDatumEnd == '\r' || * strDatumEnd == '\n')
-			break;
-		++ strDatumEnd;
-	}
-	const string_t strDatum (_p, strDatumEnd);
-
-	}
-}
-
-bool COziMapLoader::PrepareData (bool _bCheck) {
-	// Check if all required fields are defined.
-	if (m_dwPointDefined == 0) {
-		if (_bCheck && m_bMMPXY_Defined && m_bMMPLL_Defined) {
-			ReportWarning ("The activation key is probably damaged.");
-		} else {
-			ReportWarning ("No corner points defined (expected in MMPXY and MMPLL lines).");
-			ReportText ("Please try to update the .MAP file with newer version of OziExplorer.");
-		}
-		return false;
-	} else if (m_dwPointDefined != 0xF) {
-		ReportWarning ("Not enough corner points (4 expected in MMPXY and MMPLL).");
-		return false;
-	}
-
-	// Convert datum.
-	if (m_pDatumTransformation) {
-		ReportText ("Performing datum conversion to WGS84...");
-
-		for (size_t cPoint = 0; cPoint < 4; ++ cPoint)
-			m_pDatumTransformation->ApplyTo (m_points [cPoint]);
-	}
-
-	// Estimate the bounding rectangle.
-	for (size_t cPoint = 0; cPoint < 4; ++ cPoint)
-		m_rectBound.Extend (m_points [cPoint]);
-
-	return true;
-}
-
-bool COziMapLoader::PrepareProjection () {
-	ReportText ("Performing projection calculations...");
-
-	return true;
-}
-#endif
