@@ -223,8 +223,7 @@ bool BabelGlue::Call(bool build,kGUIBusy *busy)
 	if(build)
 		m_ct.SetUpdateCallback(this,CALLBACKNAME(OutputChanged));
 
-	//printf("line=%s\n",line.GetString());
-	DebugPrint(line.GetString());
+	//DebugPrint(line.GetString());
 
 	rc=m_ct.Start(line.GetString(),CALLTHREAD_READ);
 	m_output.SetString(m_ct.GetString());

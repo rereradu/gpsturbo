@@ -4894,7 +4894,7 @@ void GPX::OverMap(int mx,int my)
 				{
 					GPXLabel *label=static_cast<GPXLabel *>(bspe);
 					
-					DebugPrint("%s\n",label->GetString());
+					//DebugPrint("%s\n",label->GetString());
 
 					if(label->m_draw==true)
 					{
