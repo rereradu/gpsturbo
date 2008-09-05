@@ -180,6 +180,9 @@ setupapi.lib"
 				RelativePath=".\notes.cpp">
 			</File>
 			<File
+				RelativePath=".\osmap.cpp">
+			</File>
+			<File
 				RelativePath=".\ozmap.cpp">
 			</File>
 			<File
@@ -246,6 +249,9 @@ setupapi.lib"
 			</File>
 			<File
 				RelativePath=".\notes.h">
+			</File>
+			<File
+				RelativePath=".\osmap.h">
 			</File>
 			<File
 				RelativePath=".\ozmap.h">

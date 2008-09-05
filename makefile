@@ -6,7 +6,7 @@ include $(KGUILOC)makefile.in
 SRC=acmap.cpp babelglue.cpp basicclasses.cpp drawsettings.cpp filters.cpp \
 gcoords.cpp gmap.cpp gpsr.cpp help.cpp lines.cpp msmap.cpp \
 ozmap.cpp print.cpp routes.cpp solvers.cpp stickers.cpp tracks.cpp tsmap.cpp uploadxml.cpp \
-gpsturbo.cpp notes.cpp art.cpp download.cpp
+gpsturbo.cpp notes.cpp art.cpp download.cpp osmap.cpp
 
 OBJ=$(SRC:%.cpp=$(OBJDIR)/%.o) # replaces the .cpp from SRC with .o
 
@@ -40,7 +40,7 @@ data.cpp:
 clean:
 	-$(RM) $(OBJ) $(RESOBJ) $(PROGRAM) data.cpp data.big _gtext.h _gtext.cpp $(DEP) # '-' causes errors not to exit the process
 
-$(DEP): data.cpp
+$(DEP): data.cpp _gtext.cpp
 	@echo "Generating Dependencies"
 	-mkdir $(OBJDIR)
 	-$(CC) $(KGUILIB_INCLUDES) -E -MM $(SYS) $(CFLAGS) $(SRC) >>$(DEP)
