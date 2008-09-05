@@ -241,6 +241,7 @@ void FiltersPage::InitControls(kGUIControlBoxObj *obj)
 	m_filterlistcaption.SetFontID(SMALLCAPTIONFONT);
 	m_filterlistcaption.SetString(gpx->GetString(STRING_CURRENTFILTER));
 
+	m_filterlist.SetFontSize(BUTTONFONTSIZE);
 	m_filterlist.SetPos(0,15);
 	m_filterlist.SetSize(200,20);
 	m_filterlist.SetNumEntries(1);				/* list of filters */
@@ -253,6 +254,7 @@ void FiltersPage::InitControls(kGUIControlBoxObj *obj)
 	m_currentdbcaption.SetFontID(SMALLCAPTIONFONT);
 	m_currentdbcaption.SetString(gpx->GetString(STRING_CURRENTDATABASE));
 
+	m_currentdb.SetFontSize(BUTTONFONTSIZE);
 	m_currentdb.SetPos(200+10,15);
 	m_currentdb.SetSize(200,20);
 	m_currentdb.SetNumEntries(1);				/* list of databases */
@@ -278,6 +280,7 @@ void FiltersPage::InitControls(kGUIControlBoxObj *obj)
 	m_quickfiltercaption.SetFontID(SMALLCAPTIONFONT);
 	m_quickfiltercaption.SetString(gpx->GetString(STRING_SEARCHSTRING));
 
+	m_quickfilter.SetFontSize(BUTTONFONTSIZE);
 	m_quickfilter.SetPos(0,15);
 	m_quickfilter.SetHint("Enter search text for comparison to waypoint names.");
 	m_quickfilter.SetSize(200,20);
@@ -291,6 +294,7 @@ void FiltersPage::InitControls(kGUIControlBoxObj *obj)
 	m_resultsfiltercaption.SetFontID(SMALLCAPTIONFONT);
 	m_resultsfiltercaption.SetString(gpx->GetString(STRING_FILTERRESULTS));
 
+	m_resultsfilter.SetFontSize(BUTTONFONTSIZE);
 	m_resultsfilter.SetPos(0,15);
 	m_resultsfilter.SetHint("Number of waypoints that match current filter.");
 	m_resultsfilter.SetSize(100,20);

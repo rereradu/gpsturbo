@@ -45,10 +45,10 @@
 /* map classes */
 #include "map.h"
 #include "gmap.h"
-//#include "acmap.h"
 #include "ozmap.h"
 #include "msmap.h"
 #include "tsmap.h"
+#include "osmap.h"
 
 enum
 {

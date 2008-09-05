@@ -384,6 +384,9 @@ private:
 
 GPX *gpx;
 
+#define LISTICONSIZE 24
+#define LISTICONSCALE 0.75f
+
 void GPXRow::Init(void)
 {
 	int i;
@@ -441,7 +444,9 @@ void GPXRow::Init(void)
 
 	SetType(CACHETYPE_UNDEFINED);
 	m_typeshape.SetImage(gpx->GetShape(CACHETYPE_UNDEFINED));
-	m_typeshape.SetSize(32,32);
+	m_typeshape.SetSize(LISTICONSIZE,LISTICONSIZE);
+	m_typeshape.SetScale(LISTICONSCALE,LISTICONSCALE);
+
 	m_difficulty.SetString("N/A");
 	m_terrain.SetString("N/A");
 	m_container.SetSelection(CONTAINERTYPE_NOTCHOSEN);
@@ -686,7 +691,7 @@ void GPXRow::Load(kGUIString *ld,kGUIXMLItem *wp)
 
 	m_llcoord.Set(wp->Locate("lat")->GetValueDouble(),wp->Locate("lon")->GetValueDouble());
 	m_llcoord.Output(&m_lat,&m_lon);
-	
+
 	gc=wp->Locate("groundspeak:cache");
 	if(gc)
 	{
@@ -718,6 +723,7 @@ void GPXRow::Load(kGUIString *ld,kGUIXMLItem *wp)
 		SetDesc(gc->Locate("groundspeak:long_description")->GetValue());
 		/* hint */
 		SetHint(gc->Locate("groundspeak:encoded_hints")->GetValue());
+		m_hint.Trim();
 		m_hint.SetLocked(true);
 	}
 	else
@@ -757,17 +763,18 @@ void GPXRow::Load(kGUIString *ld,kGUIXMLItem *wp)
 			m_haslogs=true;
 			nc=logs->GetNumChildren();
 
-			/* clip logs at 6 */
+			/* clip logs ??? */
+
 			if(GetFound()==true)
 				maxlogs=gpx->GetClipFoundLogs();
 			else
 				maxlogs=gpx->GetClipNotFoundLogs();
 
-			if(maxlogs>=0)
+			if(maxlogs>=0)	/* -1 == no clipping required */
 			{
 				while(nc>maxlogs)
 				{
-					logs->DelChild(logs->GetChild(6));
+					logs->DelChild(logs->GetChild(nc-1));
 					--nc;
 				}
 			}
@@ -791,7 +798,8 @@ void GPXRow::Load(kGUIString *ld,kGUIXMLItem *wp)
 		m_name.SetLocked(false);
 
 	m_typeshape.SetImage(gpx->GetShape(GetType()));
-	m_typeshape.SetSize(32,32);
+	m_typeshape.SetSize(LISTICONSIZE,LISTICONSIZE);
+	m_typeshape.SetScale(LISTICONSCALE,LISTICONSCALE);
 
 	if(m_corrected.GetSelected())
 		CorrChanged();
@@ -839,7 +847,8 @@ void GPXRow::Copy(GPXRow *copy,bool copyall)
 	for(i=0;i<MAXUSERTICKS;++i)
 		m_user[i].SetSelected(copy->m_user[i].GetSelected());
 	m_typeshape.SetImage(gpx->GetShape(GetType()));
-	m_typeshape.SetSize(32,32);
+	m_typeshape.SetSize(LISTICONSIZE,LISTICONSIZE);
+	m_typeshape.SetScale(LISTICONSCALE,LISTICONSCALE);
 
 	SetName(&copy->m_name);
 	m_url.SetString(copy->m_url.GetString());
@@ -1161,6 +1170,9 @@ void GPXRow::CalcHeight(void)
 {
 	int h;
 	int h2;
+
+	if(!gpx->m_fwt)
+		return;
 
 	h=m_name.CalcHeight(gpx->m_fwt->GetColWidth(GPXCOL_NAME)-8)+2;
 	h2=m_hint.CalcHeight(gpx->m_fwt->GetColWidth(GPXCOL_HINT)-8)+2;
@@ -1619,10 +1631,36 @@ bool SplashScreen::UpdateInput(void)
 
 SplashScreen *ss;
 
+class mykGUIXML : public kGUIXML
+{
+public:
+	void ChildLoaded(kGUIXMLItem *child,kGUIXMLItem *parent);
+};
+
+/* to conserve memory we will load these directly as they are streamed in and */
+/* return the items to the pool right away */
+
+void mykGUIXML::ChildLoaded(kGUIXMLItem *child,kGUIXMLItem *parent)
+{
+	if(!strcmp(child->GetName(),"wpt"))
+	{
+		/* load a waypoint row directly */
+		GPXRow *row;
+
+		row=new GPXRow(0,child);
+		gpx->m_wptlist.SetEntry(gpx->m_numwpts++,row);
+
+		/* remove this child from the parent since we have processed it, don't purge though */
+		parent->DelChild(child,false);
+		/* add item and it's children back to the available pool */
+		PoolAdd(child);
+	}
+}
+
 void GPX::PreInit(void)
 {
 	unsigned int i;
-	kGUIXML xml;
+	mykGUIXML xml;
 	bool xmlstatus;
 	DefSkin *skin;
 	kGUIDate endtime;
@@ -1795,7 +1833,22 @@ void GPX::PreInit(void)
 	m_xmlnamecache.Init(10,0);
 	xml.SetNameCache(&m_xmlnamecache);
 
-	xmlstatus=xml.Load(PROFILEFILE);
+#if USESHAREDCOMBOS
+	m_sharedcontainer.SetNumEntries(CONTAINERTYPE_NUM);
+	for(i=0;i<CONTAINERTYPE_NUM;++i)
+		m_sharedcontainer.SetEntry(i,containernames[i],i);
+#endif
+
+	m_fwt=0;
+	m_numwpts=0;
+	m_wptlist.Alloc(1024);
+	m_wptlist.SetGrow(true);
+	m_wptlist.SetGrowSize(256);
+
+	SetClipFoundLogs(-1);
+	SetClipNotFoundLogs(-1);
+
+	xmlstatus=xml.StreamLoad(PROFILEFILE);
 	endtime.SetToday();
 	m_debug.ASprintf("Start-XML Loaded seconds=%d\n",m_starttime.GetDiffSeconds(&endtime));
 
@@ -1929,6 +1982,19 @@ void GPX::AddMaps(const char *path)
 				m_mapinfo.SetEntry(m_nummaps++,mi);
 			}
 		}
+		else if(strstri(dir.GetFilename(e),".osm"))
+		{
+			mname.SetString(dir.GetFilename(e));
+			mname.Replace(".osm","");
+			mname.Replace(path,"");
+			
+			/* check if already is in list */
+			if(FindMapz(mname.GetString())<0)
+			{
+				mi=new GPXMAPInfo(MAPTYPE_OPENSTREETMAP,mname.GetString(),dir.GetFilename(e));
+				m_mapinfo.SetEntry(m_nummaps++,mi);
+			}
+		}
 	}
 
 	/* look for tdb and img with same name */
@@ -2016,11 +2082,6 @@ void GPX::Init(int language)
 	m_rebuildbsp=true;
 	m_mapsel=0;
 	m_mapasync=true;
-
-	m_numwpts=0;
-	m_wptlist.Alloc(1024);
-	m_wptlist.SetGrow(true);
-	m_wptlist.SetGrowSize(256);
 
 	m_curmap=new GGPXMap(MAPTYPE_GOOGLEHYBRID);
 
@@ -2149,6 +2210,7 @@ void GPX::Init(int language)
 	m_maptypecaption.SetFontID(SMALLCAPTIONFONT);
 	m_maptypecaption.SetString(gpx->GetString(STRING_CURRENTMAP));
 
+	m_maptypes.SetFontSize(BUTTONFONTSIZE);
 	m_maptypes.SetPos(0,15);
 	m_maptypes.SetSize(250,20);
 	m_maptypes.SetNumEntries(m_nummaps);
@@ -2161,18 +2223,19 @@ void GPX::Init(int language)
 	m_zoomcaption.SetFontID(SMALLCAPTIONFONT);
 	m_zoomcaption.SetString(gpx->GetString(STRING_ZOOM));
 
+	m_zoomgoto.SetFontSize(BUTTONFONTSIZE);
 	m_zoomgoto.SetPos(0,15);
-	m_zoomgoto.SetSize(150,20);
+	m_zoomgoto.SetSize(200,20);
 	m_zoomgoto.SetEventHandler(this,CALLBACKNAME(ZoomGoto));
 	m_zoomgoto.SetHint(gpx->GetString(STRING_ZOOMGOTOHINT));
 
-	m_zoomin.SetPos(160,15);
+	m_zoomin.SetPos(210,15);
 	m_zoomin.SetHint(gpx->GetString(STRING_ZOOMINHINT));
 	m_zoomin.SetImage(&m_zin);
 	m_zoomin.Contain();
 	m_zoomin.SetEventHandler(this,CALLBACKNAME(ClickZoomIn));
 
-	m_zoomout.SetPos(190,15);
+	m_zoomout.SetPos(240,15);
 	m_zoomout.SetHint(gpx->GetString(STRING_ZOOMOUTHINT));
 	m_zoomout.SetImage(&m_zout);
 	m_zoomout.Contain();
@@ -2271,6 +2334,7 @@ void GPX::Init(int language)
 	m_gpscaption.SetFontID(SMALLCAPTIONFONT);
 	m_gpscaption.SetString("Realtime Tracking: GPSr Name / Connect / Track on Map / Position");
 
+	m_realtimegps.SetFontSize(BUTTONFONTSIZE);
 	m_realtimegps.SetPos(0,15);
 	m_realtimegps.SetHint("Select GPSr for realtime tracking.");
 	m_realtimegps.SetNumEntries(1);
@@ -2279,7 +2343,7 @@ void GPX::Init(int language)
 	m_realtimegps.SetSize(200,20);
 
 	m_gpsconnect.SetPos(210+0,15);
-	m_gpsconnect.SetHint("Connect/Disconnect to GPS18.");
+	m_gpsconnect.SetHint("Connect/Disconnect to Tracking GPSr.");
 	m_gpsconnect.SetEventHandler(this,CALLBACKNAME(GPSConnectChanged));
 	m_gpsfollow.SetPos(210+15,15);
 	m_gpsfollow.SetHint("Center map on GSP position.");
@@ -2462,12 +2526,6 @@ void GPX::Init(int language)
 	m_splitsort=0;
 	m_splitwidth.SetString("2.5");
 	m_splitdesc.SetString(".Name, .Container, .Hint");
-
-#if USESHAREDCOMBOS
-	m_sharedcontainer.SetNumEntries(CONTAINERTYPE_NUM);
-	for(i=0;i<CONTAINERTYPE_NUM;++i)
-		m_sharedcontainer.SetEntry(i,containernames[i],i);
-#endif
 }
 
 void GPX::MoveBasicDivider(kGUIEvent *event)
@@ -2702,6 +2760,9 @@ void GPX::ChangeMapType(void)
 //	case MAPTYPE_TOPOCANADAMAP:
 //		m_curmap=new ACGPXMap();
 //	break;
+	case MAPTYPE_OPENSTREETMAP:
+		m_curmap=new OSMMap(mi->m_filename.GetString());
+	break;
 	case MAPTYPE_OZF2:
 		m_curmap=new OZF2GPXMap(mi->m_filename.GetString());
 	break;
@@ -6434,6 +6495,18 @@ void GPX::LoadPrefs(kGUIXML *xml,bool xmlstatus)
 			endtime.SetToday();
 			m_debug.ASprintf("LoadPrefs 2(gpsrs) seconds=%d\n",m_starttime.GetDiffSeconds(&endtime));
 
+#if 1
+			/* since we pre-loaded these during the xmlstream load they don't */
+			/* save the correct settings / colors etc so we update them all now */
+			for(i=0;i<m_numwpts;++i)
+			{
+				GPXRow *row;
+
+				row=m_wptlist.GetEntry(i);
+				row->CalcHeight();
+				row->UpdateLabelName();
+			}
+#else
 			for(i=0;i<root->GetNumChildren();++i)
 			{
 				item=root->GetChild(i);
@@ -6444,6 +6517,7 @@ void GPX::LoadPrefs(kGUIXML *xml,bool xmlstatus)
 					m_wptlist.SetEntry(m_numwpts++,row);
 				}
 			}
+#endif
 			UpdateDBList();
 			endtime.SetToday();
 			m_debug.ASprintf("LoadPrefs 3(cache entries) seconds=%d\n",m_starttime.GetDiffSeconds(&endtime));

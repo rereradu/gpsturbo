@@ -189,6 +189,8 @@ public:
 	static int Read24(const char *fp);
 	static short Read16(const char *fp);
 
+	//this func is also used by the openstreetmap renderer
+	static void DrawTrainTracks(int nvert,kGUIDPoint2 *point);
 private:
 	MSFAT *LocateFile(const char *name,const char *type);
 	MSFAT *LocateType(const char *type);
@@ -206,7 +208,6 @@ private:
 	const char *ReadPoint(MSSUBDIV *sub,const char *rstart);
 	const char *ReadPoly(MSSUBDIV *sub,const char *rstart,int type);
 	int GetPoint(kGUIBitStream *bs,int nbits,int sign);
-	void DrawTrainTracks(int nvert,kGUIDPoint2 *point);
 	
 	kGUIText m_t[MAXLABELS];	/* temp used in drawing */
 	void ReadLabel(const char *enc,kGUIString *s);

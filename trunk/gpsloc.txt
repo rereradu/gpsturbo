@@ -4,89 +4,89 @@ SAVEGPX	Save GPX file	Sauver le fichier GPX	GPX-Datei speichern	Spara GPX-fil
 LOADAS	Load As ...	En Charger ...	Geladen ...	Load Som ...
 SAVEAS	Save As ...	Enregistrer sous ...	Speichern unter ...	Spara som ...
 SAVECHANGES	Save Changes	Enregistrer les modifications	Änderungen speichern	Spara ändringar
-RENAMEDATABASE	Rename Database	Renommer la base de données	Benennen Database	Byt namn Database
-REMOVESTALEWAYPOINTS	Remove Stale Waypoints	Supprimer vicié waypoints	Entfernen Sie Stale Wegpunkte	Ta bort Stale Riktmärken
+RENAMEDATABASE	Rename Database	Renommer la base de données	Datenbank umbenennen	Byt namn Database
+REMOVESTALEWAYPOINTS	Remove Stale Waypoints	Supprimer vicié waypoints	Alte Wegpunkte entfernen	Ta bort Stale Riktmärken
 PRINTTABLE	Print Table	Imprimer le tableau	Tabelle drucken	Skriv ut tabellen
 PRINTMAP	Print Map	Imprimer la carte	Karte drucken	Skriv ut kartan
-SAVESELECTEDSHAPE	Save Selected Map area as Shape	Sauver sélectionné de la carte domaine que la forme	Speichern Ausgewählte Karte als Shape	Spara markerade Karta område som Shape
-VIEWFILTEREDCACHEPAGES	View Filtered Cache Pages	Voir filtré cache pages	Sehen Sie gefiltert Cache-Seiten	Visa Filtrerat Cache Pages
+SAVESELECTEDSHAPE	Save Selected Map area as Shape	Sauver sélectionné de la carte domaine que la forme	Ausgewählte Karte als Shape speichern	Spara markerade Karta område som Shape
+VIEWFILTEREDCACHEPAGES	View Filtered Cache Pages	Voir filtré cache pages	Cache-Seiten gefiltert betrachten	Visa Filtrerat Cache Pages
 CREDITS	Credits	Crédits	Impressum	Poäng
 VIEWHELP	View Help	Voir Aide	Hilfe anzeigen	Visa Hjälp
 QUIT	Quit	Quitter	Beenden	Avsluta
 FILTEREDANDMAP	Filtered / Map	Filtré / Carte	Gefiltert / Karte	Filtrerat / Karta
 ROUTES	Routes	Routes	Routen	Rutter
-TRACKS	Tracks	Tracks	Touren	Tracks
+TRACKS	Tracks	Tracks	Tracks	Tracks
 LINES	Lines	Lignes	Lines	Lines
 FILTERS	Filters	Filtres	Filter	Filter
-DRAWSETTINGS	Draw Settings	Dessiner Paramètres	Draw-Einstellungen	Oavgjort Inställningar
+DRAWSETTINGS	Draw Settings	Dessiner Paramètres	Einstellungen	Oavgjort Inställningar
 GPSRS	GPSRs	GPSRs	GPSRs	GPSRs
-MAPDOWNLOAD	Map Download	Plan d'accès Télécharger	Map Download	Karta Download
+MAPDOWNLOAD	Map Download	Plan d'accès Télécharger	Karten herunterladen	Karta Download
 SOLVER	Solver	Solver	Solver	Solver
 STICKERS	Stickers	Flyers	Stickers	Stickers
-NOTES	Notes	Notes	Hinweise	Notes
+NOTES	Notes	Notes	Notizen	Notes
 BASIC	Basic	De base	Basic	Basic
 DEBUG	Debug	Debug	Debug	Debug
 CURRENTMAP	Current Map	La carte actuelle	Aktuelle Karte	Aktuell Map
-CURRENTMAPHINT	Click to change the current map.	Cliquez pour modifier la carte actuelle.	Klicken Sie zum Ändern der aktuellen Karte.	Klicka för att ändra den aktuella kartan.
+CURRENTMAPHINT	Click to change the current map.	Cliquez pour modifier la carte actuelle.	Klicken zum Ändern der aktuellen Karte.	Klicka för att ändra den aktuella kartan.
 ZOOM	Zoom	Zoom	Zoom	Zoom
-ZOOMGOTOHINT	Goto a zoom level.	Vers un niveau de zoom.	Springen ein Zoom-Stufe.	Gå till en zoomnivå.
-ZOOMINHINT	Zoom In on the map.	Zoom avant sur la carte.	In der Zoom auf die Karte.	Zooma in på kartan.
-ZOOMOUTHINT	Zoom Out on the map.	Zoom arrière sur la carte.	Zoom-Out auf der Karte.	Zooma ut på kartan.
-UP	Up	Vers le haut	Nach oben	Upp
+ZOOMGOTOHINT	Goto a zoom level.	Vers un niveau de zoom.	Zu Zoom-Stufe springen.	Gå till en zoomnivå.
+ZOOMINHINT	Zoom In on the map.	Zoom avant sur la carte.	In Karte hineinzoomen.	Zooma in på kartan.
+ZOOMOUTHINT	Zoom Out on the map.	Zoom arrière sur la carte.	Aus Karte herauszoomen.	Zooma ut på kartan.
+UP	Up	Vers le haut	Aufwärts	Upp
 DOWN	Down	Vers le bas	Abwärts	Nere
-NEWROUTE	New Route	New Route	New Route	Ny rutt
-AUTOORDER	Auto Order	Auto Commander	Bestell-Auto	Auto Beställ
-SAVEROUTE	Save Route	Enregistrer	Speichern Route	Spara Route
+NEWROUTE	New Route	New Route	Neue Route	Ny rutt
+AUTOORDER	Auto Order	Auto Commander	Automatisch ordnen	Auto Beställ
+SAVEROUTE	Save Route	Enregistrer	Route speichern	Spara Route
 UNDOCHANGES	Undo Changes	Annuler les changements	Änderungen rückgängig	Ångra ändringarna
 DELETEROUTE	Delete Route	Supprimer l'itinéraire	Route löschen	Delete Route
-RENAMEROUTE	Rename Route	Renommer la route	Benennen Route	Byt namn Route
-COPYROUTE	Copy Route	Route de copie	Kopieren Route	Kopiera Route
+RENAMEROUTE	Rename Route	Renommer la route	Route umbennenen	Byt namn Route
+COPYROUTE	Copy Route	Route de copie	Route kopieren	Kopiera Route
 NAME	Name	Nom	Name	Namn
 BRAND	Brand	Marque	Marke	Märke
 PORT	Port	Port	Port	Port
 RATE	Rate	Taux	Rate	Betygsätta
 MAXWAYPOINTS	Max Waypoints	Max Waypoints	Max Wegpunkte	Max Riktmärken
-MAXNAMELENGTH	Max Name Length	Max longueur du nom	Max-Name Länge	Max Namn Längd
+MAXNAMELENGTH	Max Name Length	Max longueur du nom	Max Namenslänge	Max Namn Längd
 CHILDREN	Children	Enfants	Kinder	Barn
-NAMEFORMAT	Name Format	Nom Format	Name Format	Namn Format
-UPLOADWAYPOINTS	Upload Waypoints to GPSr	Envoyez points à GPSr	Hochladen Wegpunkte auf GPSr	Ladda upp Riktmärken till GPSr
-DOWNLOADWAYPOINTS	Download Waypoints from GPSr	Télécharger les waypoints de GPSr	Download von Wegpunkten GPSr	Hämta Riktmärken från GPSr
-UPLOADTRACKS	Upload Tracks to GPSr	Envoyez pistes à GPSr	Hochladen Touren auf GPSr	Ladda upp spår att GPSr
-DOWNLOADTRACKS	Download Tracks from GPSr	Télécharger les voies de GPSr	Download-Tracks aus GPSr	Ladda ner låtar från GPSr
-DOWNLOADFINDS	Download Finds from GPSr	Télécharger trouve à partir de GPSr	Download Funde aus GPSr	Hämta fynd från GPSr
-NEWTRACK	New Track	Nouvelle piste	Neue Spur	Nytt spår
-SAVETRACK	Save Track	Sauver la bonne voie	Speichern Track	Spara Track
-DELETETRACK	Delete Track	Supprimer la voie	Löschen Track	Ta bort Track
-RENAMETRACK	Rename Track	Renommer la bonne voie	Benennen Sie Track	Byt namn Track
-COPYTRACK	Copy Track	La voie de copie	Kopieren Track	Copy Track
-SIMPLIFYTRACK	Simplify Track	Simplifier la bonne voie	Vereinfachen Track	Förenkla Track
+NAMEFORMAT	Name Format	Nom Format	Namensformat	Namn Format
+UPLOADWAYPOINTS	Upload Waypoints to GPSr	Envoyez points à GPSr	Wegpunkte auf GPSr hochladen	Ladda upp Riktmärken till GPSr
+DOWNLOADWAYPOINTS	Download Waypoints from GPSr	Télécharger les waypoints de GPSr	Wegpunkte von GPSr herunterladen	Hämta Riktmärken från GPSr
+UPLOADTRACKS	Upload Tracks to GPSr	Envoyez pistes à GPSr	Tracks auf GPSr hochladen	Ladda upp spår att GPSr
+DOWNLOADTRACKS	Download Tracks from GPSr	Télécharger les voies de GPSr	Tracks von GPSr herunterladen	Ladda ner låtar från GPSr
+DOWNLOADFINDS	Download Finds from GPSr	Télécharger trouve à partir de GPSr	Funde von GPSr herunterladen	Hämta fynd från GPSr
+NEWTRACK	New Track	Nouvelle piste	Neuer Track	Nytt spår
+SAVETRACK	Save Track	Sauver la bonne voie	Track speichern	Spara Track
+DELETETRACK	Delete Track	Supprimer la voie	Track löschen	Ta bort Track
+RENAMETRACK	Rename Track	Renommer la bonne voie	Track umbenennen	Byt namn Track
+COPYTRACK	Copy Track	La voie de copie	Track kopieren	Copy Track
+SIMPLIFYTRACK	Simplify Track	Simplifier la bonne voie	Track vereinfachen	Förenkla Track
 NEWLINE	New Line	New Line	New Line	New Line
-SAVELINES	Save Lines	Sauver les lignes	Sparen Sie Lines	Spara Lines
-DELETELINES	Delete Lines	De supprimer des lignes	Löschen Lines	Ta bort Lines
-RENAMELINES	Rename Lines	Renommer Lines	Benennen Sie Lines	Byt namn Lines
-COPYLINES	Copy Lines	Les lignes de copie	Kopieren Sie Lines	Kopiera Lines
+SAVELINES	Save Lines	Sauver les lignes	Lines speichern	Spara Lines
+DELETELINES	Delete Lines	De supprimer des lignes	Lines löschen	Ta bort Lines
+RENAMELINES	Rename Lines	Renommer Lines	Lines umbenennen	Byt namn Lines
+COPYLINES	Copy Lines	Les lignes de copie	Lines kopieren	Kopiera Lines
 NEWFILTER	New Filter	Nouveau filtre	Neuer Filter	Nya filter
-SAVEFILTER	Save Filter	Sauver Filtre	Speichern Filter	Spara Filter
+SAVEFILTER	Save Filter	Sauver Filtre	Filter speichern	Spara Filter
 DELETEFILTER	Delete Filter	Supprimer le filtre	Filter löschen	Ta bort filtret
-RENAMEFILTER	Rename Filter	Renommer Filtre	Benennen Sie Filter	Byt filter
-COPYFILTER	Copy Filter	Filtre de copie	Kopieren Filter	Kopiera Filter
+RENAMEFILTER	Rename Filter	Renommer Filtre	Filter umbenennen	Byt filter
+COPYFILTER	Copy Filter	Filtre de copie	Filter kopieren	Kopiera Filter
 ALLDATABASES	All Databases	Toutes les bases de données	Alle Datenbanken	Alla databaser
-NOGPSRSDEFINED	No GPSrs defined	Non défini GPSrs	Nr. GPSrs definiert	Nr GPSrs definieras
-NEWSTICKER	New Sticker	Nouvelle Sticker	Neue Sticker	Nya Sticker
-SAVESTICKER	Save Sticker	Sauver Sticker	Speichern Sticker	Spara Sticker
-DELETESTICKER	Delete Sticker	Supprimer la vignette	Löschen Sticker	Ta bort Sticker
-RENAMESTICKER	Rename Sticker	Renommer Sticker	Benennen Sticker	Byt namn Sticker
-COPYSTICKER	Copy Sticker	Autocollant de copie	Kopieren Sticker	Kopiera Sticker
-PRINTSTICKER	Print Sticker	Imprimer Sticker	Aufkleber drucken	Skriv ut Sticker
+NOGPSRSDEFINED	No GPSrs defined	Non défini GPSrs	kein GPSr definiert	Nr GPSrs definieras
+NEWSTICKER	New Sticker	Nouvelle Sticker	Neuer Sticker	Nya Sticker
+SAVESTICKER	Save Sticker	Sauver Sticker	Sticker speichern	Spara Sticker
+DELETESTICKER	Delete Sticker	Supprimer la vignette	Sticker löschen	Ta bort Sticker
+RENAMESTICKER	Rename Sticker	Renommer Sticker	Sticker umbenennen	Byt namn Sticker
+COPYSTICKER	Copy Sticker	Autocollant de copie	Sticker kopieren	Kopiera Sticker
+PRINTSTICKER	Print Sticker	Imprimer Sticker	Sticker drucken	Skriv ut Sticker
 START	Start	Démarrer	Start	Start
 ABORT	Abort	Abandonner	Abort	Abort
-ADDEDITMACROBUTTONS	Add/Edit Macro Buttons	Ajouter / modifier la macro boutons	Add / Edit-Makro-Tasten	Lägg till / redigera Makro Knappar
+ADDEDITMACROBUTTONS	Add/Edit Macro Buttons	Ajouter / modifier la macro boutons	Makro-Tasten hinzufügen/ändern	Lägg till / redigera Makro Knappar
 CURRENTFILTER	Current Filter	Filtre actuelle	Aktuelle Filter	Aktuella filter
-CURRENTDATABASE	Current Database	Base de données	Aktuellen Datenbank	Aktuella Database
-REVERSE	Reverse	Inverser	Reverse	Omvänd
-SEARCHSTRING	Search String	Chaîne de recherche	String-Suche	Söksträng
+CURRENTDATABASE	Current Database	Base de données	Aktuelle Datenbank	Aktuella Database
+REVERSE	Reverse	Inverser	Umgekehrt	Omvänd
+SEARCHSTRING	Search String	Chaîne de recherche	Stringsuche	Söksträng
 FILTERRESULTS	Filter Results	Filtrer les résultats	Filtern von Ergebnissen	Filtrera resultat
-CURRENTFILTERHINT	Click to change the current filter	Cliquez ici pour changer le filtre courant	Klicken Sie zum Ändern der aktuellen Filter	Klicka för att ändra nuvarande filter
+CURRENTFILTERHINT	Click to change the current filter	Cliquez ici pour changer le filtre courant	Klicken zum Ändern des aktuellen Filters	Klicka för att ändra nuvarande filter
 SHOWALL	Show All	Afficher tout	Alle anzeigen	Visa alla
-CURRENTDATABASEHINT	Click to change the current database.	Cliquez pour modifier l'actuelle base de données.	Klicken Sie zum Ändern der aktuellen Datenbank.	Klicka för att ändra den nuvarande databasen.
-REVERSEHINT	Select to display the reverse filter results.	Sélectionnez cette option pour afficher l'inverse de filtrer les résultats.	Wählen Sie zur Anzeige der Reverse-Filter Ergebnisse.	Välj att visa det omvända filter resultat.
+CURRENTDATABASEHINT	Click to change the current database.	Cliquez pour modifier l'actuelle base de données.	Klicken zum Ändern der aktuellen Datenbank.	Klicka för att ändra den nuvarande databasen.
+REVERSEHINT	Select to display the reverse filter results.	Sélectionnez cette option pour afficher l'inverse de filtrer les résultats.	Anwählen zur Anzeige der Ergebnisse des umgekehrten Filters.	Välj att visa det omvända filter resultat.
