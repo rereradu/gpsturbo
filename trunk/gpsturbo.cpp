@@ -1839,6 +1839,7 @@ void GPX::PreInit(void)
 		m_sharedcontainer.SetEntry(i,containernames[i],i);
 #endif
 
+	m_mapdirty=false;
 	m_fwt=0;
 	m_numwpts=0;
 	m_wptlist.Alloc(1024);
