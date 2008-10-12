@@ -48,9 +48,8 @@ BabelGlue::~BabelGlue()
 		m_thread.Close(false);
 	
 	/* might take a while to shutdown */
-	while(m_asyncactive==true)
+	while(m_asyncactive)
 		kGUI::Sleep(1);
-
 	Purge();
 }
 
@@ -396,4 +395,4 @@ bool BabelGlue::GetPos(GPXCoord *pos)
 		delete []file;
 	}
 	return(gotnew);
-};
+}

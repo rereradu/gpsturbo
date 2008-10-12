@@ -1592,7 +1592,7 @@ void MSGPXMap::DrawPoly(POLYSORT_DEF *ps)
 		m_t[0].SetFontSize(12);
 		m_t[0].Sprintf("%d",ps->polytype);
 		lw=m_t[0].GetWidth();
-		lh=m_t[0].GetHeight();
+		lh=m_t[0].GetLineHeight();
 		lx=(ps->corners.lx-m_tx)+(aw>>1)-(lw>>1);
 		ly=(ps->corners.ty-m_ty)+(ah>>1);
 		DrawLabel(&m_t[0],lx,ly,lw,lh,0.0f,false);
@@ -1640,7 +1640,7 @@ hit:;
 	for(l=0;l<validlabels;++l)
 		m_t[l].SetFontSize(fs);
 
-	lh=m_t[0].GetHeight();		/* height of 1 line of text */
+	lh=m_t[0].GetLineHeight();		/* height of 1 line of text */
 	lgh=lh*validlabels;		/* height of all labels on this polygon */
 
 #if 0
@@ -2065,7 +2065,7 @@ void MSGPXMap::DrawLineLabel(kGUIText *t,int nvert,kGUIDPoint2 *point,double ove
 	double x1,y1,x2,y2;
 	int nc=t->GetLen();		/* get length of label in characters */
 	double lw=(double)t->GetWidth();	/* get width of label in pixels */
-	double lh=(double)t->GetHeight();	/* get height of label in pixels */
+	double lh=(double)t->GetLineHeight();	/* get height of label in pixels */
 	kGUIDPoint2 *p;
 	double ldist;		/* longest distance */
 	double dist;

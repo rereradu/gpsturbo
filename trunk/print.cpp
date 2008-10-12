@@ -213,7 +213,7 @@ void GPX::DrawGrid(int w,int h,int cx,int cy,int gridtype,double gridstep,int gr
 			m_curmap->ToMap(&c,&x,&y);
 			c.OutputLat(&t,true);
 			tp=t.GetWidth();
-			th=t.GetHeight();
+			th=t.GetLineHeight();
 			y-=ty;
 			if(gridtype==GRIDTYPE_FULL)
 			{

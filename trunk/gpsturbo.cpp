@@ -2910,7 +2910,7 @@ Credits::Credits()
 	
 	warea=m_window.GetChildZoneW()-10;
 	m_desc.SetFontSize(14);
-	m_desc.SetPos(0,m_name.GetHeight());
+	m_desc.SetPos(0,m_name.GetLineHeight());
 	GetCreditString(&m_desc);
 
 	/* append current goole map tile info */
@@ -5791,7 +5791,7 @@ GPXLabel::GPXLabel()
 void GPXLabel::Changed(void)
 {
 	m_lw=GetWidth()+4;
-	m_lh=GetHeight()+4;
+	m_lh=GetLineHeight()+4;
 }
 
 void GPXLabel::Draw(int cxpix,int cypix)
@@ -6141,7 +6141,7 @@ void GPX::PostDrawMap(void)
 		if(stext.GetLen())
 		{
 			w=stext.GetWidth()+10;
-			h=stext.GetHeight();
+			h=stext.GetLineHeight();
 			kGUI::DrawRect(c.lx+5,c.ty+10,c.lx+w,c.ty+10+h,DrawColor(255,255,255),0.65f);
 			stext.Draw(c.lx+10,c.ty+11,0,0,DrawColor(0,0,0));
 		}
@@ -6150,15 +6150,15 @@ void GPX::PostDrawMap(void)
 	/* draw copyright lines on bottom left of window */
 
 	nc=m_curmap->GetNumCopyrightLines();
-	y=c.by-10-(nc*stext.GetHeight());
+	y=c.by-10-(nc*stext.GetLineHeight());
 	for(l=0;l<nc;++l)
 	{
 		stext.SetString(m_curmap->GetCopyrightLine(l));
 		w=stext.GetWidth()+10;
-		h=stext.GetHeight();
+		h=stext.GetLineHeight();
 		kGUI::DrawRect(c.lx+5,y-1,c.lx+w,y-1+h,DrawColor(255,255,255),0.65f);
 		stext.Draw(c.lx+10,y,0,0,DrawColor(0,0,0));
-		y+=stext.GetHeight();
+		y+=stext.GetLineHeight();
 	}
 
 	/* draw map scale on bottom right corner */
@@ -6179,7 +6179,7 @@ void GPX::PostDrawMap(void)
 	stext.Sprintf("%.2f %s",dist,m_disttype.GetSelectionString());
 
 	w=stext.GetWidth();
-	h=stext.GetHeight();
+	h=stext.GetLineHeight();
 	kGUI::DrawRect(c.rx-(LEGWIDTH>>1)-LEGOFF-(w>>1),c.by-LEGOFF-h,c.rx-(LEGWIDTH>>1)-LEGOFF+(w>>1),c.by-LEGOFF,DrawColor(255,255,255),0.65f);
 	stext.Draw(c.rx-(LEGWIDTH>>1)-LEGOFF-(w>>1),c.by-LEGOFF-h,w,h,DrawColor(0,0,0));
 
@@ -6282,7 +6282,7 @@ void GPX::DrawMapCell(kGUICellObj *cell)
 	m_lines.DrawMap(&c);
 
 	kGUI::SetMouseCursor(MOUSECURSOR_DEFAULT);
-};
+}
 
 
 /* global app input callback */
@@ -6886,7 +6886,7 @@ void GPX::UpdateMacroButtons(void)
 
 		t=new kGUITextObj();
 		t->SetString("Macros:");
-		t->SetSize(t->GetWidth()+8,t->GetHeight()+8);
+		t->SetSize(t->GetWidth()+8,t->GetLineHeight()+8);
 		m_macrocontrols.AddObject(t);
 
 		for(i=0;i<m_nummacrobuttons;++i)
@@ -6904,7 +6904,7 @@ void GPX::UpdateMacroButtons(void)
 			else
 			{
 				b->SetString(bb->GetButtonText());
-				b->SetSize(b->GetWidth()+8,b->GetHeight()+8);
+				b->SetSize(b->GetWidth()+8,b->GetLineHeight()+8);
 			}
 			b->SetHint(bb->GetButtonText());
 			b->SetShowCurrent(false);	/* don't draw 'current' object frame on this button */
@@ -7125,7 +7125,8 @@ void AppInit(void)
 	gpx->PreInit();
 }
 
-void GPX::Panic(void)
+/* panic string contains callstack as well as error */
+void GPX::Panic(kGUIString *error)
 {
 	SavePrefs(false);
 }

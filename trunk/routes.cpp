@@ -607,7 +607,7 @@ void RoutesPage::ClickRename2(kGUIString *result,int closebutton)
 			box=new kGUIMsgBoxReq(MSGBOX_OK,false,"Error: name already used!");
 		else
 		{
-			unsigned int i;
+			int i;
 			GPXRoute *t;
 
 			i=GetIndex(m_editroutelist.GetSelectionString());
@@ -913,7 +913,7 @@ void GPXRoute::DrawLine(int index,int x1,int y1,int x2,int y2,kGUIColor color)
 	t.SetFontSize(WPTNAMEFONTSIZE+2);
 	t.Sprintf("%d",index);
 	tw=(t.GetWidth()+8)>>1;
-	th=(t.GetHeight()+8)>>1;
+	th=(t.GetLineHeight()+8)>>1;
 
 	kGUI::DrawRectFrame(ex-tw,ey-th,ex+tw,ey+th,color,DrawColor(0,0,0),0.8f);
 	t.Draw(ex-tw+4,ey-th+4,0,0,DrawColor(255,255,255));

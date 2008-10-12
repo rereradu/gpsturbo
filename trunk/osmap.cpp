@@ -112,7 +112,7 @@ RAILWAY_SUBWAY,
 LEISURE_PARK,
 LEISURE_PITCH,
 NATURAL_WATER,
-NATURAL_COASTLINE,
+NATURAL_COASTLINE
 };
 
 enum
@@ -598,4 +598,4 @@ unsigned int OSMMap::GetTag(const char *s)
 	if(!potag)
 		return(OSMTAG_UNDEFINED);
 	return(potag[0]->id);
-};
+}

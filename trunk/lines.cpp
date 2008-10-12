@@ -720,7 +720,7 @@ void LinesPage::ClickRename2(kGUIString *result,int closebutton)
 			box=new kGUIMsgBoxReq(MSGBOX_OK,false,"Error: name already used!");
 		else
 		{
-			unsigned int i;
+			int i;
 			GPXLine *s;
 
 			i=GetIndex(m_editlinelist.GetSelectionString());
