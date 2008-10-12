@@ -29,12 +29,12 @@ enum
 {
 BABELTYPE_WAYPOINTS=1,
 BABELTYPE_TRACKS=2,
-BABELTYPE_REALTIME=4,
+BABELTYPE_REALTIME=4
 };
 
 enum
 {
-BABELFILTER_SIMPLIFYTRACK=1,
+BABELFILTER_SIMPLIFYTRACK=1
 };
 
 class BabelGlue
@@ -49,7 +49,6 @@ public:
 	void StopTracking(void);								/* used for realtime 'tracking' mode */
 	bool IsTracking(void) {return m_thread.GetActive();}	/* is in tracking mode */
 	bool GetPos(GPXCoord *pos);								/* true if a new point is ready */
-//	void SetPos(double lat,double lon) {m_lat=lat;m_lon=lon;m_gotpos=true;}
 	void ClearTypes(void) {m_types=0;}
 	void AddType(int type) {m_types|=type;}
 	void SimplifyTrack(int num) {m_filter=BABELFILTER_SIMPLIFYTRACK;m_stnum=num;}

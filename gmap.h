@@ -34,7 +34,7 @@
 class GGPXMapTile
 {
 public:
-	GGPXMapTile() {m_waiting=false;}
+	GGPXMapTile() {m_waiting=false;m_serverid=-1;}
 	void SetOwner(class GGPXMap *owner) {m_owner=owner;}
 	void LoadTile(kGUIString *url,kGUIString *fn,int x,int y,int serverid);
 	kGUIString *GetURL(void) {return m_dle.GetURL();}

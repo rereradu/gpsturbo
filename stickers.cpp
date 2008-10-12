@@ -639,7 +639,7 @@ void StickersPage::ClickRenameSticker2(kGUIString *result,int closebutton)
 			box=new kGUIMsgBoxReq(MSGBOX_OK,false,"Error: name already used!");
 		else
 		{
-			unsigned int i;
+			int i;
 			GPXSticker *s;
 
 			i=GetSticker(m_editstickerlist.GetSelectionString());

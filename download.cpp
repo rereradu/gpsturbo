@@ -294,7 +294,7 @@ DownloadWindow::DownloadWindow(int item,kGUIString *path)
 
 void DownloadWindow::Update(void)
 {
-	kGUIString *s;
+	kGUIString *s=0;
 
 	if(m_thread.GetActive()==true)
 		m_busyrect.Animate();

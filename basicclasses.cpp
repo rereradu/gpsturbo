@@ -354,7 +354,7 @@ int GPXRecordSet::Function(int fieldid,kGUIBasicVarObj *result,CallParms *p)
 			return(ERROR_WRONGNUMBEROFPARAMETERS);
 
 		m_curindex=p->GetParm(0)->GetInt();
-		if(m_curindex<0 || m_curindex>m_numwpts)
+		if(m_curindex>m_numwpts)
 			return(ERROR_SYNTAX);
 		LoadRecord();
 		result->Set((int)0);

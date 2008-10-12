@@ -637,8 +637,8 @@ public:
 	//this is public since if a new map data is downloaded then this is called to flush
 	void ChangeMapType(void);
 private:
-	CALLBACKGLUE(GPX,Panic)
-	void Panic(void);
+	CALLBACKGLUEPTR(GPX,Panic,kGUIString)
+	void Panic(kGUIString *error);
 	kGUIString m_newname;	/* used for saving filters, routes etc */
 	void MoveDividerEvent(kGUIEvent *event);
 	void MoveDivider(int delta);

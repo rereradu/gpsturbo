@@ -42,7 +42,7 @@ clean:
 
 $(DEP): data.cpp _gtext.cpp
 	@echo "Generating Dependencies"
-	-mkdir $(OBJDIR)
+	mkdir -p $(OBJDIR)
 	-$(CC) $(KGUILIB_INCLUDES) -E -MM $(SYS) $(CFLAGS) $(SRC) >>$(DEP)
 	$(KGUILOC)$(OBJDIR)/fixdep$(EXE) $(DEP) $(OBJDIR)/
 
