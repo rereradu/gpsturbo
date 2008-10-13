@@ -535,7 +535,7 @@ void GPXLL::ToUTM(GPXUTM *utm, int datum)
 void GPXLL::FromUTM(GPXUTM *utm, int datum)
 {
   double a=0, b=0, f, e, e2, e4, e6, e8;
-  double lambda0, x, y, k0, rho, t, chi, phi, phi1, phit;
+  double lambda0=0.0f, x, y, k0, rho, t, chi, phi, phi1, phit;
   double lambda=0.0f, phi0, e1, e12, e13, e14;
   double mm, mm0, mu, ep2, cc1, tt1, nn1, rr1;
   double dd, dd2, dd3, dd4, dd5, dd6;
