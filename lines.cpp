@@ -1282,7 +1282,7 @@ void LinesPage::ProcessLine(kGUICorners *c,GPXBounds *bounds,int type,kGUIString
 					if(m_thickness<=1)
 						kGUI::DrawPolyLine(num,points,m_col);
 					else
-						kGUI::DrawFatPolyLine(3,num,points,m_col,m_thickness);
+						kGUI::DrawFatPolyLine(3,num,points,m_col,(double)m_thickness);
 				}
 			}
 		}
