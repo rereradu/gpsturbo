@@ -860,8 +860,7 @@ void GPXFilter::Load(kGUITableObj *table)
 	for(e=0;e<m_numentries;++e)
 	{
 		fe=m_entries.GetEntry(e);	/* filter record */
-		row=new GPXFilterRow();		/* m
-									ake new table record */
+		row=new GPXFilterRow();		/* make new table record */
 		row->m_fieldcombo.SetSelection(fe->m_fieldnum);
 		row->FieldChanged();	/* select proper combo box for this field and variable type */
 		row->m_opcombo.SetSelectionz(fe->m_opnum);
@@ -1439,7 +1438,7 @@ void FiltersPage::ReFilter(GPXRow *row)
 	else
 		m_filteredwptable.Sort(GPX::SortEntry);
 
-	m_resultsfilter.Sprintf("%d / %d",m_filteredwptable.GetNumChildren(),gpx->m_numwpts);
+	UpdateFilterCount();
 
 	gpx->ReCalcNear();
 	gpx->MapDirty();
@@ -1529,6 +1528,7 @@ void FiltersPage::ReFilter(void)
 			addme=!addme;
 
 		row->SetLabelDraw(addme);
+		row->SetInResults(addme);
 		if(addme==true)
 			m_filteredwptable.AddRow(row);
 	}
@@ -1539,11 +1539,16 @@ void FiltersPage::ReFilter(void)
 	if(gpx->m_movelabels.GetSelected()==true)
 		gpx->BSPDirty();
 
-	m_resultsfilter.Sprintf("%d / %d",m_filteredwptable.GetNumChildren(),gpx->m_numwpts);
+	UpdateFilterCount();
 	gpx->MapDirty();
 	gpx->ReCalcNear();
 
 	kGUI::SetMouseCursor(MOUSECURSOR_DEFAULT);
+}
+
+void FiltersPage::UpdateFilterCount(void)
+{
+	m_resultsfilter.Sprintf("%d / %d",m_filteredwptable.GetNumChildren(),gpx->m_numwpts);
 }
 
 void FiltersPage::EditFilterChanged(void)

@@ -64,6 +64,14 @@ void GPX::InitSettings(void)
 	m_drawsettingcontrols.AddObject(&m_labelcolourtable);
 	m_drawsettingcontrols.NextLine();
 
+	/* convert map button */
+	m_mapconvert.SetFontSize(BUTTONFONTSIZE);
+	m_mapconvert.SetString(gpx->GetString(STRING_CONVERTMAP));
+	m_mapconvert.Contain();
+	m_mapconvert.SetEventHandler(this,CALLBACKNAME(MapConvert));
+	m_drawsettingcontrols.AddObject(&m_mapconvert);
+	m_drawsettingcontrols.NextLine();
+
 	/* map path table */
 	m_mapdirstable.SetSize(625,100);
 	m_mapdirstable.SetNumCols(2);
@@ -341,6 +349,29 @@ void GPX::LabelDown(kGUIEvent *event)
 			m_labelcolourtable.MoveRow(1);
 			UpdateWPRender();
 		}
+	}
+}
+
+void GPX::MapConvert(kGUIEvent *event)
+{
+	if(event->GetEvent()==EVENT_PRESSED)
+	{
+		kGUIFileReq *req;
+		
+		req=new kGUIFileReq(FILEREQ_OPEN,m_defpath.GetString(),".osm",this,CALLBACKNAME(DoMapConvert));
+	}
+}
+
+void GPX::DoMapConvert(kGUIFileReq *result,int pressed)
+{
+	if(pressed==MSGBOX_OK)
+	{
+		OSMConvert *oc;
+
+		/* save default path for next time */
+		m_defpath.SetString(result->GetPath());
+
+		oc=new OSMConvert(result->GetFilename());
 	}
 }
 

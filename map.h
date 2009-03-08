@@ -95,4 +95,21 @@ private:
 	Array<int>m_mapheights;		/* map heights in pixels for each zoom level */
 };
 
+//this class is for handling street name collisions
+
+class GPXMapStrings
+{
+public:
+	GPXMapStrings();
+	~GPXMapStrings();
+	void Init(unsigned int w,unsigned int h);
+	void Clear(void);
+	bool Check(kGUICorners *b,kGUIPoint2 *c,bool clipedge);
+//private:
+	kGUIDrawSurface *m_lcwindow;	/* label collision window */
+	kGUICorners m_lcbounds;
+};
+
+
+
 #endif

@@ -46,10 +46,10 @@ kGUIThread GGPXMap::m_checkthread;
 
 void GGPXMap::InitVersions(void)
 {
-	m_mapver.SetString("80");
-	m_satmapver.SetString("30");
-	m_overlayver.SetString("80");
-	m_terver.SetString("81");
+	m_mapver.SetString("92");
+	m_satmapver.SetString("36");
+	m_overlayver.SetString("92");
+	m_terver.SetString("87");
 }
 
 #if 0
