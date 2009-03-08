@@ -90,3 +90,4 @@ CURRENTFILTERHINT	Click to change the current filter	Cliquez ici pour changer le
 SHOWALL	Show All	Afficher tout	Alle anzeigen	Visa alla
 CURRENTDATABASEHINT	Click to change the current database.	Cliquez pour modifier l'actuelle base de données.	Klicken zum Ändern der aktuellen Datenbank.	Klicka för att ändra den nuvarande databasen.
 REVERSEHINT	Select to display the reverse filter results.	Sélectionnez cette option pour afficher l'inverse de filtrer les résultats.	Anwählen zur Anzeige der Ergebnisse des umgekehrten Filters.	Välj att visa det omvända filter resultat.
+CONVERTMAP	Convert Map	Convert Map	Convert Map	Convert Map

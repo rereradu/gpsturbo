@@ -905,7 +905,7 @@ void GPXRoute::DrawLine(int index,int x1,int y1,int x2,int y2,kGUIColor color)
 	lpoints[1].x=x2;
 	lpoints[1].y=y2;
 
-	kGUI::DrawFatPolyLine(2,lpoints,color,5,0.6f);
+	kGUI::DrawFatPolyLine(3,2,lpoints,color,5,0.6f);
 
 	/* draw box 1/2 way between line */
 	ex=(x1+x2)>>1;

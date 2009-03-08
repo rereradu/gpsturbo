@@ -954,7 +954,7 @@ void GPXTrack::Draw(kGUICorners *c)
 		for(e=0;e<ne;++e)
 		{
 			if(e<(ne-1))
-				kGUI::DrawFatPolyLine(2,p,col,3,alpha);
+				kGUI::DrawFatPolyLine(3,2,p,col,3,alpha);
 			kGUI::DrawPixel(p->x,p->y,col2);
 			++p;
 		}
@@ -1036,7 +1036,7 @@ void TracksPage::DrawMap(kGUICorners *c)
 				for(e=0;e<ne;++e)
 				{
 					if(e<(ne-1))
-						kGUI::DrawFatPolyLine(2,p,col,3,alpha);
+						kGUI::DrawFatPolyLine(3,2,p,col,3,alpha);
 					kGUI::DrawPixel(p->x,p->y,col2);
 					++p;
 				}
@@ -1577,7 +1577,7 @@ unsigned int GPXTrack::Changed(GPXTrack *t2)
 	GPXTrackEntry *e1;
 	GPXTrackEntry *e2;
 
-	nt=min(m_numentries,t2->m_numentries);
+	nt=valmin(m_numentries,t2->m_numentries);
 	for(i=0;i<nt;++i)
 	{
 		e1=m_entries.GetEntry(i);

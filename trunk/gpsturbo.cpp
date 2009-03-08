@@ -29,6 +29,9 @@
 #include "babelglue.h"
 
 /*! @todo load gpx files from inside zip file automatically */
+/*! @todo view tracks based on distance from a point, right click on map, view tracks ??? */
+
+
 //zlib is used by the oziexplorer format and is only included here to get the version
 //number for the credit screen.
 #include "zlib/zlib.h"
@@ -395,6 +398,7 @@ void GPXRow::Init(void)
 	m_numchildren=0;
 	m_children.SetGrow(true);
 	m_label.SetRow(this);
+	m_inresults=false;
 
 	m_copiedfrom=0;
 	m_objectlist[GPXCOL_NA]=&m_na;
@@ -1179,8 +1183,8 @@ void GPXRow::CalcHeight(void)
 	if(h2>h)
 		h=h2;
 	
-	h=min(h,MAXRH);
-	h=max(h,MINRH);
+	h=valmin(h,MAXRH);
+	h=valmax(h,MINRH);
 
 	SetRowHeight(h);
 }
@@ -1425,7 +1429,7 @@ void GPX::InitColorCombo(kGUIComboBoxObj *box)
 
 typedef struct
 {
-	char *text;
+	const char *text;
 	int alpha;
 }ALPHA_DEF;
 
@@ -1845,6 +1849,7 @@ void GPX::PreInit(void)
 	m_wptlist.Alloc(1024);
 	m_wptlist.SetGrow(true);
 	m_wptlist.SetGrowSize(256);
+	m_wptpool.SetBlockSize(2048);
 
 	SetClipFoundLogs(-1);
 	SetClipNotFoundLogs(-1);
@@ -1983,10 +1988,10 @@ void GPX::AddMaps(const char *path)
 				m_mapinfo.SetEntry(m_nummaps++,mi);
 			}
 		}
-		else if(strstri(dir.GetFilename(e),".osm"))
+		else if(strstri(dir.GetFilename(e),".osb"))
 		{
 			mname.SetString(dir.GetFilename(e));
-			mname.Replace(".osm","");
+			mname.Replace(".osb","");
 			mname.Replace(path,"");
 			
 			/* check if already is in list */
@@ -3899,7 +3904,8 @@ void RemoveStale::PressRemove(kGUIEvent *event)
 		int rflag;
 		int *dp;
 		kGUITableObj *ft;
-			
+		bool all=m_all.GetSelected();
+
 		ft=gpx->m_fwt;
 
 		/* remove any selected waypoints */
@@ -3912,13 +3918,13 @@ void RemoveStale::PressRemove(kGUIEvent *event)
 			hash.Add(rsr->GetDate(),&rflag);
 		}
 
-		/* use whole list */
-		if(m_all.GetSelected())
+		i=0;
+		while(i<gpx->m_numwpts)
 		{
-			i=0;
-			while(i<gpx->m_numwpts)
+			row=gpx->m_wptlist.GetEntry(i);
+
+			if((all==true) || (row->GetInResults()))
 			{
-				row=gpx->m_wptlist.GetEntry(i);
 				dp=(int *)hash.Find(row->GetGenDate());
 				if(dp)
 				{
@@ -3926,7 +3932,8 @@ void RemoveStale::PressRemove(kGUIEvent *event)
 					{
 						/* if this row is in the filtered results table */
 						/* then remove it but don't free it */
-						ft->DeleteRowz(row,false);
+						if(row->GetInResults())
+							ft->DeleteRow(row,false);
 
 						gpx->m_wptlist.DeleteEntry(i);
 						--gpx->m_numwpts;
@@ -3934,27 +3941,10 @@ void RemoveStale::PressRemove(kGUIEvent *event)
 						--i;
 					}
 				}
-				++i;
 			}
+			++i;
 		}
-		else	/* use current filtered results list */
-		{
-			i=0;
-			while(i<ft->GetNumChildren())
-			{
-				row=static_cast<GPXRow *>(ft->GetChild(i));
-				dp=(int *)hash.Find(row->GetGenDate());
-				if(dp)
-				{
-					if(*(dp)==1)
-					{
-						ft->DeleteRow(row);
-						--i;
-					}
-				}
-				++i;
-			}
-		}
+		gpx->UpdateFilterCount();
 
 		/* rebuild database list */
 		gpx->UpdateDBList();
@@ -5799,7 +5789,7 @@ void GPXLabel::Draw(int cxpix,int cypix)
 	int i,nt;
 	int px,py;
 	kGUICorners c;
-	double alpha=gpx->GetLabelAlpha();
+	float alpha=(float)gpx->GetLabelAlpha();
 
 	px=m_c.lx-cxpix;
 	py=m_c.ty-cypix;
@@ -5807,8 +5797,8 @@ void GPXLabel::Draw(int cxpix,int cypix)
 	/* if label has moved, then draw a line between the old position and the new location */
 	if((m_origx!=m_c.lx) || (m_origy!=m_c.ty))
 	{
-		kGUI::DrawFatLine(m_origx-cxpix,m_origy-cypix,px+16,py,DrawColor(0,0,0),3.2f,alpha);
-		kGUI::DrawFatLine(m_origx-cxpix,m_origy-cypix,px+16,py,m_colour,2.0f,alpha);
+		kGUI::DrawFatLine((float)(m_origx-cxpix),(float)(m_origy-cypix),(float)px+16,(float)py,DrawColor(0,0,0),3.2f,alpha);
+		kGUI::DrawFatLine((float)(m_origx-cxpix),(float)(m_origy-cypix),(float)px+16,(float)py,m_colour,2.0f,alpha);
 	}
 
 	if(m_icon<0)
@@ -6496,7 +6486,6 @@ void GPX::LoadPrefs(kGUIXML *xml,bool xmlstatus)
 			endtime.SetToday();
 			m_debug.ASprintf("LoadPrefs 2(gpsrs) seconds=%d\n",m_starttime.GetDiffSeconds(&endtime));
 
-#if 1
 			/* since we pre-loaded these during the xmlstream load they don't */
 			/* save the correct settings / colors etc so we update them all now */
 			for(i=0;i<m_numwpts;++i)
@@ -6507,18 +6496,6 @@ void GPX::LoadPrefs(kGUIXML *xml,bool xmlstatus)
 				row->CalcHeight();
 				row->UpdateLabelName();
 			}
-#else
-			for(i=0;i<root->GetNumChildren();++i)
-			{
-				item=root->GetChild(i);
-				if(!strcmp(item->GetName(),"wpt"))
-				{
-					GPXRow *row;
-					row=new GPXRow(0,item);
-					m_wptlist.SetEntry(m_numwpts++,row);
-				}
-			}
-#endif
 			UpdateDBList();
 			endtime.SetToday();
 			m_debug.ASprintf("LoadPrefs 3(cache entries) seconds=%d\n",m_starttime.GetDiffSeconds(&endtime));
@@ -6899,7 +6876,7 @@ void GPX::UpdateMacroButtons(void)
 	
 				i=bb->GetImage();
 				b->SetImage(i);
-				b->SetSize(min(i->GetImageWidth(),64),min(i->GetImageHeight(),32));
+				b->SetSize(valmin(i->GetImageWidth(),64),valmin(i->GetImageHeight(),32));
 			}
 			else
 			{
@@ -6924,7 +6901,7 @@ void GPX::UpdateMacroButtons(void)
 
 	/* move down tabs if need be */
 	oldy=m_tabs.GetZoneY();
-	newy=max(m_logo.GetZoneBY()-m_tabs.GetTabRowHeight(),m_macrocontrols.GetZoneBY());
+	newy=valmax(m_logo.GetZoneBY()-m_tabs.GetTabRowHeight(),m_macrocontrols.GetZoneBY());
 	printf("mctop=%d,mcbot=%d,oldy=%d,newy=%d\n",m_macrocontrols.GetZoneY(),m_macrocontrols.GetZoneBY(),oldy,newy);
 	if(oldy!=newy)
 	{

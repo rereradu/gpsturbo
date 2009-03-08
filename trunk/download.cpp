@@ -133,7 +133,7 @@ void DownloadPage::Init(kGUIContainerObj *obj)
 	m_table.SetColWidth(COL_PATH,350);
 	m_table.SetColTitle(COL_BROWSE,"Browse");
 	m_table.SetColWidth(COL_BROWSE,50);
-	m_table.SetSize(min(bw,m_table.CalcTableWidth()),200);
+	m_table.SetSize(valmin(bw,m_table.CalcTableWidth()),200);
 	obj->AddObject(&m_table);
 }
 
@@ -318,10 +318,9 @@ void DownloadWindow::Update(void)
 }
 
 static const char *canbasefiles[]={
-	"NTDBDATA.mdx",
-	"NTDBData.img",
-	"NTDBDATA_MDR.img",
-	"NTDBData.TDB"};
+	"IbycsTop.MDX",
+	"IbycsTop.img",
+	"IbycsTop.TDB"};
 
 void DownloadWindow::DownloadThread(void)
 {
@@ -342,16 +341,19 @@ void DownloadWindow::DownloadThread(void)
 	kGUIString length;
 	kGUIString datetime;
 	kGUIString name;
+	kGUIString temp;
 	unsigned long fs;
 	bool werror;
 	char c;
 	int numok=0,numdownloaded=0;
+	bool add;
+	bool img;
 
 	m_abort=false;
 	switch(m_item)
 	{
 	case DOWNLOAD_IBYCUS_TOPOCANADA:
-		url.SetString("http://www.ibycus.com/ibycustopo/download/filelist.lst");
+		url.SetString("http://www.ibycus.com/ibycustopo/download/filelist.txt");
 
 		s=new kGUIString();
 		s->Sprintf("downloading '%s'\n",url.GetString());
@@ -365,17 +367,32 @@ void DownloadWindow::DownloadThread(void)
 		m_comm.Write(&s);
 		if(status==DOWNLOAD_OK)
 		{
-			/* split on the TAB character */
-			csv.SetSplit("\t");
+			/* split on the space character */
+			csv.SetIgnoreEmpty(true);
+			csv.SetSplit(" ");
 			csv.Load();
 
 			numlines=csv.GetNumRows();
 			numcols=csv.GetNumCols();
 
+			//0 = r/w status, 1,2,3 = groups/owners etc
+			//4 = size
+			//5,6,7 = date
+			//8 = filename
+
+			if(numcols!=9)
+			{
+				s=new kGUIString();
+				s->Sprintf("Error: File format not as expected!");
+				m_comm.Write(&s);
+				goto quit;
+			}
+
 			s=new kGUIString();
 			s->Sprintf("number of img files=%d\n",numlines);
 			m_comm.Write(&s);
 
+#if 0
 			/* these are the base files */
 			for(i=0;i<sizeof(canbasefiles)/sizeof(char *);++i)
 			{
@@ -430,6 +447,7 @@ void DownloadWindow::DownloadThread(void)
 					}
 				}
 			}
+#endif
 
 			fullfilename.SetString("imgs");
 			kGUI::MakeFilename(&m_path,&fullfilename,&mapdir);
@@ -447,82 +465,123 @@ void DownloadWindow::DownloadThread(void)
 					m_abort=true;	
 				}
 			}
+
+			//0 = r/w status, 1,2,3 = groups/owners etc
+			//4 = size
+			//5,6,7 = date
+			//8 = filename
+
 			if(m_abort==false)
 			{
 				for(i=0;i<numlines;++i)
 				{
-					csv.GetField(i,0,&filename);
-					csv.GetField(i,1,&length);
-					csv.GetField(i,2,&datetime);
-					csv.GetField(i,3,&name);
-
-					fs=length.GetInt();
-					kGUI::MakeFilename(&mapdir,&filename,&fullfilename);
-					if(kGUI::FileSize(fullfilename.GetString())!=fs)
+					if(csv.GetNumCols(i)==9)
 					{
-						s=new kGUIString();
-						s->Sprintf("Loading map '%s', filename='%s'\n",name.GetString(),filename.GetString());
-						/* if buffer is full then delay and try again */
-						while(m_comm.Write(&s)==false)
-							kGUI::Sleep(1);
+						csv.GetField(i,4,&length);
+						csv.GetField(i,5,&datetime);
+						csv.GetField(i,6,&temp);
+						datetime.Append(" ");
+						datetime.Append(&temp);
+						csv.GetField(i,7,&temp);
+						datetime.Append(" ");
+						datetime.Append(&temp);
+						csv.GetField(i,8,&filename);
+						csv.GetField(i,8,&name);
 
-						dh.SetMemory();
-						url.Sprintf("http://www.ibycus.com/ibycustopo/download/%s",filename.GetString());
-						status=dl.DownLoad(&dh,&url);
-
-						dlsize=dh.GetLoadableSize();
-						s=new kGUIString();
-						s->Sprintf("download status=%s\n",status==DOWNLOAD_OK?"OK":"Error!");
-						m_comm.Write(&s);
-
-						if(status==DOWNLOAD_OK && dlsize>0)
+						add=false;
+						img=false;
+						/* check for root list */
+						for(unsigned int b=0;b<sizeof(canbasefiles)/sizeof(char *);++b)
 						{
-							/* ok, save file to drive */
-							werror=false;
-
-							wdh.SetFilename(fullfilename.GetString());
-							if(wdh.OpenWrite("wb",dlsize)==true)
-							{
-								dh.Open();
-								for(j=0;j<dlsize;++j)
-								{
-									dh.Read(&c,(unsigned long)1L);
-									wdh.Write(&c,1L);
-								}
-								dh.Close();
-								if(wdh.Close()==false)
-									werror=true;
-							}
-							else
-								werror=true;
-
-							if(!werror)
-								++numdownloaded;
-							else
-							{
-								s=new kGUIString();
-								s->Sprintf("Error opening file '%s' for write!\n",fullfilename.GetString());
-								m_comm.Write(&s);
-								m_abort=true;
-
-							}
-
+							if(!strcmp(filename.GetString(),canbasefiles[b]))
+								add=true;
 						}
-						else
+						if(add==false)
 						{
-							if(++dlerror==10)
+							if(filename.Str(".img")>=0)
+							{
+								add=true;
+								img=true;
+							}
+						}
+
+						if(add)
+						{
+							fs=length.GetInt();
+							if(img)
+								kGUI::MakeFilename(&mapdir,&filename,&fullfilename);
+							else
+								kGUI::MakeFilename(&m_path,&filename,&fullfilename);
+							if(kGUI::FileSize(fullfilename.GetString())!=fs)
 							{
 								s=new kGUIString();
-								s->Sprintf("aborting download, too many errors!\n",status);
+								s->Sprintf("Loading map '%s', filename='%s'\n",name.GetString(),filename.GetString());
+								/* if buffer is full then delay and try again */
+								while(m_comm.Write(&s)==false)
+									kGUI::Sleep(1);
+
+								dh.SetMemory();
+								if(img)
+									url.Sprintf("http://www.ibycus.com/ibycustopo/download/imgs/%s",filename.GetString());
+								else
+									url.Sprintf("http://www.ibycus.com/ibycustopo/download/%s",filename.GetString());
+								status=dl.DownLoad(&dh,&url);
+
+								dlsize=dh.GetLoadableSize();
+								s=new kGUIString();
+								s->Sprintf("download status=%s\n",status==DOWNLOAD_OK?"OK":"Error!");
 								m_comm.Write(&s);
-								m_abort=true;
+
+								if(status==DOWNLOAD_OK && dlsize>0)
+								{
+									/* ok, save file to drive */
+									werror=false;
+
+									wdh.SetFilename(fullfilename.GetString());
+									if(wdh.OpenWrite("wb",dlsize)==true)
+									{
+										dh.Open();
+										for(j=0;j<dlsize;++j)
+										{
+											dh.Read(&c,(unsigned long)1L);
+											wdh.Write(&c,1L);
+										}
+										dh.Close();
+										if(wdh.Close()==false)
+											werror=true;
+									}
+									else
+										werror=true;
+
+									if(!werror)
+										++numdownloaded;
+									else
+									{
+										s=new kGUIString();
+										s->Sprintf("Error opening file '%s' for write!\n",fullfilename.GetString());
+										m_comm.Write(&s);
+										m_abort=true;
+
+									}
+
+								}
+								else
+								{
+									if(++dlerror==10)
+									{
+										s=new kGUIString();
+										s->Sprintf("aborting download, too many errors!\n",status);
+										m_comm.Write(&s);
+										m_abort=true;
+									}
+								}
 							}
+							else
+								++numok;
+							if(m_abort)
+								break;
 						}
 					}
-					else
-						++numok;
-					if(m_abort)
-						break;
 				}
 			}
 			s=new kGUIString();
@@ -536,7 +595,7 @@ void DownloadWindow::DownloadThread(void)
 	break;
 	}
 
-
+quit:;
 	m_thread.Close(true);
 }
 

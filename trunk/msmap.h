@@ -41,7 +41,7 @@ typedef struct
 	unsigned int numpoints;
 	double thickness;
 	int pixlen;
-	kGUIDPoint2 *points;
+	kGUIFPoint2 *points;
 	kGUICorners corners;
 	int numlabels;				/* 0 to 4 */
 	const char *curlabels[4];	/* pointer to current label */
@@ -190,7 +190,9 @@ public:
 	static short Read16(const char *fp);
 
 	//this func is also used by the openstreetmap renderer
-	static void DrawTrainTracks(int nvert,kGUIDPoint2 *point);
+	static void DrawTrainTracks(int nvert,kGUIFPoint2 *point,kGUIColor c);
+	static void DrawDashedLine(int nvert,kGUIFPoint2 *point,float segment,kGUIColor c);
+	static void DrawDottedLine(int nvert,kGUIFPoint2 *point,float segment,float radius,kGUIColor c);
 private:
 	MSFAT *LocateFile(const char *name,const char *type);
 	MSFAT *LocateType(const char *type);
@@ -212,7 +214,7 @@ private:
 	kGUIText m_t[MAXLABELS];	/* temp used in drawing */
 	void ReadLabel(const char *enc,kGUIString *s);
 	static void DrawLabel(kGUIText *t,double lx,double ly,double lw,double lh,double heading,bool clipedge);
-	void DrawLineLabel(kGUIText *s,int nvert,kGUIDPoint2 *point,double over,bool root);
+	void DrawLineLabel(kGUIText *s,int nvert,kGUIFPoint2 *point,double over,bool root);
 //	void DrawPolyLabel(kGUIText *s,int nvert,kGUIPoint2 *point);
 
 	const char *m_filedata;
@@ -289,11 +291,10 @@ private:
 	
 	int m_numlabels;			/* 0 to 4 */
 	const char *m_curlabels[4];	/* pointer to current label */
-	static kGUIDrawSurface *m_lcwindow;	/* label collision window */
-	static kGUICorners m_lcbounds;
 
+	static GPXMapStrings m_lc;
 	static MSCOORD m_points[MAXPP];
-	static kGUIDPoint2 m_ppoints[MAXPP];
+	static kGUIFPoint2 m_ppoints[MAXPP];
 
 	static int m_labelicon;				/* icon for last read label */
 	static Array<kGUIImage *>m_icons;

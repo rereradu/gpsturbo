@@ -42,6 +42,7 @@ public:
 	void ReFilter(void);
 	void ReFilterEvent(kGUIEvent *event) {if(event->GetEvent()==EVENT_AFTERUPDATE)ReFilter();}
 	void ReFilter(GPXRow *row);
+	void UpdateFilterCount(void);
 
 	unsigned int GetNumFilters(void) {return m_numfilters;}
 	int GetFilter(const char *name);

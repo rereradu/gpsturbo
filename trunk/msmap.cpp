@@ -37,7 +37,7 @@ int MSGPXMap::m_ty;
 Array<MSGPXMap *> MSGPXMap::m_drawmaps;
 Array<MSSUBDIV *> MSGPXMap::m_drawsubdivs;
 MSCOORD MSGPXMap::m_points[MAXPP];
-kGUIDPoint2 MSGPXMap::m_ppoints[MAXPP];
+kGUIFPoint2 MSGPXMap::m_ppoints[MAXPP];
 
 unsigned int MSGPXMap::m_numsortpolys;
 Array<POLYSORT_DEF>MSGPXMap::m_sortpolys;
@@ -50,8 +50,9 @@ Array<POLYSORT_DEF>MSGPXMap::m_roadgroups[ROADGROUP_NUM];
 
 Heap MSGPXMap::m_sortpolysheap;
 
-kGUIDrawSurface *MSGPXMap::m_lcwindow=0;	/* label collision window */
-kGUICorners MSGPXMap::m_lcbounds;
+GPXMapStrings MSGPXMap::m_lc;
+//kGUIDrawSurface *MSGPXMap::m_lcwindow=0;	/* label collision window */
+//kGUICorners MSGPXMap::m_lcbounds;
 
 int MSGPXMap::m_labelicon;	/* icon number for last loaded label */
 Array<kGUIImage *>MSGPXMap::m_icons;
@@ -87,12 +88,7 @@ void MSGPXMap::Init(void)
 	unsigned int i;
 	kGUIImage *image;
 
-	m_lcwindow=new kGUIDrawSurface();
-	m_lcwindow->Init(256,256);
-	m_lcbounds.lx=0;
-	m_lcbounds.ty=0;
-	m_lcbounds.rx=256;
-	m_lcbounds.by=256;
+	m_lc.Init(256,256);
 
 	m_drawsubdivs.Init(50,25);
 	m_drawmaps.Init(50,25);
@@ -116,7 +112,6 @@ void MSGPXMap::Purge(void)
 {
 	int i;
 
-	delete m_lcwindow;
 	for(i=0;i<6;++i)
 		delete m_icons.GetEntry(i);
 }
@@ -1053,16 +1048,8 @@ int MSGPXMap::DrawTile(int tx,int ty)
 	unsigned int i;
 	MSSUBDIV *sub;
 	MSGPXMap *map;
-	kGUIDrawSurface *savesurface;
 
-	/* clear the label collision window */
-	kGUI::PushClip();
-	savesurface=kGUI::GetCurrentSurface();
-	kGUI::SetCurrentSurface(m_lcwindow);
-	kGUI::ResetClip();	/* set clip to full surface on stack */
-	kGUI::DrawRect(0,0,m_lcwindow->GetWidth(),m_lcwindow->GetHeight(),DrawColor(0,0,0));
-	kGUI::SetCurrentSurface(savesurface);
-	kGUI::PopClip();
+	m_lc.Clear();
 
 	m_tx=tx<<8;
 	m_ty=ty<<8;
@@ -1089,6 +1076,26 @@ int MSGPXMap::DrawTile(int tx,int ty)
 	{
 		sub=m_drawsubdivs.GetEntry(i);
 		map=m_drawmaps.GetEntry(i);
+
+		//debug draw
+#if 0
+		{
+			GPXCoord nw;
+			GPXCoord se;
+			kGUIColor c;
+			kGUICorners subcorners;
+
+			c=DrawColor(255,i&255,i&255);
+			nw.SetLat(ToDegrees(sub->boundary.nw.dlat));
+			nw.SetLon(ToDegrees(sub->boundary.nw.dlong));
+			se.SetLat(ToDegrees(sub->boundary.se.dlat));
+			se.SetLon(ToDegrees(sub->boundary.se.dlong));
+			ToMap(&nw,&subcorners.lx,&subcorners.ty);
+			ToMap(&se,&subcorners.rx,&subcorners.by);
+
+			kGUI::DrawRect(subcorners.lx-m_tx,subcorners.ty-m_ty,subcorners.rx-m_tx,subcorners.by-m_ty,c);
+		}
+#endif
 		map->AddSubPolys(sub);
 	}
 
@@ -1124,7 +1131,7 @@ int MSGPXMap::DrawTile(int tx,int ty)
 			POLYSORT_DEF ps;
 
 			ps=m_roadgroups[i].GetEntry(j);
-			kGUI::DrawFatPolyLine(ps.numpoints,ps.points,polylineinfo[ps.polytype].colour,ps.thickness);
+			kGUI::DrawFatPolyLine(3,ps.numpoints,ps.points,polylineinfo[ps.polytype].colour,(float)ps.thickness);
 		}
 	}
 
@@ -1548,8 +1555,8 @@ void MSGPXMap::AddSubPolys(MSSUBDIV *sub)
 				/* decompress them again, this is a speed optimization! */
 
 				ps.numpoints=m_numpoints;
-				ps.points=(kGUIDPoint2 *)m_sortpolysheap.Alloc(m_numpoints*sizeof(kGUIDPoint2));
-				memcpy(ps.points,m_ppoints,m_numpoints*sizeof(kGUIDPoint2));
+				ps.points=(kGUIFPoint2 *)m_sortpolysheap.Alloc(m_numpoints*sizeof(kGUIFPoint2));
+				memcpy(ps.points,m_ppoints,m_numpoints*sizeof(kGUIFPoint2));
 
 				/* save labels associated with this poly */
 				ps.numlabels=m_numlabels;
@@ -1750,8 +1757,8 @@ void MSGPXMap::DrawSub(MSSUBDIV *sub)
 						/* decompress them again, this is a speed optimization! */
 
 						ps.numpoints=m_numpoints;
-						ps.points=(kGUIDPoint2 *)m_sortpolysheap.Alloc(m_numpoints*sizeof(kGUIDPoint2));
-						memcpy(ps.points,m_ppoints,m_numpoints*sizeof(kGUIDPoint2));
+						ps.points=(kGUIFPoint2 *)m_sortpolysheap.Alloc(m_numpoints*sizeof(kGUIFPoint2));
+						memcpy(ps.points,m_ppoints,m_numpoints*sizeof(kGUIFPoint2));
 
 						/* save labels associated with this polyline */
 						if(GetZoom()>=13 && m_numlabels && pi->drawlabel)
@@ -1763,15 +1770,15 @@ void MSGPXMap::DrawSub(MSSUBDIV *sub)
 						else
 							ps.numlabels=0;
 						m_roadgroups[pi->thickindex].SetEntry(m_roadgroupspolys[pi->thickindex]++,ps);
-						edge=min(max(0.75f,thickness*0.115f),1.5f);
-						kGUI::DrawFatPolyLine(m_numpoints,m_ppoints,DrawColor(128,128,128),thickness+edge,0.66f);
+						edge=valmin(valmax(0.75f,thickness*0.115f),1.5f);
+						kGUI::DrawFatPolyLine(3,m_numpoints,m_ppoints,DrawColor(128,128,128),(float)(thickness+edge),0.66f);
 					}
 				break;
 				case PL_TRAINTRACKS:
 					if(GetZoom()>13)
-						DrawTrainTracks(m_numpoints,m_ppoints);
+						DrawTrainTracks(m_numpoints,m_ppoints,DrawColor(64,64,64));
 					else
-						kGUI::DrawPolyLine(m_numpoints,m_ppoints,DrawColor(0,0,0));
+						kGUI::DrawPolyLine(m_numpoints,m_ppoints,DrawColor(64,64,64));
 				break;
 				}
 
@@ -1834,8 +1841,8 @@ void MSGPXMap::DrawSub(MSSUBDIV *sub)
 				/* decompress it again, this is a speed optimization! */
 
 				ps.numpoints=1;
-				ps.points=(kGUIDPoint2 *)m_sortpolysheap.Alloc(sizeof(kGUIDPoint2));
-				memcpy(ps.points,m_ppoints,sizeof(kGUIDPoint2));
+				ps.points=(kGUIFPoint2 *)m_sortpolysheap.Alloc(sizeof(kGUIFPoint2));
+				memcpy(ps.points,m_ppoints,sizeof(kGUIFPoint2));
 
 				/* save labels associated with this point */
 				ps.numlabels=m_numlabels;
@@ -1865,8 +1872,8 @@ void MSGPXMap::DrawSub(MSSUBDIV *sub)
 				/* decompress it again, this is a speed optimization! */
 
 				ps.numpoints=1;
-				ps.points=(kGUIDPoint2 *)m_sortpolysheap.Alloc(sizeof(kGUIDPoint2));
-				memcpy(ps.points,m_ppoints,sizeof(kGUIDPoint2));
+				ps.points=(kGUIFPoint2 *)m_sortpolysheap.Alloc(sizeof(kGUIFPoint2));
+				memcpy(ps.points,m_ppoints,sizeof(kGUIFPoint2));
 
 				/* save labels associated with this point */
 				ps.numlabels=m_numlabels;
@@ -1878,10 +1885,11 @@ void MSGPXMap::DrawSub(MSSUBDIV *sub)
 	}
 }
 
-void MSGPXMap::DrawTrainTracks(int nvert,kGUIDPoint2 *point)
+#if 0
+void MSGPXMap::DrawTrainTracks(int nvert,kGUIFPoint2 *point,kGUIColor c)
 {
 	int i;
-	double x1,y1,x2,y2;
+	float x1,y1,x2,y2;
 
 	for(i=0;i<(nvert-1);++i)
 	{
@@ -1890,13 +1898,13 @@ void MSGPXMap::DrawTrainTracks(int nvert,kGUIDPoint2 *point)
 		x2=point[i+1].x;
 		y2=point[i+1].y;
 
-		if(kGUI::DrawLine(x1,y1,x2,y2,DrawColor(64,64,64))==true)
+		if(kGUI::DrawLine(x1,y1,x2,y2,c)==true)
 		{
-			double dx,dy;
-			double length,lcross;
-			double curx,cury;
-			double stepx,stepy,step;
-			double offx,offy;
+			float dx,dy;
+			float length,lcross;
+			float curx,cury;
+			float stepx,stepy,step;
+			float offx,offy;
 
 			dx=x2-x1;
 			dy=y2-y1;
@@ -1927,14 +1935,14 @@ void MSGPXMap::DrawTrainTracks(int nvert,kGUIDPoint2 *point)
 			curx=x1;
 			cury=y1;
 			lcross=0.0f;
-			step=hypot(stepx,stepy);
+			step=(float)hypot(stepx,stepy);
 			/* draw a cross line every 4 pixels */
 			while(length>0.0f)
 			{
 				lcross+=step;
 				if(lcross>=4.0f)
 				{
-					kGUI::DrawLine(curx+offx,cury-offy,curx-offx,cury+offy,DrawColor(64,64,64));
+					kGUI::DrawLine(curx+offx,cury-offy,curx-offx,cury+offy,c);
 					lcross-=4.0f;
 				}
 				curx+=stepx;
@@ -1944,6 +1952,130 @@ void MSGPXMap::DrawTrainTracks(int nvert,kGUIDPoint2 *point)
 		}
 	}
 }
+#endif
+
+void MSGPXMap::DrawDashedLine(int nvert,kGUIFPoint2 *point,float segment,kGUIColor c)
+{
+	int i;
+	float x1,y1,x2,y2,dx,dy,stepx,stepy,heading;
+//	float segrem=0.0f;
+	float seglen;
+	bool draw=true;
+
+	for(i=0;i<(nvert-1);++i)
+	{
+		x1=point[i].x;
+		y1=point[i].y;
+		x2=point[i+1].x;
+		y2=point[i+1].y;
+		dx=x2-x1;
+		dy=y2-y1;
+		heading=atan2(dx,dy);
+		stepx=sin(heading);
+		stepy=cos(heading);
+		seglen=(float)hypot(dx,dy);
+
+		while(seglen>=segment)
+		{
+			x2=x1+stepx*segment;
+			y2=y1+stepy*segment;
+			if(draw)
+				kGUI::DrawLine(x1,y1,x2,y2,c);
+			draw=!draw;
+			x1=x2;
+			y1=y2;
+			seglen-=segment;
+		}
+		/* handle remainders */
+	}
+}
+
+#if 1
+void MSGPXMap::DrawTrainTracks(int nvert,kGUIFPoint2 *point,kGUIColor c)
+{
+	int i;
+	float x0,y0,x1,y1,x2,y2,dx,dy,stepx,stepy,heading;
+	float offx,offy,cx,cy;
+	float segrem=0.0f;
+	float segment=4.0f;
+	float seglen;
+//	bool draw=true;
+
+	x0=point[0].x;
+	y0=point[0].y;
+	for(i=0;i<(nvert-1);++i)
+	{
+		x1=point[i].x;
+		y1=point[i].y;
+		x2=point[i+1].x;
+		y2=point[i+1].y;
+		kGUI::DrawLine(x1,y1,x2,y2,c);
+		dx=x2-x1;
+		dy=y2-y1;
+		heading=atan2(dx,dy);
+		stepx=sin(heading);
+		stepy=cos(heading);
+		seglen=(float)hypot(dx,dy);
+
+		while((segrem+seglen)>=segment)
+		{
+			x2=x1+stepx*(segment-segrem);
+			y2=y1+stepy*(segment-segrem);
+
+			/* draw track cross line */
+			offx=sin(heading+(PI/2.0f))*3.0f;
+			offy=cos(heading+(PI/2.0f))*3.0f;
+			cx=(x0+x2)/2.0f;
+			cy=(y0+y2)/2.0f;
+			kGUI::DrawLine(cx+offx,cy+offy,cx-offx,cy-offy,c);
+			x0=x1=x2;
+			y0=y1=y2;
+			seglen-=(segment-segrem);
+			segrem=0;
+		}
+		segrem+=seglen;
+	}
+}
+#endif
+
+void MSGPXMap::DrawDottedLine(int nvert,kGUIFPoint2 *point,float segment,float radius,kGUIColor c)
+{
+	int i;
+	float x0,y0,x1,y1,x2,y2,dx,dy,stepx,stepy,heading;
+	float segrem=0.0f;
+	float seglen;
+//	bool draw=true;
+
+	x0=point[0].x;
+	y0=point[0].y;
+	for(i=0;i<(nvert-1);++i)
+	{
+		x1=point[i].x;
+		y1=point[i].y;
+		x2=point[i+1].x;
+		y2=point[i+1].y;
+		dx=x2-x1;
+		dy=y2-y1;
+		heading=atan2(dx,dy);
+		stepx=sin(heading);
+		stepy=cos(heading);
+		seglen=(float)hypot(dx,dy);
+
+		while((segrem+seglen)>=segment)
+		{
+			x2=x1+stepx*(segment-segrem);
+			y2=y1+stepy*(segment-segrem);
+			kGUI::DrawCircle((x0+x2)/2.0f,(y0+y2)/2.0f,radius+0.5f,c,0.33f);
+			kGUI::DrawCircle((x0+x2)/2.0f,(y0+y2)/2.0f,radius,c,1.0f);
+			x0=x1=x2;
+			y0=y1=y2;
+			seglen-=(segment-segrem);
+			segrem=0;
+		}
+		segrem+=seglen;
+	}
+}
+
 
 /* read label into string class */
 
@@ -2058,7 +2190,7 @@ void MSGPXMap::ReadLabel(const char *enc,kGUIString *s)
 	}
 }
 
-void MSGPXMap::DrawLineLabel(kGUIText *t,int nvert,kGUIDPoint2 *point,double over,bool root)
+void MSGPXMap::DrawLineLabel(kGUIText *t,int nvert,kGUIFPoint2 *point,double over,bool root)
 {
 	int s;
 	int lsec;			/* longest section */
@@ -2066,7 +2198,7 @@ void MSGPXMap::DrawLineLabel(kGUIText *t,int nvert,kGUIDPoint2 *point,double ove
 	int nc=t->GetLen();		/* get length of label in characters */
 	double lw=(double)t->GetWidth();	/* get width of label in pixels */
 	double lh=(double)t->GetLineHeight();	/* get height of label in pixels */
-	kGUIDPoint2 *p;
+	kGUIFPoint2 *p;
 	double ldist;		/* longest distance */
 	double dist;
 	double cx,cy;
@@ -2157,9 +2289,8 @@ void MSGPXMap::DrawLabel(kGUIText *t,double lx,double ly,double lw,double lh,dou
 {
 	int hx,hy,i;
 	bool dodraw;
-	kGUIPoint2 m_corners[4];
-	kGUICorners m_bounds;
-	kGUIDrawSurface *savesurface;
+	kGUIPoint2 corners[4];
+	kGUICorners bounds;
 	kGUIImage *icon;
 	double icx=0.0f,icy=0.0f;
 
@@ -2167,7 +2298,7 @@ void MSGPXMap::DrawLabel(kGUIText *t,double lx,double ly,double lw,double lh,dou
 	
 	if(m_labelicon>=0)
 	{
-		kGUICorners m_tbounds;
+		kGUICorners tbounds;
 
 		icon=m_icons.GetEntry(m_labelicon);
 		/* center icon over position */
@@ -2177,24 +2308,24 @@ void MSGPXMap::DrawLabel(kGUIText *t,double lx,double ly,double lw,double lh,dou
 		icy=iconcentery[m_labelicon];
 
 		/* if icon is cliped against edge of tile then don't draw */
-		m_bounds.lx=(int)lx;
-		m_bounds.rx=(int)lx+icon->GetImageWidth();
-		m_bounds.ty=(int)ly;
-		m_bounds.by=(int)ly+icon->GetImageHeight();
+		bounds.lx=(int)lx;
+		bounds.rx=(int)lx+icon->GetImageWidth();
+		bounds.ty=(int)ly;
+		bounds.by=(int)ly+icon->GetImageHeight();
 
-		m_tbounds.lx=0;
-		m_tbounds.ty=0;
-		m_tbounds.rx=256;
-		m_tbounds.by=256;
+		tbounds.lx=0;
+		tbounds.ty=0;
+		tbounds.rx=256;
+		tbounds.by=256;
 
 		if(clipedge)
 		{
-			if(kGUI::Inside(&m_bounds,&m_tbounds)==false)
+			if(kGUI::Inside(&bounds,&tbounds)==false)
 				return;
 		}
 		else
 		{
-			if(kGUI::Overlap(&m_bounds,&m_tbounds)==false)
+			if(kGUI::Overlap(&bounds,&tbounds)==false)
 				return;
 		}
 	}
@@ -2203,69 +2334,44 @@ void MSGPXMap::DrawLabel(kGUIText *t,double lx,double ly,double lw,double lh,dou
 
 	if(heading==0.0f)
 	{
-		m_corners[0].x=(int)lx;
-		m_corners[0].y=(int)ly;
-		m_corners[1].x=(int)(lx+lw);
-		m_corners[1].y=(int)ly;
-		m_corners[2].x=(int)(lx+lw);
-		m_corners[2].y=(int)(ly+lh);
-		m_corners[3].x=(int)lx;
-		m_corners[3].y=(int)(ly+lh);
+		corners[0].x=(int)lx;
+		corners[0].y=(int)ly;
+		corners[1].x=(int)(lx+lw);
+		corners[1].y=(int)ly;
+		corners[2].x=(int)(lx+lw);
+		corners[2].y=(int)(ly+lh);
+		corners[3].x=(int)lx;
+		corners[3].y=(int)(ly+lh);
 		
-		m_bounds.lx=(int)lx;
-		m_bounds.rx=(int)(lx+lw);
-		m_bounds.ty=(int)ly;
-		m_bounds.by=(int)(ly+lh);
+		bounds.lx=(int)lx;
+		bounds.rx=(int)(lx+lw);
+		bounds.ty=(int)ly;
+		bounds.by=(int)(ly+lh);
 	}
 	else
 	{
-		m_corners[0].x=(int)lx;
-		m_corners[0].y=(int)ly;
-		m_corners[1].x=(int)(lx+(int)(cos(heading)*lw));
-		m_corners[1].y=(int)(ly-(int)(sin(heading)*lw));
+		corners[0].x=(int)lx;
+		corners[0].y=(int)ly;
+		corners[1].x=(int)(lx+(int)(cos(heading)*lw));
+		corners[1].y=(int)(ly-(int)(sin(heading)*lw));
 		hx=(int)(cos(heading-(PI*2*0.25f))*lh);
 		hy=(int)(sin(heading-(PI*2*0.25f))*lh);
-		m_corners[3].x=m_corners[0].x+hx;
-		m_corners[3].y=m_corners[0].y-hy;
-		m_corners[2].x=m_corners[1].x+hx;
-		m_corners[2].y=m_corners[1].y-hy;
+		corners[3].x=corners[0].x+hx;
+		corners[3].y=corners[0].y-hy;
+		corners[2].x=corners[1].x+hx;
+		corners[2].y=corners[1].y-hy;
 
-		m_bounds.lx=min(min(m_corners[0].x,m_corners[1].x),
-						min(m_corners[2].x,m_corners[3].x));
-		m_bounds.ty=min(min(m_corners[0].y,m_corners[1].y),
-						min(m_corners[2].y,m_corners[3].y));
-		m_bounds.rx=max(max(m_corners[0].x,m_corners[1].x),
-						max(m_corners[2].x,m_corners[3].x));
-		m_bounds.by=max(max(m_corners[0].y,m_corners[1].y),
-						max(m_corners[2].y,m_corners[3].y));
-	}
-
-	/* is this label totally inside the window? */
-	if(clipedge)
-	{
-		if(kGUI::Inside(&m_bounds,&m_lcbounds)==false)
-			return;
-	}
-	else
-	{
-		if(kGUI::Overlap(&m_bounds,&m_lcbounds)==false)
-			return;
+		bounds.lx=valmin(valmin(corners[0].x,corners[1].x),
+						valmin(corners[2].x,corners[3].x));
+		bounds.ty=valmin(valmin(corners[0].y,corners[1].y),
+						valmin(corners[2].y,corners[3].y));
+		bounds.rx=valmax(valmax(corners[0].x,corners[1].x),
+						valmax(corners[2].x,corners[3].x));
+		bounds.by=valmax(valmax(corners[0].y,corners[1].y),
+						valmax(corners[2].y,corners[3].y));
 	}
 
-	kGUI::PushClip();
-	savesurface=kGUI::GetCurrentSurface();
-	kGUI::SetCurrentSurface(m_lcwindow);
-	kGUI::ResetClip();	/* set clip to full surface on stack */
-	
-	/* is this area of the window clear? */
-	dodraw=kGUI::ReadPoly(4,m_corners,DrawColor(0,0,0));
-	if(dodraw==true)
-	{
-		/* ok, it was clear, so fill it in now! */
-		kGUI::DrawPoly(4,m_corners,DrawColor(255,255,255));
-	}
-	kGUI::SetCurrentSurface(savesurface);
-	kGUI::PopClip();
+	dodraw=m_lc.Check(&bounds,corners,clipedge);
 
 	if(dodraw==true)
 	{
@@ -2314,10 +2420,10 @@ void MSGPXMap::DrawLabel(kGUIText *t,double lx,double ly,double lw,double lh,dou
 				}
 
 			}
-			t->DrawRot(lx,ly,0.0f,DrawColor(0,0,0),1.0f);
+			t->DrawRot((float)lx,(float)ly,0.0f,DrawColor(0,0,0),1.0f);
 		}
 		else
-			t->DrawRot(lx,ly,heading,DrawColor(0,0,0),1.0f);
+			t->DrawRot((float)lx,(float)ly,(float)heading,DrawColor(0,0,0),1.0f);
 	}
 }
 
@@ -2347,6 +2453,8 @@ const char *MSGPXMap::ReadPoly(MSSUBDIV *sub,const char *rstart,int type)
 	int road_length;
 	GPXCoord c;
 	const char *oldrstart=rstart;
+	double tx=m_tx;
+	double ty=m_ty;
 
 	m_numlabels=0;	/* default is no labels */
 	polydata= ReadU32(rstart);
@@ -2444,7 +2552,6 @@ const char *MSGPXMap::ReadPoly(MSSUBDIV *sub,const char *rstart,int type)
 		}
 #endif
 
-
 	bitinfo= ReadU8(rstart++);
 	totalbits=blen<<3;
 	bs.Set(rstart);
@@ -2513,8 +2620,8 @@ const char *MSGPXMap::ReadPoly(MSSUBDIV *sub,const char *rstart,int type)
 		c.Set(ToDegrees(m_points[x].dlat),ToDegrees(m_points[x].dlong));
 		
 		ToMap(&c,&ddx,&ddy);
-		m_ppoints[npi].x=(ddx-m_tx);
-		m_ppoints[npi].y=(ddy-m_ty);
+		m_ppoints[npi].x=(float)(ddx-tx);
+		m_ppoints[npi].y=(float)(ddy-ty);
 		dx=(int)ddx;
 		dy=(int)ddy;
 		if(!x)
@@ -2611,8 +2718,8 @@ const char *MSGPXMap::ReadPoint(MSSUBDIV *sub,const char *rstart)
 	c.Set(ToDegrees(m_points[0].dlat),ToDegrees(m_points[0].dlong));
 
 	ToMap(&c,&dx,&dy);
-	m_ppoints[0].x=(dx-m_tx);
-	m_ppoints[0].y=(dy-m_ty);
+	m_ppoints[0].x=(float)(dx-m_tx);
+	m_ppoints[0].y=(float)(dy-m_ty);
 	if(has_subtype==true)
 		rstart+=9;
 	else

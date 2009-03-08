@@ -230,6 +230,9 @@ public:
 	GPXCoord *GetCoord(void) {return &m_llcoord;}
 	void SetCoord(double lat,double lon) {m_llcoord.Set(lat,lon);m_llcoord.Output(&m_lat,&m_lon);}
 
+	bool GetInResults(void) {return m_inresults;}
+	void SetInResults(bool ir) {m_inresults=ir;}
+
 	void GetPos(GPXCoord *c) {c->Set(&m_llcoord);}
 	double GetLat(void) {return m_llcoord.GetLat();}
 	double GetLon(void) {return m_llcoord.GetLon();}
@@ -323,7 +326,8 @@ private:
 	unsigned int m_numchildren;
 	Array<GPXChild *>m_children;
 
-	bool m_purge;	/* used by the basic interface only */
+	bool m_purge:1;			/* used by the basic interface only */
+	bool m_inresults:1;		/* true if this row is in the current filtered results table */
 };
 
 
@@ -576,8 +580,10 @@ public:
 
 	void UpdateDBList() {m_filters.UpdateDBList();}
 
-	void ReFilter() {m_filters.ReFilter();}
+	void ReFilter(void) {m_filters.ReFilter();}
 	void ReFilter(GPXRow *row) {m_filters.ReFilter(row);}
+	void UpdateFilterCount(void) {m_filters.UpdateFilterCount();}
+
 	FiltersPage *GetFilterObj(void) {return &m_filters;}
 	GPSrPage *GetGPSrObj(void) {return &m_gpsr;}
 	/* used by both main table and route table so needs to be public */
@@ -586,6 +592,8 @@ public:
 
 	unsigned int m_numwpts;
 	Array<GPXRow *>m_wptlist;
+	ClassPool<GPXRow>m_wptpool;
+
 	/* pointer to filtered results table that lives in m_filters */
 	kGUITableObj *m_fwt;
 	/* these are temporary variables used for save/load etc */
@@ -729,6 +737,8 @@ private:
 
 	void LabelUp(kGUIEvent *event);
 	void LabelDown(kGUIEvent *event);
+	void MapConvert(kGUIEvent *event);
+	void DoMapConvert(kGUIFileReq *result,int pressed);
 
 	void SetDefDB(const char *defdb) {m_defdb.SetString(defdb);}
 	kGUIString *GetDefDB(void) {return &m_defdb;}
@@ -753,6 +763,8 @@ private:
 	kGUITableObj m_labelcolourtable;
 
 	kGUIControlBoxObj m_macrocontrols;
+
+	kGUIButtonObj m_mapconvert;
 
 	kGUITableObj m_mapdirstable;
 
@@ -1054,6 +1066,8 @@ private:
 	CALLBACKGLUE(GPX,MapDirty);
 	CALLBACKGLUEPTR(GPX,LabelUp,kGUIEvent)
 	CALLBACKGLUEPTR(GPX,LabelDown,kGUIEvent)
+	CALLBACKGLUEPTR(GPX,MapConvert,kGUIEvent)
+	CALLBACKGLUEPTRVAL(GPX,DoMapConvert,kGUIFileReq,int)
 };
 
 enum
