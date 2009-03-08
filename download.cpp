@@ -622,7 +622,7 @@ void DownloadWindow::StopEvent(kGUIEvent *event)
 
 DownloadWindow::~DownloadWindow()
 {
-	kGUIString *s;
+	kGUIString *s=0;
 
 	/* wait for finished */
 	m_abort=true;
