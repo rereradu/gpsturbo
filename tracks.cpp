@@ -1577,7 +1577,7 @@ unsigned int GPXTrack::Changed(GPXTrack *t2)
 	GPXTrackEntry *e1;
 	GPXTrackEntry *e2;
 
-	nt=valmin(m_numentries,t2->m_numentries);
+	nt=MIN(m_numentries,t2->m_numentries);
 	for(i=0;i<nt;++i)
 	{
 		e1=m_entries.GetEntry(i);

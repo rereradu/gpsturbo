@@ -1183,8 +1183,8 @@ void GPXRow::CalcHeight(void)
 	if(h2>h)
 		h=h2;
 	
-	h=valmin(h,MAXRH);
-	h=valmax(h,MINRH);
+	h=MIN(h,MAXRH);
+	h=MAX(h,MINRH);
 
 	SetRowHeight(h);
 }
@@ -4070,7 +4070,7 @@ void GPX::DoLoadUserFound(kGUIXML *xml,int userslot)
 	kGUIBusy *busy;
 	kGUIMsgBoxReq *box;
 
-	busy=new kGUIBusy(600);
+	busy=new kGUIBusy(kGUI::GetScreenWidth()>>1);
 	busy->GetTitle()->SetString("Scanning GPX File");
 
 	notdb=0;
@@ -4136,7 +4136,7 @@ void GPX::DoLoad(kGUIXML *xml,const char *dbname,const char *filename)
 
 	SetDefDB(dbname);	/* default database to use */
 
-	busy=new kGUIBusy(600);
+	busy=new kGUIBusy(kGUI::GetScreenWidth()>>1);
 	busy->GetTitle()->SetString("Importing GPX File");
 
 	m_badtype=false;
@@ -5047,8 +5047,8 @@ void GPX::BuildPage(DataHandle *dh,GPXRow *page,bool head,bool tail)
 	if(head)
 	{
 		dh->Sprintf("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">");
-		dh->Sprintf("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">\n");
-		dh->Sprintf("<html><head><title>%s - %s</title></head><body bgcolor=\"#ffffff\" text=\"#000000\">",page->m_wptname.GetString(),page->m_name.GetString());
+		dh->Sprintf("<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">\n");
+		dh->Sprintf("<title>%s - %s</title></head><body bgcolor=\"#ffffff\" text=\"#000000\">",page->m_wptname.GetString(),page->m_name.GetString());
 	}
 	dh->Sprintf("<table width=\"95%%\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\"><tr><td bgcolor=\"#ffffff\">");
 	{
@@ -5057,7 +5057,7 @@ void GPX::BuildPage(DataHandle *dh,GPXRow *page,bool head,bool tail)
 
 		DrawColorToRGB(page->m_label.m_colour,lr,lg,lb);
 		DrawColorToRGB(page->m_label.m_tcolour,tr,tg,tb);
-		dh->Sprintf("<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0><TR BGCOLOR=\"%02x%02x%02x\"><TD><FONT COLOR=\"%02x%02x%02x\">",lr,lg,lb,tr,tg,tb);
+		dh->Sprintf("<TABLE BORDER=0 CELLPADDING=0 CELLSPACING=0><TR BGCOLOR=\"#%02x%02x%02x\"><TD><FONT COLOR=\"#%02x%02x%02x\">",lr,lg,lb,tr,tg,tb);
 	}
 
 	dh->Sprintf("<h2><img src=\"geoart/%s\"><b>%s - %s</b></h2>",icon.GetString(),page->m_wptname.GetString(),page->m_name.GetString());
@@ -6676,7 +6676,7 @@ void GPX::SavePrefs(bool showbusy)
 
 	if(showbusy)
 	{
-		busy=new kGUIBusy(500);
+		busy=new kGUIBusy(kGUI::GetScreenWidth()>>1);
 		busy->GetTitle()->SetString("Saving...");
 		busy->SetMax(100);
 	}
@@ -6876,7 +6876,7 @@ void GPX::UpdateMacroButtons(void)
 	
 				i=bb->GetImage();
 				b->SetImage(i);
-				b->SetSize(valmin(i->GetImageWidth(),64),valmin(i->GetImageHeight(),32));
+				b->SetSize(MIN(i->GetImageWidth(),64),MIN(i->GetImageHeight(),32));
 			}
 			else
 			{
@@ -6901,7 +6901,7 @@ void GPX::UpdateMacroButtons(void)
 
 	/* move down tabs if need be */
 	oldy=m_tabs.GetZoneY();
-	newy=valmax(m_logo.GetZoneBY()-m_tabs.GetTabRowHeight(),m_macrocontrols.GetZoneBY());
+	newy=MAX(m_logo.GetZoneBY()-m_tabs.GetTabRowHeight(),m_macrocontrols.GetZoneBY());
 	printf("mctop=%d,mcbot=%d,oldy=%d,newy=%d\n",m_macrocontrols.GetZoneY(),m_macrocontrols.GetZoneBY(),oldy,newy);
 	if(oldy!=newy)
 	{
@@ -7143,7 +7143,7 @@ void GPX::PreLoadXML(int current,int size)
 {
 	if(!m_busy)
 	{
-		m_busy=new kGUIBusy(600);
+		m_busy=new kGUIBusy(kGUI::GetScreenWidth()>>1);
 		m_busy->GetTitle()->SetString("Loading GPX File");
 		m_busy->SetMax(size);
 	}
