@@ -1770,7 +1770,7 @@ void MSGPXMap::DrawSub(MSSUBDIV *sub)
 						else
 							ps.numlabels=0;
 						m_roadgroups[pi->thickindex].SetEntry(m_roadgroupspolys[pi->thickindex]++,ps);
-						edge=valmin(valmax(0.75f,thickness*0.115f),1.5f);
+						edge=MIN(MAX(0.75f,thickness*0.115f),1.5f);
 						kGUI::DrawFatPolyLine(3,m_numpoints,m_ppoints,DrawColor(128,128,128),(float)(thickness+edge),0.66f);
 					}
 				break;
@@ -2361,14 +2361,14 @@ void MSGPXMap::DrawLabel(kGUIText *t,double lx,double ly,double lw,double lh,dou
 		corners[2].x=corners[1].x+hx;
 		corners[2].y=corners[1].y-hy;
 
-		bounds.lx=valmin(valmin(corners[0].x,corners[1].x),
-						valmin(corners[2].x,corners[3].x));
-		bounds.ty=valmin(valmin(corners[0].y,corners[1].y),
-						valmin(corners[2].y,corners[3].y));
-		bounds.rx=valmax(valmax(corners[0].x,corners[1].x),
-						valmax(corners[2].x,corners[3].x));
-		bounds.by=valmax(valmax(corners[0].y,corners[1].y),
-						valmax(corners[2].y,corners[3].y));
+		bounds.lx=MIN(MIN(corners[0].x,corners[1].x),
+						MIN(corners[2].x,corners[3].x));
+		bounds.ty=MIN(MIN(corners[0].y,corners[1].y),
+						MIN(corners[2].y,corners[3].y));
+		bounds.rx=MAX(MAX(corners[0].x,corners[1].x),
+						MAX(corners[2].x,corners[3].x));
+		bounds.by=MAX(MAX(corners[0].y,corners[1].y),
+						MAX(corners[2].y,corners[3].y));
 	}
 
 	dodraw=m_lc.Check(&bounds,corners,clipedge);

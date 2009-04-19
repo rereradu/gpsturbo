@@ -1229,7 +1229,7 @@ private:
 class SelectWaypoints
 {
 public:
-	SelectWaypoints(unsigned int num,ClassArray<GPSrWaypoints> *waypoints,int mode);
+	SelectWaypoints(kGUIString *gpsname,unsigned int num,ClassArray<GPSrWaypoints> *waypoints,int mode);
 	~SelectWaypoints() {m_list.DeleteChildren();}
 private:
 	CALLBACKGLUEPTR(SelectWaypoints,PressDone,kGUIEvent)
@@ -1254,6 +1254,7 @@ private:
 	kGUIButtonObj m_cancel;
 	kGUIButtonObj m_toggle;
 	kGUIButtonObj m_update;
+	kGUIString m_gpsname;
 };
 
 

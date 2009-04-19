@@ -27,6 +27,9 @@
 
 #include "map.h"
 
+#define USEVHEAP 1
+#include "vheap.h"
+
 enum
 {
 ACCESS_FALSE,
@@ -406,6 +409,7 @@ typedef struct
 
 typedef struct
 {
+	unsigned int lod;
 	unsigned int numtags;
 	unsigned int tags[6];
 	int rendertype;
@@ -465,6 +469,7 @@ public:
 private:
 	bool m_loaded;
 	bool m_current;
+	unsigned int m_lod;
 	unsigned int m_numnodes;
 	unsigned int m_numways;
 	GPXCoord m_nw;
@@ -527,40 +532,71 @@ typedef struct
 {
 	double m_lat;
 	double m_lon;
-	unsigned int m_renderindex;
+	unsigned int m_renderindex:16;
+	bool m_export:1;				/* assigned when writing out file */
+#if USEVHEAP
+	unsigned int m_namelen:12;
+	vheap_offset m_name;
+#else
 	char *m_name;
-	bool m_export;				/* assigned when writing out file */
+#endif
 }OSMCONVNODE_DEF;
 
 typedef struct
 {
-	unsigned int m_renderindex;
-	bool m_closed;
-	unsigned int m_numnodes;
+	unsigned int m_renderindex:15;
+	unsigned int m_numnodes:16;
+	bool m_closed:1;
+#if USEVHEAP
+	unsigned int m_namelen:12;
+	vheap_offset m_name;
+	vheap_offset m_coords;
+#else
 	char *m_name;
 	OSMCONVNODE_DEF **m_nodes;
+#endif
 }OSMCONVWAY_DEF;
+
+typedef struct
+{
+	double m_lat;
+	double m_lon;
+}OSMCONVWAYCOORD_DEF;
 
 class OSMConvert;
 
-class OSMConvertSection
+class OSMBound
+{
+public:
+	OSMBound() {m_boundinit=false;m_minlat=0.0f;m_maxlat=0.0f;m_minlon=0.0f;m_maxlon=0.0f;}
+	void Bound(double lat,double lon);
+	bool m_boundinit;
+	double m_minlat,m_maxlat,m_minlon,m_maxlon;
+};
+
+class OSMConvertSection : public OSMBound
 {
 	friend class OSMConvert;
 public:
-	OSMConvertSection(OSMConvert *parent);
+	OSMConvertSection(OSMConvert *parent,unsigned int lod,unsigned int defways);
 	~OSMConvertSection();
 	void Split(void);
 	unsigned int WriteHeader(FILE *f,unsigned int);
 	void Write(FILE *f);
 private:
 	OSMConvert *m_parent;
+	unsigned int m_lod;
 	unsigned int m_numnodes;
-	unsigned int m_numexnodes;
 	unsigned int m_numways;
-	double m_minlat,m_maxlat,m_minlon,m_maxlon;
 	double m_latscale,m_lonscale;
+#if USEVHEAP
+	vheap_offset m_nodeofflist;
+	//Array<vheap_offset>m_nodeptrs;
+	Array<vheap_offset>m_wayptrs;
+#else
 	Array<OSMCONVNODE_DEF *>m_nodeptrs;
 	Array<OSMCONVWAY_DEF *>m_wayptrs;
+#endif
 	unsigned int m_packedlength;
 	unsigned int m_unpackedlength;
 	Array<unsigned char>m_packedbuffer;
@@ -613,19 +649,27 @@ private:
 	static int SortUnknown(const void *v1,const void *v2);
 	void AddUnknownPair(const char *s);
 	void AddUnknownRender(const char *s);
-	unsigned int m_printcount;
+	unsigned int m_nprintcount;
+	unsigned int m_wprintcount;
 	Hash m_taghash;
 	Hash m_taggroupspecialhash;
 	Hash m_tagpairhash;
 	Hash m_unknownpair;		/* used to stop duplicate reporting of unknown tag pairs */
 	Hash m_unknownrender;		/* used to stop duplicate reporting of unknown renders */
+#if USEVHEAP
+	VHeap m_vheap;
+	Array<OSMCONVWAYCOORD_DEF>m_tempcoords1;
+	Array<OSMCONVWAYCOORD_DEF>m_tempcoords2;
+	Array<vheap_offset>*m_nodeptrs;
+#else
 	Heap m_heap;
-	kGUIString m_pair;
-	Hash m_nodehash;
 	Array<OSMCONVNODE_DEF *>m_tempnodeptrs;
 	Array<OSMCONVNODE_DEF *>m_tempnodeptrs2;
+#endif
+	kGUIString m_pair;
+	Hash *m_nodehash;
 
-	OSMConvertSection *m_rs;
+	OSMConvertSection *m_rs[3];
 	unsigned int m_numsections;
 	Array<OSMConvertSection *>m_section; 
 

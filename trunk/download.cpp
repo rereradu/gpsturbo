@@ -133,7 +133,7 @@ void DownloadPage::Init(kGUIContainerObj *obj)
 	m_table.SetColWidth(COL_PATH,350);
 	m_table.SetColTitle(COL_BROWSE,"Browse");
 	m_table.SetColWidth(COL_BROWSE,50);
-	m_table.SetSize(valmin(bw,m_table.CalcTableWidth()),200);
+	m_table.SetSize(MIN(bw,m_table.CalcTableWidth()),200);
 	obj->AddObject(&m_table);
 }
 

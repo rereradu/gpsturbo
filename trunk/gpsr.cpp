@@ -363,7 +363,7 @@ bool GPSrPage::UploadToGPS(int what,GPXGPSRow *gpsrow,const char *filename,const
 
 	if(title)
 	{
-		busy=new kGUIBusy(600);
+		busy=new kGUIBusy(kGUI::GetScreenWidth()>>1);
 		busy->GetTitle()->SetString(title);
 		busy->SetMax(500);
 	}
@@ -529,8 +529,11 @@ void GPSrPage::DownloadWP(int mode)
 		else
 		{
 			SelectWaypoints *sw;
+			GPXGPSRow *r;
 
-			sw=new SelectWaypoints(numadded,waypoints,mode);
+			/* pass name of GPSr to select so we can use for a DB name */
+			r=static_cast<GPXGPSRow *>(m_gpstable.GetChild(m_currentgps.GetSelection()));
+			sw=new SelectWaypoints(&r->m_name,numadded,waypoints,mode);
 		}
 	}
 }
@@ -628,12 +631,13 @@ const char *lwcoldesc[LOADWP_NUMCOLUMNS]={
 	
 const int lwcolwidths[LOADWP_NUMCOLUMNS]={40,65,80,80,130,140,300};
 
-SelectWaypoints::SelectWaypoints(unsigned int num,ClassArray<GPSrWaypoints> *waypoints,int mode)
+SelectWaypoints::SelectWaypoints(kGUIString *gpsname,unsigned int num,ClassArray<GPSrWaypoints> *waypoints,int mode)
 {
 	unsigned int i;
 	SelectWaypointsRow *tsr;
 	GPSrWaypoints *gwp;
 
+	m_gpsname.SetString(gpsname);
 	m_mode=mode;
 	m_wp=waypoints;
 	if(m_mode==DOWNLOAD_WP)
@@ -755,11 +759,13 @@ void SelectWaypoints::PressDone(kGUIEvent *event)
 	if(event->GetEvent()==EVENT_PRESSED)
 	{
 		unsigned int i;
+		unsigned int numadded;
 		SelectWaypointsRow *rsr;
 		GPXRow *userrow;
 		GPSrWaypoints *gwp;
-
-		/* add names of selected tracks to hash table */
+		
+		/* add selected points */
+		numadded=0;		
 		for(i=0;i<m_list.GetNumChildren();++i)
 		{
 			rsr=static_cast<SelectWaypointsRow *>(m_list.GetChild(i));
@@ -770,15 +776,26 @@ void SelectWaypoints::PressDone(kGUIEvent *event)
 				userrow=new GPXRow();
 				userrow->SetName(gwp->GetName());
 				userrow->SetWptName(gwp->GetName());
-				
+
 				userrow->SetCoord(gwp->GetLat(),gwp->GetLon());
 				userrow->UpdateLabelName();
 
+				userrow->SetDB(&m_gpsname);
+
 				gpx->m_wptlist.SetEntry(gpx->m_numwpts++,userrow);
 				gpx->GetColour(userrow);		/* calc label colour */
+				++numadded;
 			}
 		}
-
+		if(numadded)
+		{
+			/* update the dblist */
+			gpx->CalcDists();
+			gpx->BSPDirty();
+			gpx->UpdateDBList();
+			gpx->UpdateWPRender();
+			gpx->ReFilter();
+		}
 		m_window.Close();
 	}
 }
@@ -795,7 +812,7 @@ bool GPSrPage::DownloadWptsFromGPSr(void)
 	gpsrow=static_cast<GPXGPSRow *>(m_gpstable.GetChild(m_currentgps.GetSelection()));
 	title.Sprintf("Downloading Waypoints from %s",gpsrow->m_name.GetString());
 	
-	busy=new kGUIBusy(600);
+	busy=new kGUIBusy(kGUI::GetScreenWidth()>>1);
 	busy->GetTitle()->SetString(title.GetString());
 	busy->SetMax(500);
 
@@ -884,7 +901,7 @@ bool GPSrPage::DownloadTracksFromGPSr(void)
 	gpsrow=static_cast<GPXGPSRow *>(m_gpstable.GetChild(m_currentgps.GetSelection()));
 	title.Sprintf("Downloading Tracks from %s",gpsrow->m_name.GetString());
 	
-	busy=new kGUIBusy(600);
+	busy=new kGUIBusy(kGUI::GetScreenWidth()>>1);
 	busy->GetTitle()->SetString(title.GetString());
 	busy->SetMax(500);
 
@@ -899,7 +916,7 @@ void GPSrPage::PreLoadXML(int current,int size)
 {
 	if(!m_busy)
 	{
-		m_busy=new kGUIBusy(600);
+		m_busy=new kGUIBusy(kGUI::GetScreenWidth()>>1);
 		m_busy->GetTitle()->SetString("Loading GPX File");
 		m_busy->SetMax(size);
 	}

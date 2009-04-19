@@ -332,6 +332,31 @@ void FiltersPage::MainTableEvent(kGUIEvent *event)
 {
 	switch(event->GetEvent())
 	{
+	case EVENT_DELETEROWSTART:
+	{
+		unsigned int nr;
+
+		/* number of rows about to be deleted */
+		nr=event->m_value[0].i;
+		if(nr>25)
+		{
+			m_busy=new kGUIBusy(kGUI::GetScreenWidth()>>1);
+			m_busy->GetTitle()->SetString(gpx->GetString(STRING_DELETEING));
+			m_busy->SetCur(0);
+			m_busy->SetMax(nr);
+			m_busycur=0;
+		}
+	}
+	break;
+	case EVENT_DELETEROWEND:
+		if(m_busy)
+		{
+			delete m_busy;
+			m_busy=0;
+		}
+		gpx->BSPDirty();
+		UpdateDBList();
+	break;
 	case EVENT_DELETEROW:
 	{
 		unsigned int e;
@@ -339,6 +364,13 @@ void FiltersPage::MainTableEvent(kGUIEvent *event)
 
 		obj=static_cast<kGUITableRowObj *>(m_filteredwptable.GetChild(event->m_value[0].ui));
 
+		if(m_busy)
+		{
+			++m_busycur;
+			m_busy->SetCur(m_busycur,false);
+			if((m_busycur%25)==0)
+				kGUI::ReDraw();
+		}
 		/* user manually deleted a row in the */
 		/* table so remove it from the full list! */
 		for(e=0;e<gpx->m_numwpts;++e)
@@ -351,14 +383,10 @@ void FiltersPage::MainTableEvent(kGUIEvent *event)
 				gpx->m_wptlist.DeleteEntry(e);
 				--gpx->m_numwpts;
 				
-				gpx->BSPDirty();
-				UpdateDBList();
 				return;
 			}
 		}
-
 		assert(false,"Row not found error!");
-
 	}
 	break;
 	case EVENT_COL_RIGHTCLICK:
@@ -381,6 +409,7 @@ FiltersPage::FiltersPage()
 {
 	m_numfilters=0;
 	m_filters.Init(16,4);
+	m_busy=0;
 }
 
 FiltersPage::~FiltersPage()

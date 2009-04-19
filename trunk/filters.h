@@ -93,6 +93,8 @@ private:
 	kGUIButtonObj m_rename;
 	kGUIButtonObj m_copy;
 	kGUITableObj m_table;
+	kGUIBusy *m_busy;
+	unsigned int m_busycur;
 
 	unsigned int m_numfilters;
 	Array<class GPXFilter *>m_filters;
