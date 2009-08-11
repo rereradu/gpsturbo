@@ -179,6 +179,7 @@ void LinesPage::Init(kGUIContainerObj *obj)
 	m_linedown.SetEventHandler(this,CALLBACKNAME(ClickDown));
 	m_editlinecontrols.AddObject(&m_linedown);
 
+	m_editlinelist.SetShowIterators(true);
 	m_editlinelist.SetFontSize(BUTTONFONTSIZE);
 	m_editlinelist.SetSize(300,20);
 	m_editlinelist.SetNumEntries(1);				/* list of Lines */

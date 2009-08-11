@@ -624,6 +624,8 @@ public:
 
 	void AddSection(OSMConvertSection *s) {m_section.SetEntry(m_numsections++,s);}
 
+	void SetPack(bool p) {m_pack=p;}
+	bool GetPack(void) {return m_pack;}
 	void InitRenderLookup(void);
 	unsigned int GetRenderIndex(unsigned int numtags,OSMTAG_DEF **tags);
 private:
@@ -673,6 +675,8 @@ private:
 	unsigned int m_numsections;
 	Array<OSMConvertSection *>m_section; 
 
+	bool m_pack;
+	unsigned int m_maxblocksize;
 	bool m_hastag[OSM_NUMTAGS];
 };
 

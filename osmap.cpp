@@ -476,32 +476,45 @@ void OSMSection::Load(DataHandle *dh)
 	bool hasname;
 	int slen;
 	char c;
+	bool waspacked=false;
 
 	dh->Seek(m_offset);
 
-	/* load packed buffer, then uncompress */
-	packed.Init(m_packedlength,-1);
-	dh->Read((void *)packed.GetArrayPtr(),(unsigned long)m_packedlength);
-	unpacked.Init(m_unpackedlength,0);
+	gpx->m_debug.ASprintf("OSMSection::Load size=%d,%d\n",m_packedlength,m_unpackedlength);
 
-	d_stream.zalloc = (alloc_func)0;
-	d_stream.zfree = (free_func)0;
-	d_stream.opaque = (voidpf)0;
+	if(m_packedlength==m_unpackedlength)
+	{
+		/* if sizes are the same then the data is not packed so just continue to read from datahandle */
 
-	d_stream.next_in  = packed.GetArrayPtr();
-	d_stream.avail_in= m_packedlength;
-	d_stream.next_out = unpacked.GetArrayPtr();
-	d_stream.avail_out= m_unpackedlength;
+		/* we use this after unpacking for reading strings into so it must be inited */
+		packed.Init(256,-1);
+	}
+	else
+	{
+		waspacked=true;
 
-	inflateInit(&d_stream);
-	zret=inflate(&d_stream, Z_FINISH);
-    inflateEnd(&d_stream);
+		/* load packed buffer, then uncompress */
+		packed.Init(m_packedlength,-1);
+		dh->Read((void *)packed.GetArrayPtr(),(unsigned long)m_packedlength);
+		unpacked.Init(m_unpackedlength,0);
 
+		d_stream.zalloc = (alloc_func)0;
+		d_stream.zfree = (free_func)0;
+		d_stream.opaque = (voidpf)0;
+
+		d_stream.next_in  = packed.GetArrayPtr();
+		d_stream.avail_in= m_packedlength;
+		d_stream.next_out = unpacked.GetArrayPtr();
+		d_stream.avail_out= m_unpackedlength;
+
+		inflateInit(&d_stream);
+		zret=inflate(&d_stream, Z_FINISH);
+		inflateEnd(&d_stream);
+		udh.SetMemory(unpacked.GetArrayPtr(),m_unpackedlength);
+		udh.Open();
+		dh=&udh;
+	}
 	m_loaded=true;
-
-	udh.SetMemory(unpacked.GetArrayPtr(),m_unpackedlength);
-	udh.Open();
-	dh=&udh;
 
 	/* load nodes */
 	if(m_numnodes)
@@ -600,7 +613,8 @@ void OSMSection::Load(DataHandle *dh)
 			w->m_name=0;
 		++w;
 	}
-	udh.Close();
+	if(waspacked)
+		udh.Close();
 }
 
 /* new binary format */
@@ -1595,6 +1609,16 @@ void OSMConvertSection::Split(void)
 	s->Sprintf("Split(lod=%d,ways=%d,nodes=%d,minlat=%f,maxlat=%f,minlon=%f,maxlon=%f\n",m_lod,m_numways,m_numnodes,m_minlat,m_maxlat,m_minlon,m_maxlon);
 	while(m_parent->m_comm.Write(&s)==false);
 
+	/* do we have a max size set for each block, if so make sure it is small enough */
+	if(m_parent->m_maxblocksize)
+	{
+		unsigned int blocksize;
+
+		blocksize=WriteHeader(0,0);
+		if(blocksize>m_parent->m_maxblocksize)
+			goto splitagain;
+	}
+
 	if((m_numways<512) || ((m_maxlat-m_minlat)<0.25f && (m_maxlon-m_minlon)<0.25f))
 	{
 		m_parent->AddSection(this);
@@ -1602,6 +1626,7 @@ void OSMConvertSection::Split(void)
 		//kGUI::Trace("Section is Small Enough, Adding!\n");
 		return;
 	}
+splitagain:;
 	/* must split this into 2 */
 	s1=new OSMConvertSection(m_parent,m_lod,m_numways>>1);
 	s2=new OSMConvertSection(m_parent,m_lod,m_numways>>1);
@@ -2033,20 +2058,24 @@ unsigned int OSMConvertSection::WriteHeader(FILE *f,unsigned int offset)
 	buf.Init(1000,-1);
 #endif
 
-	fwrite(&m_lod,4,1,f);
-	fwrite(&m_numnodes,4,1,f);
-	fwrite(&m_numways,4,1,f);
+	if(f)
+	{
+		fwrite(&m_lod,4,1,f);
+		fwrite(&m_numnodes,4,1,f);
+		fwrite(&m_numways,4,1,f);
 
-	fwrite(&m_minlat,sizeof(m_minlat),1,f);
-	fwrite(&m_maxlat,sizeof(m_maxlat),1,f);
-	fwrite(&m_minlon,sizeof(m_minlon),1,f);
-	fwrite(&m_maxlon,sizeof(m_maxlon),1,f);
+		fwrite(&m_minlat,sizeof(m_minlat),1,f);
+		fwrite(&m_maxlat,sizeof(m_maxlat),1,f);
+		fwrite(&m_minlon,sizeof(m_minlon),1,f);
+		fwrite(&m_maxlon,sizeof(m_maxlon),1,f);
+
+		fwrite(&offset,4,1,f);
+	}
 
 	/* used to convert coords from doubles to unsigned 16 bit integers */
 	m_latscale=65535.0f/(m_maxlat-m_minlat);
 	m_lonscale=65535.0f/(m_maxlon-m_minlon);
 
-	fwrite(&offset,4,1,f);
 
 	/* write section data to temp memory buffer */
 	h.SetMemory();
@@ -2189,22 +2218,46 @@ unsigned int OSMConvertSection::WriteHeader(FILE *f,unsigned int offset)
 	h.Close();
 
 	m_unpackedlength=(unsigned int)h.GetSize();
-	m_packedbuffer.Alloc(m_unpackedlength);
 
-	c_stream.zalloc = (alloc_func)0;
-	c_stream.zfree = (free_func)0;
-	c_stream.opaque = (voidpf)0;
+	if(!f)
+	{
+		/* this was just a size check?? */
+		return(m_unpackedlength);
+	}
 
-	c_stream.next_in  = (unsigned char *)h.GetBufferPtr();
-	c_stream.avail_in= m_unpackedlength;
-	c_stream.next_out = m_packedbuffer.GetArrayPtr();
-	c_stream.avail_out=m_unpackedlength;
+	/* if no packing is requested then make sizes the same! */
+	if(m_parent->m_pack==false)
+		m_packedlength=m_unpackedlength;
+	else
+	{
+		m_packedbuffer.Alloc(m_unpackedlength);
 
-	deflateInit(&c_stream, 9);
-	deflate(&c_stream,Z_FINISH);
-	deflateEnd(&c_stream);
+		c_stream.zalloc = (alloc_func)0;
+		c_stream.zfree = (free_func)0;
+		c_stream.opaque = (voidpf)0;
 
-	m_packedlength=c_stream.total_out;
+		c_stream.next_in  = (unsigned char *)h.GetBufferPtr();
+		c_stream.avail_in= m_unpackedlength;
+		c_stream.next_out = m_packedbuffer.GetArrayPtr();
+		c_stream.avail_out=m_unpackedlength;
+
+		deflateInit(&c_stream, 9);
+		deflate(&c_stream,Z_FINISH);
+		deflateEnd(&c_stream);
+
+		m_packedlength=c_stream.total_out;
+
+		/* if for some reason packed is larger then just write unpacked data */
+		if(m_packedlength>m_unpackedlength)
+			m_packedlength=m_unpackedlength;
+	}
+
+	if(m_packedlength==m_unpackedlength)
+	{
+		/* copy unpacked data to the packed buffer */
+		m_packedbuffer.Alloc(m_unpackedlength);
+		memcpy(m_packedbuffer.GetArrayPtr(),h.GetBufferPtr(),m_unpackedlength);
+	}
 
 	fwrite(&m_packedlength,4,1,f);
 	fwrite(&m_unpackedlength,4,1,f);
@@ -3862,6 +3915,13 @@ void OSMConvert::Init(void)
 	unsigned int i;
 	const OSMTAG_DEF *tp;
 
+#if 0
+	m_pack=false;
+	m_maxblocksize=8192;
+#else
+	m_pack=true;
+	m_maxblocksize=0;
+#endif
 	m_abort=false;
 	m_nprintcount=0;
 	m_wprintcount=0;

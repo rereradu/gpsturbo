@@ -122,7 +122,6 @@ public:
 	int last;
 	int next_level_idx;
 	int shiftby;
-//	const char *rgnoffsets[5];
 
 	const char *m_pntstart;
 	const char *m_pntend;
@@ -196,7 +195,7 @@ public:
 private:
 	MSFAT *LocateFile(const char *name,const char *type);
 	MSFAT *LocateType(const char *type);
-	void LoadSub(MSSUBDIV *sub,const char *fp,int shiftby);
+	bool LoadSub(MSSUBDIV *sub,const char *fp,int shiftby);
 	void ReLoadSub(MSSUBDIV *sub,int shiftby);
 	void SetLevelShift(int l,int b);
 	void DrawSub(MSSUBDIV *sub);
