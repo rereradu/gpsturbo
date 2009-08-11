@@ -268,6 +268,7 @@ void TracksPage::Init(kGUIContainerObj *obj)
 	m_editcontrols.SetPos(0,0);
 	m_editcontrols.SetSize(bw,20);
 
+	m_edittracklist.SetShowIterators(true);
 	m_edittracklist.SetFontSize(BUTTONFONTSIZE);
 	m_edittracklist.SetSize(300,20);
 	m_edittracklist.SetNumEntries(1);				/* list of Tracks */
@@ -585,6 +586,7 @@ void TracksPage::UpdateTrackInfo(void)
 	GPXTrackRow *row;
 	GPXTrackRow *row2;
 	double dist,ratio,eval1,eval2;
+	unsigned int ne;
 
 	/* generate results report */
 	GPX::GetDistInfo(gpx->GetCurrentDist(),0,&ratio,&eval1,&eval2);
@@ -596,11 +598,15 @@ void TracksPage::UpdateTrackInfo(void)
 	m_curbounds.Init();
 	if(m_table.GetNumChildren(0))
 	{
-		for(i=0;i<(m_table.GetNumChildren(0)-1);++i)
+		ne=m_table.GetNumChildren(0);
+		for(i=0;i<ne;++i)
 		{
 			row=static_cast<GPXTrackRow *>(m_table.GetChild(i));
-			row2=static_cast<GPXTrackRow *>(m_table.GetChild(i+1));
-			dist+=row->m_llcoord.Dist(&row2->m_llcoord)*ratio;
+			if(i<ne-1)
+			{
+				row2=static_cast<GPXTrackRow *>(m_table.GetChild(i+1));
+				dist+=row->m_llcoord.Dist(&row2->m_llcoord)*ratio;
+			}
 			m_curbounds.Add(row->m_llcoord.GetLat(),row->m_llcoord.GetLon());
 		}
 	}
@@ -1005,8 +1011,6 @@ void TracksPage::DrawMap(kGUICorners *c)
 		pos.Set(m_curbounds.GetMaxLat(),m_curbounds.GetMaxLon());
 		gpx->m_curmap->ToMap(&pos,&b.rx,&b.ty);
 
-		/* todo handle poly draw for current too */
-
 		/* only draw if track overlaps the draw area */
 		if(kGUI::Overlap(c,&b)==true)
 		{
@@ -1018,7 +1022,6 @@ void TracksPage::DrawMap(kGUICorners *c)
 			TracksPage::m_polypoints.Alloc(ne);
 			p=TracksPage::m_polypoints.GetArrayPtr();
 
-			ne=m_table.GetNumChildren();
 			for(e=0;e<ne;++e)
 			{
 				row=static_cast<GPXTrackRow *>(m_table.GetChild(e));

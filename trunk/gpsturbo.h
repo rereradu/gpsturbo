@@ -433,6 +433,19 @@ BROWSE_DATA
 #include "notes.h"
 #include "download.h"
 
+#ifdef INCLUDEWIG
+#include "wig.h"
+
+enum
+{
+SCRIPTTAB_BASIC,
+SCRIPTTAB_LUA,
+SCRIPTTAB_WIG,
+SCRIPTTAB_NUMTABS
+};
+
+#endif
+
 /* update text array 'tabnames' in gpsturbo.cpp if adding to this list */
 
 enum
@@ -448,10 +461,11 @@ TAB_DOWNLOAD,
 TAB_SOLVER,
 TAB_STICKERS,
 TAB_NOTES,
-TAB_BASIC,
+TAB_SCRIPTS,
 TAB_DEBUG,
 TAB_NUMTABS
 };
+
 
 class GPX
 {
@@ -510,6 +524,38 @@ public:
 	kGUIInputBoxObj m_basicoutput;
 	unsigned int m_nummacrobuttons;
 	ClassArray<MacroButton>m_macrobuttons;
+
+#ifdef INCLUDEWIG
+	kGUITabObj m_scripttabs;
+	WigLua m_lua;
+	kGUIControlBoxObj m_luacontrol;
+	kGUIInputBoxObj m_luasource;
+	kGUIButtonObj m_luaload;
+	kGUIButtonObj m_luastart;
+	kGUIButtonObj m_luacancel;
+	kGUIDividerObj m_luadivider;
+	kGUIInputBoxObj m_luaoutput;
+	kGUIString m_luapath;
+
+	kGUIControlBoxObj m_wigcontrol;
+	kGUIButtonObj m_loadwig;
+	kGUIButtonObj m_playwig;
+	kGUIInputBoxObj m_wiginfo;
+	WigCart m_wigcart;
+	kGUIString m_wigpath;
+	void StartLua(kGUIEvent *event);
+	void ClickLoadLua(kGUIEvent *event);
+	void DoLoadLua(kGUIFileReq *result,int pressed);
+	void ClickLoadWig(kGUIEvent *event);
+	void DoLoadWig(kGUIFileReq *result,int pressed);
+	void ClickPlayWig(kGUIEvent *event);
+	CALLBACKGLUEPTR(GPX,StartLua,kGUIEvent)
+	CALLBACKGLUEPTR(GPX,ClickLoadLua,kGUIEvent)
+	CALLBACKGLUEPTRVAL(GPX,DoLoadLua,kGUIFileReq,int)
+	CALLBACKGLUEPTR(GPX,ClickLoadWig,kGUIEvent)
+	CALLBACKGLUEPTRVAL(GPX,DoLoadWig,kGUIFileReq,int)
+	CALLBACKGLUEPTR(GPX,ClickPlayWig,kGUIEvent)
+#endif
 
 	kGUIInputBoxObj m_debug;
 	kGUIString m_printmap;	/* name of printer to use for printing maps */
@@ -657,8 +703,14 @@ private:
 	void BasicCancel(kGUIEvent *event);
 	void BasicAddButton(kGUIEvent *event);
 	void SetBasicCClasses(void);
-	void BasicError(int s,int e) {m_tabs.SetCurrentTab(TAB_BASIC);m_basicsource.Activate();m_basicsource.Select(s,e);}
+#ifdef INCLUDEWIG
+	void BasicError(int s,int e) {m_tabs.SetCurrentTab(TAB_SCRIPTS);m_scripttabs.SetCurrentTab(SCRIPTTAB_BASIC);m_basicsource.Activate();m_basicsource.Select(s,e);}
+#else
+	void BasicError(int s,int e) {m_tabs.SetCurrentTab(TAB_SCRIPTS);m_basicsource.Activate();m_basicsource.Select(s,e);}
+#endif
 	void MoveBasicDivider(kGUIEvent *event);
+	void MoveLuaDivider(kGUIEvent *event);
+	void LuaCancel(kGUIEvent *event);
 
 	void UpdateCenter(kGUIEvent *event);
 	void ZoomGoto(kGUIEvent *event);
@@ -1057,10 +1109,12 @@ private:
 	CALLBACKGLUEPTR(GPX,MacroButtonEvent,kGUIEvent)
 	CALLBACKGLUE(GPX,BasicDone)
 	CALLBACKGLUEPTR(GPX,BasicCancel,kGUIEvent)
+	CALLBACKGLUEPTR(GPX,LuaCancel,kGUIEvent)
 	CALLBACKGLUEPTR(GPX,BasicAddButton,kGUIEvent)
 	CALLBACKGLUEPTR(GPX,StartBasicMenuDone,kGUIEvent);
 	CALLBACKGLUEVALVAL(GPX,BasicError,int,int);
 	CALLBACKGLUEPTR(GPX,MoveBasicDivider,kGUIEvent);
+	CALLBACKGLUEPTR(GPX,MoveLuaDivider,kGUIEvent);
 	CALLBACKGLUE(GPX,AddCClasses);
 	CALLBACKGLUEPTRVAL(GPX,SetHintDone,kGUIString,int)
 	CALLBACKGLUE(GPX,MapDirty);

@@ -177,7 +177,7 @@ FF_DEF ffslist[FILTERFIELD_NUMFILTERS]={
 	{"Corrected",CMPTYPE_COMBO,OP_EQ,sizeof(corrtickedtext)/sizeof(char *),corrtickedtext},
 	{"Owner",CMPTYPE_STRING,OP_STRING,0,0},
 	{"Cache Type",CMPTYPE_COMBO,OP_COMBO,CACHETYPE_NUM,cachetypenames},
-	{"Container",CMPTYPE_COMBO,OP_COMBO,CONTAINERTYPE_NUM/sizeof(char *),containernames},
+	{"Container",CMPTYPE_COMBO,OP_COMBO,CONTAINERTYPE_NUM,containernames},
 	{"Difficulty",CMPTYPE_NUM,OP_NUM,0,0},
 	{"Terrain",CMPTYPE_NUM,OP_NUM,0,0},
 	{"Name",CMPTYPE_STRING,OP_STRING,0,0},
@@ -243,20 +243,20 @@ void FiltersPage::InitControls(kGUIControlBoxObj *obj)
 
 	m_filterlist.SetFontSize(BUTTONFONTSIZE);
 	m_filterlist.SetPos(0,15);
-	m_filterlist.SetSize(200,20);
+	m_filterlist.SetSize(gpx->GetAdjust(200),20);
 	m_filterlist.SetNumEntries(1);				/* list of filters */
 	m_filterlist.SetEntry(0,gpx->GetString(STRING_SHOWALL),0);
 	m_filterlist.SetEventHandler(this,CALLBACKNAME(ReFilterEvent));
 	m_filterlist.SetHint(gpx->GetString(STRING_CURRENTFILTERHINT));
 
-	m_currentdbcaption.SetPos(200+10,0);
+	m_currentdbcaption.SetPos(gpx->GetAdjust(200)+10,0);
 	m_currentdbcaption.SetFontSize(SMALLCAPTIONFONTSIZE);
 	m_currentdbcaption.SetFontID(SMALLCAPTIONFONT);
 	m_currentdbcaption.SetString(gpx->GetString(STRING_CURRENTDATABASE));
 
 	m_currentdb.SetFontSize(BUTTONFONTSIZE);
-	m_currentdb.SetPos(200+10,15);
-	m_currentdb.SetSize(200,20);
+	m_currentdb.SetPos(gpx->GetAdjust(200)+10,15);
+	m_currentdb.SetSize(gpx->GetAdjust(200),20);
 	m_currentdb.SetNumEntries(1);				/* list of databases */
 	m_currentdb.SetEntry(0,gpx->GetString(STRING_ALLDATABASES),0);
 	m_currentdb.SetEventHandler(this,CALLBACKNAME(ReFilterEvent));
@@ -283,7 +283,7 @@ void FiltersPage::InitControls(kGUIControlBoxObj *obj)
 	m_quickfilter.SetFontSize(BUTTONFONTSIZE);
 	m_quickfilter.SetPos(0,15);
 	m_quickfilter.SetHint("Enter search text for comparison to waypoint names.");
-	m_quickfilter.SetSize(200,20);
+	m_quickfilter.SetSize(gpx->GetAdjust(200),20);
 	m_quickfilter.SetEventHandler(this,CALLBACKNAME(ReFilterEvent));
 
 	obj->AddObjects(2,&m_quickfiltercaption,&m_quickfilter);
@@ -297,7 +297,7 @@ void FiltersPage::InitControls(kGUIControlBoxObj *obj)
 	m_resultsfilter.SetFontSize(BUTTONFONTSIZE);
 	m_resultsfilter.SetPos(0,15);
 	m_resultsfilter.SetHint("Number of waypoints that match current filter.");
-	m_resultsfilter.SetSize(100,20);
+	m_resultsfilter.SetSize(gpx->GetAdjust(100),20);
 	m_resultsfilter.SetLocked(true);
 
 	obj->AddObjects(2,&m_resultsfiltercaption,&m_resultsfilter);

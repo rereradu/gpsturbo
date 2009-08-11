@@ -512,43 +512,50 @@ MSGPXMap::MSGPXMap(const char *fn)
 					break;
 
 				sub=new MSSUBDIV();
-
 				if(level)
 				{
 					if(ReadU16(fp+subdivisionoffset+14)>(subdivisionsize/14))
 						smaller=true;
 				}
 				sub->level=level;
-				LoadSub(sub,fp+subdivisionoffset,1);
-				++nums;
-				if(level && smaller==false)
+				if(LoadSub(sub,fp+subdivisionoffset,1)==false)
 				{
-					sub->next_level_idx=ReadU16(fp+subdivisionoffset+14);
-					subdivisionoffset+=16;
+					delete sub;
+					m_bad=true;
+					return;
 				}
 				else
 				{
-					sub->next_level_idx=0;
-					subdivisionoffset+=14;
-				}
-				//DebugPrint("level=%d,Index=%d,w=%d,h=%d,Sub next=%d,droplevel=%d,last=%d\n",level,m_numsubdivs,sub->boundary.nw.dlat-sub->boundary.se.dlat,sub->boundary.se.dlong-sub->boundary.nw.dlong,sub->next_level_idx,nextlevelindex,sub->last);
-
-				if(nextlevelindex==-1)
-					nextlevelindex=sub->next_level_idx;
-
-				m_levels.GetEntry((m_numlevels-1)-level)->nsubdivisions=nums;
-				++index;
-				if(sub->last)
-				{
-					--ncsub;
-					if(!ncsub)
+					++nums;
+					if(level && smaller==false)
 					{
-						ncsub=nums;
-						nums=0;
-						--level;
+						sub->next_level_idx=ReadU16(fp+subdivisionoffset+14);
+						subdivisionoffset+=16;
 					}
+					else
+					{
+						sub->next_level_idx=0;
+						subdivisionoffset+=14;
+					}
+					//DebugPrint("level=%d,Index=%d,w=%d,h=%d,Sub next=%d,droplevel=%d,last=%d\n",level,m_numsubdivs,sub->boundary.nw.dlat-sub->boundary.se.dlat,sub->boundary.se.dlong-sub->boundary.nw.dlong,sub->next_level_idx,nextlevelindex,sub->last);
+
+					if(nextlevelindex==-1)
+						nextlevelindex=sub->next_level_idx;
+
+					m_levels.GetEntry((m_numlevels-1)-level)->nsubdivisions=nums;
+					++index;
+					if(sub->last)
+					{
+						--ncsub;
+						if(!ncsub)
+						{
+							ncsub=nums;
+							nums=0;
+							--level;
+						}
+					}
+					m_subdivs.SetEntry(m_numsubdivs++,sub);
 				}
-				m_subdivs.SetEntry(m_numsubdivs++,sub);
 			}
 			/* check to make sure cbits is correct */
 			/* do this by calculating the bounds of all subdivs at each level */
@@ -1049,6 +1056,9 @@ int MSGPXMap::DrawTile(int tx,int ty)
 	MSSUBDIV *sub;
 	MSGPXMap *map;
 
+	if(m_bad)
+		return(TILE_ERROR);
+
 	m_lc.Clear();
 
 	m_tx=tx<<8;
@@ -1064,7 +1074,7 @@ int MSGPXMap::DrawTile(int tx,int ty)
 
 	m_numdrawsubs=0;
 	kGUI::DrawRect(0,0,256,256,DrawColor(242,239,233));
-	
+
 	/* add all sub areas to list */
 	DrawTile(mlevels[GetZoom()]);
 
@@ -1171,6 +1181,9 @@ bool MSGPXMap::DrawTile(int level)
 	kGUICorners subcorners;
 	GPXCoord nw;
 	GPXCoord se;
+
+	if(m_bad)
+		return(false);
 
 	/* go to a child level? */
 	if( m_numchildren && level>m_numdrawlevels)
@@ -1327,7 +1340,7 @@ void MSGPXMap::ReLoadSub(MSSUBDIV *sub,int shiftby)
 	LoadSub(sub,sub->from,shiftby);
 }
 
-void MSGPXMap::LoadSub(MSSUBDIV *sub,const char *fp,int shiftby)
+bool MSGPXMap::LoadSub(MSSUBDIV *sub,const char *fp,int shiftby)
 {
 	unsigned int width, height;
 	unsigned int rgninfo;
@@ -1338,7 +1351,12 @@ void MSGPXMap::LoadSub(MSSUBDIV *sub,const char *fp,int shiftby)
 	
 	rgninfo= ReadU32(fp);
 	sub->rgn_offset= (rgninfo&0xFFFFFF);
+#if 1
+	if(sub->rgn_offset>m_rgnsize)
+		return(false);
+#else
 	assert(sub->rgn_offset<m_rgnsize,"Offset into region too large!");
+#endif
 
 	sub->elements= rgninfo>>24;
 	sub->center.dlong= Read24(fp+4);
@@ -1352,7 +1370,7 @@ void MSGPXMap::LoadSub(MSSUBDIV *sub,const char *fp,int shiftby)
 	sub->boundary.nw.dlong= sub->center.dlong-width;
 	sub->boundary.se.dlat= sub->center.dlat-height;
 	sub->boundary.se.dlong= sub->center.dlong+width;
-
+	return(true);
 }
 
 /* this needs to be done after all the regions have been parsed */
@@ -1772,6 +1790,7 @@ void MSGPXMap::DrawSub(MSSUBDIV *sub)
 						m_roadgroups[pi->thickindex].SetEntry(m_roadgroupspolys[pi->thickindex]++,ps);
 						edge=MIN(MAX(0.75f,thickness*0.115f),1.5f);
 						kGUI::DrawFatPolyLine(3,m_numpoints,m_ppoints,DrawColor(128,128,128),(float)(thickness+edge),0.66f);
+
 					}
 				break;
 				case PL_TRAINTRACKS:

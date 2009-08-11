@@ -24,7 +24,10 @@ MAPDOWNLOAD	Map Download	Plan d'accès Télécharger	Karten herunterladen	Karta Dow
 SOLVER	Solver	Solver	Solver	Solver
 STICKERS	Stickers	Flyers	Stickers	Stickers
 NOTES	Notes	Notes	Notizen	Notes
+SCRIPTS	Scripts	Scripts	Scripts	Scripts
 BASIC	Basic	De base	Basic	Basic
+LUA	Lua	Lua	Lua	Lua
+WIG	WigCart	WigCart	WigCart	WigCart
 DEBUG	Debug	Debug	Debug	Debug
 CURRENTMAP	Current Map	La carte actuelle	Aktuelle Karte	Aktuell Map
 CURRENTMAPHINT	Click to change the current map.	Cliquez pour modifier la carte actuelle.	Klicken zum Ändern der aktuellen Karte.	Klicka för att ändra den aktuella kartan.
@@ -92,3 +95,4 @@ CURRENTDATABASEHINT	Click to change the current database.	Cliquez pour modifier 
 REVERSEHINT	Select to display the reverse filter results.	Sélectionnez cette option pour afficher l'inverse de filtrer les résultats.	Anwählen zur Anzeige der Ergebnisse des umgekehrten Filters.	Välj att visa det omvända filter resultat.
 CONVERTMAP	OSM Convert Map	OSM Convert Map	OSM Convert Map	OSM Convert Map
 DELETEING	Deleteing	Deleteing	Deleteing	Deleteing
+LOAD	Load	Load	Load	Load

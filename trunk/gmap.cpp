@@ -46,9 +46,9 @@ kGUIThread GGPXMap::m_checkthread;
 
 void GGPXMap::InitVersions(void)
 {
-	m_mapver.SetString("92");
-	m_satmapver.SetString("36");
-	m_overlayver.SetString("92");
+	m_mapver.SetString("103");
+	m_satmapver.SetString("42");
+	m_overlayver.SetString("103");
 	m_terver.SetString("87");
 }
 
@@ -248,17 +248,17 @@ void GGPXMap::GenerateURL(unsigned int type,kGUIString *url,kGUIString *hstr,int
 			bit>>=1;
 		}
 
-		url->Sprintf("http://khm%d.google.com/kh?v=" SATMAPVER "&hl=en&t=%s",*serverid,m_satmapver.GetInt()+tryver,hstr->GetString());
+		url->Sprintf("http://khm%d.google.com/kh/v=" SATMAPVER "&hl=en&t=%s",*serverid,m_satmapver.GetInt()+tryver,hstr->GetString());
 	}
 	break;
 	case TILESOURCE_OVERLAY:
-		url->Sprintf("http://mt%d.google.com/mt?v=" OVERLAYVER "&hl=en&x=%d&y=%d&zoom=%d",*serverid,m_overlayver.GetInt()+tryver,tx,ty,17-zoom);
+		url->Sprintf("http://mt%d.google.com/vt/v=" OVERLAYVER "&hl=en&x=%d&y=%d&zoom=%d",*serverid,m_overlayver.GetInt()+tryver,tx,ty,17-zoom);
 	break;
 	case TILESOURCE_MAP:
-		url->Sprintf("http://mt%d.google.com/mt?v=" MAPVER "&hl=en&x=%d&y=%d&zoom=%d",*serverid,m_mapver.GetInt()+tryver,tx,ty,17-zoom);
+		url->Sprintf("http://mt%d.google.com/vt/v=" MAPVER "&hl=en&x=%d&y=%d&zoom=%d",*serverid,m_mapver.GetInt()+tryver,tx,ty,17-zoom);
 	break;
 	case TILESOURCE_TERRAIN:
-		url->Sprintf("http://mt%d.google.com/mt?v=" TERVER "&hl=en&x=%d&y=%d&zoom=%d",*serverid,m_terver.GetInt()+tryver,tx,ty,17-zoom);
+		url->Sprintf("http://mt%d.google.com/mt/v=" TERVER "&hl=en&x=%d&y=%d&zoom=%d",*serverid,m_terver.GetInt()+tryver,tx,ty,17-zoom);
 	break;
 	}
 }

@@ -180,6 +180,7 @@ void StickersPage::Init(kGUIContainerObj *obj)
 
 	m_editstickercontrols.SetSize(bw,20);
 
+	m_editstickerlist.SetShowIterators(true);
 	m_editstickerlist.SetFontSize(BUTTONFONTSIZE);
 	m_editstickerlist.SetSize(300,20);
 	m_editstickerlist.SetNumEntries(1);				/* list of Stickers */
@@ -226,6 +227,7 @@ void StickersPage::Init(kGUIContainerObj *obj)
 	m_deletesticker.SetEnabled(false);
 	m_renamesticker.SetEnabled(false);
 	m_copysticker.SetEnabled(false);
+	m_doprintsticker.SetEnabled(false);
 
 	obj->AddObject(&m_editstickercontrols);
 	
@@ -462,6 +464,7 @@ void StickersPage::Changed(void)
 		m_deletesticker.SetEnabled(false);
 		m_renamesticker.SetEnabled(false);
 		m_copysticker.SetEnabled(false);
+		m_doprintsticker.SetEnabled(false);
 	}
 	else
 	{
@@ -470,6 +473,7 @@ void StickersPage::Changed(void)
 		m_deletesticker.SetEnabled(!changed);
 		m_renamesticker.SetEnabled(!changed);
 		m_copysticker.SetEnabled(!changed);
+		m_doprintsticker.SetEnabled(!changed);
 	}
 
 	m_savesticker.SetEnabled(changed);	/* enabled after editing */
@@ -812,6 +816,8 @@ void GPXSticker::Save(kGUITableObj *table)
 		re->m_w=row->m_w.GetInt();
 		re->m_h=row->m_h.GetInt();
 		re->m_size=row->m_size.GetDouble();
+		if(row->m_image.IsValid())
+			re->m_image.Copy(&row->m_image);
 		m_entries.SetEntry(e,re);
 	}
 }
@@ -911,6 +917,7 @@ void PrintStickers::Setup(void)
 		{
 			offx=(int)(((1.75f+0.28f)*x)*ppi);
 			offx2=(int)(((1.75f+0.28f)*(x+1))*ppi);
+
 			for(i=0;i<m_sp->m_stickertable.GetNumChildren();++i)
 			{
 				row=static_cast<GPXStickerRow *>(m_sp->m_stickertable.GetChild(i));
@@ -926,6 +933,7 @@ void PrintStickers::Setup(void)
 					t->SetFontSize(row->m_size.GetInt());
 					t->SetColor(row->m_color.GetSelection());
 					t->SetPos(row->m_x.GetInt()+offx,row->m_y.GetInt()+offy);
+					t->SetClip(offx,offy,offx2,offy2);
 					t->SetPage(1);
 
 					/* constrain to label since unused (white) descender space can overflow onto the label below and cause 2 pages to print */
@@ -941,14 +949,18 @@ void PrintStickers::Setup(void)
 					kGUIImage *orig;
 
 					orig=&(row->m_image);
-
-					i=new kGUIReportImageRefObj();
-					i->SetImage(orig);
-					i->SetScale(row->m_size.GetDouble(),row->m_size.GetDouble());
-					i->SetPos(row->m_x.GetInt()+offx,row->m_y.GetInt()+offy);
-					i->SetSize((int)(orig->GetImageWidth()*row->m_size.GetDouble()),(int)(orig->GetImageHeight()*row->m_size.GetDouble()));
-					i->SetPage(1);
-					AddObjToSection(REPORTSECTION_BODY,i,true);
+					/* dont't add if invalid since it will assert out! */
+					if(orig->IsValid())
+					{
+						i=new kGUIReportImageRefObj();
+						i->SetImage(orig);
+						i->SetScale(row->m_size.GetDouble(),row->m_size.GetDouble());
+						i->SetPos(row->m_x.GetInt()+offx,row->m_y.GetInt()+offy);
+						i->SetSize((int)(orig->GetImageWidth()*row->m_size.GetDouble()),(int)(orig->GetImageHeight()*row->m_size.GetDouble()));
+						i->SetClip(offx,offy,offx2,offy2);
+						i->SetPage(1);
+						AddObjToSection(REPORTSECTION_BODY,i,true);
+					}
 				}
 				break;
 				case STICKERPRIM_RECT:
@@ -957,6 +969,7 @@ void PrintStickers::Setup(void)
 
 					r=new kGUIReportRectObj();
 					r->SetZone(row->m_x.GetInt()+offx,row->m_y.GetInt()+offy,row->m_w.GetInt(),row->m_h.GetInt());
+					r->SetClip(offx,offy,offx2,offy2);
 					r->SetColor(row->m_color.GetSelection());
 					r->SetPage(1);
 					AddObjToSection(REPORTSECTION_BODY,r,true);

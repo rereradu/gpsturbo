@@ -38,6 +38,8 @@
 
 BigFile *g_bf;
 double GPX::m_adjust=1.0f;
+int g_fullw;
+int g_fullh;
 
 #include "_gtext.cpp"
 
@@ -1497,7 +1499,7 @@ STRING_MAPDOWNLOAD,
 STRING_SOLVER,
 STRING_STICKERS,
 STRING_NOTES,
-STRING_BASIC,
+STRING_SCRIPTS,
 STRING_DEBUG};
 
 enum
@@ -1922,9 +1924,9 @@ void GPX::PreInit(void)
 	kGUI::HideWindow();
 	kGUI::GetBackground()->SetPos(0,0);
 	/* leave a few pixels at the bottom so they can access their taskbar */
-	kGUI::GetBackground()->SetSize(kGUI::GetFullScreenWidth(),kGUI::GetFullScreenHeight()-35);
+	kGUI::GetBackground()->SetSize(g_fullw,g_fullh-35);
 	kGUI::GetBackground()->SetTitle("GPS Turbo");
-	ss->SetPos((kGUI::GetFullScreenWidth()-ss->GetZoneW())/2,(kGUI::GetFullScreenHeight()-ss->GetZoneH())/2);
+	ss->SetPos((g_fullw-ss->GetZoneW())/2,(g_fullh-ss->GetZoneH())/2);
 	ss->SetDoing("Initializing GUI.");
 	kGUI::ReDraw();
 	kGUI::ShowWindow();
@@ -2062,14 +2064,21 @@ void GPX::UpdateMapMenu(void)
 	m_maptypes.SetSelectionz(name.GetString());
 }
 
+#ifdef INCLUDEWIG
+const int scripttabnames[SCRIPTTAB_NUMTABS]={
+	STRING_BASIC,
+	STRING_LUA,
+	STRING_WIG};
+#endif
+
 void GPX::Init(int language)
 {
 	unsigned int i;
 	int y;
-	int bw;
-	int bh;
+	int bw,bh,tw;
 	kGUIString s;
 	kGUIText *t;
+	kGUITabObj *ptab;
 
 	m_locstrings.Init(&STRING_DEF);	/* generated data in _text.cpp */
 
@@ -2218,7 +2227,7 @@ void GPX::Init(int language)
 
 	m_maptypes.SetFontSize(BUTTONFONTSIZE);
 	m_maptypes.SetPos(0,15);
-	m_maptypes.SetSize(250,20);
+	m_maptypes.SetSize(GetAdjust(250),20);
 	m_maptypes.SetNumEntries(m_nummaps);
 	m_maptypes.SetHint(gpx->GetString(STRING_CURRENTMAPHINT));
 	m_maptypes.SetEventHandler(this,CALLBACKNAME(ChangeMapTypeEvent));
@@ -2231,17 +2240,17 @@ void GPX::Init(int language)
 
 	m_zoomgoto.SetFontSize(BUTTONFONTSIZE);
 	m_zoomgoto.SetPos(0,15);
-	m_zoomgoto.SetSize(200,20);
+	m_zoomgoto.SetSize(GetAdjust(200),20);
 	m_zoomgoto.SetEventHandler(this,CALLBACKNAME(ZoomGoto));
 	m_zoomgoto.SetHint(gpx->GetString(STRING_ZOOMGOTOHINT));
 
-	m_zoomin.SetPos(210,15);
+	m_zoomin.SetPos(GetAdjust(200)+10,15);
 	m_zoomin.SetHint(gpx->GetString(STRING_ZOOMINHINT));
 	m_zoomin.SetImage(&m_zin);
 	m_zoomin.Contain();
 	m_zoomin.SetEventHandler(this,CALLBACKNAME(ClickZoomIn));
 
-	m_zoomout.SetPos(240,15);
+	m_zoomout.SetPos(GetAdjust(200)+40,15);
 	m_zoomout.SetHint(gpx->GetString(STRING_ZOOMOUTHINT));
 	m_zoomout.SetImage(&m_zout);
 	m_zoomout.Contain();
@@ -2290,13 +2299,13 @@ void GPX::Init(int language)
 	m_ulat.SetPos(0,15);
 	m_ulat.SetHint("Latitude on map under Mouse.");
 	m_ulat.SetFontSize(BUTTONFONTSIZE);
-	m_ulat.SetSize(100,20);
+	m_ulat.SetSize(GetAdjust(100),20);
 	m_ulat.SetLocked(true);
 
-	m_ulon.SetPos(110,15);
+	m_ulon.SetPos(GetAdjust(100)+10,15);
 	m_ulon.SetHint("Longitude on map under Mouse.");
 	m_ulon.SetFontSize(BUTTONFONTSIZE);
-	m_ulon.SetSize(100,20);
+	m_ulon.SetSize(GetAdjust(100),20);
 	m_ulon.SetLocked(true);
 	m_mapcontrols.AddObjects(3,&m_ucaption,&m_ulat,&m_ulon);
 
@@ -2310,13 +2319,13 @@ void GPX::Init(int language)
 	m_clat.SetPos(0,15);
 	m_clat.SetHint("Current center latitude.");
 	m_clat.SetFontSize(BUTTONFONTSIZE);
-	m_clat.SetSize(100,20);
+	m_clat.SetSize(GetAdjust(100),20);
 	m_clat.SetEventHandler(this,CALLBACKNAME(UpdateCenter));
 
-	m_clon.SetPos(110,15);
+	m_clon.SetPos(GetAdjust(100)+10,15);
 	m_clon.SetHint("Current center longitude.");
 	m_clon.SetFontSize(BUTTONFONTSIZE);
-	m_clon.SetSize(100,20);
+	m_clon.SetSize(GetAdjust(100),20);
 	m_clon.SetEventHandler(this,CALLBACKNAME(UpdateCenter));
 
 	m_mapcontrols.AddObjects(3,&m_cposcaption,&m_clat,&m_clon);
@@ -2330,7 +2339,7 @@ void GPX::Init(int language)
 	m_neardist.SetPos(0,15);
 	m_neardist.SetHint("Distance for Near calculation using current draw units.");
 	m_neardist.SetFontSize(BUTTONFONTSIZE);
-	m_neardist.SetSize(100,20);
+	m_neardist.SetSize(GetAdjust(100),20);
 	m_neardist.SetEventHandler(this,CALLBACKNAME(ReCalcNearEvent));
 
 	m_mapcontrols.AddObjects(2,&m_nearcaption,&m_neardist);
@@ -2346,24 +2355,24 @@ void GPX::Init(int language)
 	m_realtimegps.SetNumEntries(1);
 	m_realtimegps.SetEntry(0,"No GPSrs defined",-1);
 	m_realtimegps.SetSelection(-1);
-	m_realtimegps.SetSize(200,20);
+	m_realtimegps.SetSize(GetAdjust(200),20);
 
-	m_gpsconnect.SetPos(210+0,15);
+	m_gpsconnect.SetPos(GetAdjust(200)+10,15);
 	m_gpsconnect.SetHint("Connect/Disconnect to Tracking GPSr.");
 	m_gpsconnect.SetEventHandler(this,CALLBACKNAME(GPSConnectChanged));
 	m_gpsfollow.SetPos(210+15,15);
 	m_gpsfollow.SetHint("Center map on GSP position.");
 
-	m_gpslat.SetPos(210+15+15,15);
+	m_gpslat.SetPos(GetAdjust(200)+10+15+15,15);
 	m_gpslat.SetHint("GPS latitude.");
 	m_gpslat.SetFontSize(BUTTONFONTSIZE);
-	m_gpslat.SetSize(100,20);
+	m_gpslat.SetSize(GetAdjust(100),20);
 	m_gpslat.SetLocked(true);
 
-	m_gpslon.SetPos(210+110+15+15,15);
+	m_gpslon.SetPos(GetAdjust(200)+10+GetAdjust(100)+10+15+15,15);
 	m_gpslon.SetHint("GPS longitude.");
 	m_gpslon.SetFontSize(BUTTONFONTSIZE);
-	m_gpslon.SetSize(100,20);
+	m_gpslon.SetSize(GetAdjust(100),20);
 	m_gpslon.SetLocked(true);
 	m_mapcontrols.AddObjects(6,&m_gpscaption,&m_realtimegps,&m_gpsconnect,&m_gpsfollow,&m_gpslat,&m_gpslon);
 
@@ -2434,10 +2443,33 @@ void GPX::Init(int language)
 	m_download.Init(&m_tabs);
 
 	/***************************************************************/
-	m_tabs.SetCurrentTab(TAB_BASIC);
+	m_tabs.SetCurrentTab(TAB_SCRIPTS);
 
+	bh=m_tabs.GetChildZoneH();
+
+#ifdef INCLUDEWIG
+	m_scripttabs.SetPos(0,0);
+	m_scripttabs.SetSize(bw,bh-5);
+	m_scripttabs.SetNumTabs(SCRIPTTAB_NUMTABS);
+	for(i=0;i<SCRIPTTAB_NUMTABS;++i)
+	{
+		t=m_scripttabs.GetTabTextPtr(i);
+
+		t->SetFontSize(16);
+		t->SetFontID(1);	/* bold */
+
+		m_scripttabs.SetTabName(i,GetString(scripttabnames[i]));
+	}
+	m_tabs.AddObject(&m_scripttabs);
+
+	m_scripttabs.SetCurrentTab(SCRIPTTAB_BASIC);
+	ptab=&m_scripttabs;
+#else
+	ptab=&m_tabs;
+#endif
+	tw=ptab->GetChildZoneW();
 	m_basiccontrol.SetPos(0,0);
-	m_basiccontrol.SetSize(bw,20);
+	m_basiccontrol.SetSize(tw,20);
 
 	m_basicstart.SetFontSize(BUTTONFONTSIZE);
 	m_basicstart.SetString(gpx->GetString(STRING_START));
@@ -2459,17 +2491,15 @@ void GPX::Init(int language)
 	m_basicaddbutton.SetEnabled(true);
 	m_basiccontrol.AddObject(&m_basicaddbutton);
 	m_basiccontrol.NextLine();
-	m_tabs.AddObject(&m_basiccontrol);
 
 	m_basic.SetDoneCallback(this,CALLBACKNAME(BasicDone));
 	m_basic.SetErrorCallback(this,CALLBACKNAME(BasicError));
 	m_basicstartmenu.SetEventHandler(this,CALLBACKNAME(StartBasicMenuDone));
 
-	bh=m_tabs.GetChildZoneH()-m_basiccontrol.GetZoneH();
+	bh=ptab->GetChildZoneH()-m_basiccontrol.GetZoneH();
 	m_basicsource.SetFontID(2);		/* courier */
 	m_basicsource.SetFontSize(20);
-	m_basicsource.SetPos(0,30);
-	m_basicsource.SetSize(bw,bh>>1);
+	m_basicsource.SetSize(tw,bh>>1);
 	m_basicsource.SetWrap(false);		/* don't wrap lines, add scrolbar to buttom if off of right */
 	m_basicsource.SetAllowEnter(true);
 	m_basicsource.SetAllowTab(true);
@@ -2480,21 +2510,100 @@ void GPX::Init(int language)
 	m_basicsource.SetFixedTabs(true);
 	m_basicsource.SetTab(0,m_basicsource.GetWidth());
 	m_basicsource.Clear();
+	m_basiccontrol.AddObject(&m_basicsource);
 
-	m_tabs.AddObject(&m_basicsource);
-//	m_basicsource.SetEventHandler(this,CALLBACKNAME(BasicChanged));
-
-	m_basicdivider.SetPos(0,30+(bh>>1));
-	m_basicdivider.SetSize(bw,10);
+	m_basicdivider.SetSize(tw,10);
 	m_basicdivider.SetEventHandler(this,CALLBACKNAME(MoveBasicDivider));
-	m_tabs.AddObject(&m_basicdivider);
+	m_basiccontrol.AddObject(&m_basicdivider);
 
-	m_basicoutput.SetPos(0,30+(bh>>1)+10);
-	m_basicoutput.SetSize(bw,(bh>>1));
-	m_tabs.AddObject(&m_basicoutput);
+	m_basicoutput.SetSize(tw,ptab->GetChildZoneH()-m_basiccontrol.GetCurrentY()-45);
+	m_basiccontrol.AddObject(&m_basicoutput);
 
 	m_basic.SetAddAppObjectsCallback(this,CALLBACKNAME(AddCClasses));
+	ptab->AddObject(&m_basiccontrol);
 
+#ifdef INCLUDEWIG
+	m_scripttabs.AddObject(&m_basiccontrol);
+
+	m_scripttabs.SetCurrentTab(SCRIPTTAB_LUA);
+
+	m_luacontrol.SetPos(0,0);
+	m_luacontrol.SetSize(tw,20);
+
+	m_luaload.SetFontSize(BUTTONFONTSIZE);
+	m_luaload.SetString(gpx->GetString(STRING_LOAD));
+	m_luaload.Contain();
+	m_luaload.SetEventHandler(this,CALLBACKNAME(ClickLoadLua));
+	m_luacontrol.AddObject(&m_luaload);
+
+	m_luastart.SetFontSize(BUTTONFONTSIZE);
+	m_luastart.SetString(gpx->GetString(STRING_START));
+	m_luastart.Contain();
+	m_luastart.SetEventHandler(this,CALLBACKNAME(StartLua));
+	m_luacontrol.AddObject(&m_luastart);
+
+	m_luacancel.SetFontSize(BUTTONFONTSIZE);
+	m_luacancel.SetString(gpx->GetString(STRING_ABORT));
+	m_luacancel.Contain();
+	m_luacancel.SetEventHandler(this,CALLBACKNAME(LuaCancel));
+	m_luacancel.SetEnabled(false);
+	m_luacontrol.AddObject(&m_luacancel);
+	m_luacontrol.NextLine();
+
+	bh=m_scripttabs.GetChildZoneH()-m_luacontrol.GetZoneH();
+	m_luasource.SetFontID(2);		/* courier */
+	m_luasource.SetFontSize(20);
+	m_luasource.SetSize(tw,bh>>1);
+	m_luasource.SetWrap(false);		/* don't wrap lines, add scrolbar to buttom if off of right */
+	m_luasource.SetAllowEnter(true);
+	m_luasource.SetAllowTab(true);
+	m_luasource.SetLeaveSelection(true);
+
+	/* calc the width of 4 spaces ( using current font etc ) for the tab size */
+	m_luasource.SetString("    ");
+	m_luasource.SetFixedTabs(true);
+	m_luasource.SetTab(0,m_luasource.GetWidth());
+	m_luasource.Clear();
+	m_luacontrol.AddObject(&m_luasource);
+
+	m_luadivider.SetSize(tw,10);
+	m_luadivider.SetEventHandler(this,CALLBACKNAME(MoveLuaDivider));
+	m_luacontrol.AddObject(&m_luadivider);
+	m_luacontrol.NextLine();
+
+	m_luaoutput.SetSize(tw,m_scripttabs.GetChildZoneH()-m_luacontrol.GetCurrentY()-45);
+	m_luacontrol.AddObject(&m_luaoutput);
+	m_scripttabs.AddObject(&m_luacontrol);
+
+	/******************************************/
+	m_scripttabs.SetCurrentTab(SCRIPTTAB_WIG);
+
+	m_wigcontrol.SetPos(0,0);
+	m_wigcontrol.SetSize(tw,20);
+
+	m_loadwig.SetFontSize(BUTTONFONTSIZE);
+	m_loadwig.SetString("Load Cartridge");
+	m_loadwig.Contain();
+	m_loadwig.SetEventHandler(this,CALLBACKNAME(ClickLoadWig));
+	m_loadwig.SetEnabled(true);
+	m_wigcontrol.AddObject(&m_loadwig);
+
+	m_playwig.SetFontSize(BUTTONFONTSIZE);
+	m_playwig.SetString("Play Cartridge");
+	m_playwig.Contain();
+	m_playwig.SetEventHandler(this,CALLBACKNAME(ClickPlayWig));
+	m_playwig.SetEnabled(true);
+	m_wigcontrol.AddObject(&m_playwig);
+	m_wigcontrol.NextLine();
+
+	m_wiginfo.SetSize(MIN(tw>>1,300),bh-50);
+	m_wiginfo.SetLocked(true);
+	m_wigcontrol.AddObject(&m_wiginfo);
+
+	m_scripttabs.AddObject(&m_wigcontrol);
+
+	m_scripttabs.SetCurrentTab(SCRIPTTAB_BASIC);
+#endif
 	/***************************************************************/
 	m_tabs.SetCurrentTab(TAB_DEBUG);
 	m_debug.SetPos(0,0);
@@ -4364,6 +4473,7 @@ void GPX::DoSaveMapShape(kGUIFileReq *result,int pressed)
 	kGUIDrawSurface *savesurface;
 	kGUIImage image;
 	kGUIMsgBoxReq *box;
+	DataHandle outdh;
 
 	if(pressed==MSGBOX_OK)
 	{
@@ -4397,7 +4507,8 @@ void GPX::DoSaveMapShape(kGUIFileReq *result,int pressed)
 			image.SetMemImage(0,GUISHAPE_SURFACE,shapew,shapeh,tempsurface.GetBPP(),(const unsigned char *)tempsurface.GetSurfacePtr(0,0));
 
 			/* save the image */
-			if(image.SaveJPGImage(result->GetFilename(),100)==false)
+			outdh.SetFilename(result->GetFilename());
+			if(image.SaveJPGImage(&outdh,100)==false)
 				box=new kGUIMsgBoxReq(MSGBOX_OK,false,"Error saving file!");
 			else
 				box=new kGUIMsgBoxReq(MSGBOX_OK,true,"Jpeg file: width=%d, height=%d '%s' saved!",shapew,shapeh,result->GetFilename());
@@ -5976,6 +6087,7 @@ void GPX::PreDrawMap(void)
 			{
 				int o;
 				int maxmoved;
+				int movedist;
 				bool moved;
 				bool collided;
 				ROWY_DEF lry;
@@ -6009,19 +6121,22 @@ void GPX::PreDrawMap(void)
 				{
 					collided=false;
 					o=0;
-					while(((le+o)<e) && (maxmoved>0))
+					while((le+o)<e)
 					{
 						lry=m_swptlist.GetEntry(le+o);
 						lrow=lry.row;
-						while(kGUI::Overlap(&newpos,&(lrow->m_label.m_c)))
+						/* if we overlap this label then move down till we clear it */
+						if(kGUI::Overlap(&newpos,&(lrow->m_label.m_c)))
 						{
 							collided=true;
 							moved=true;
-							++newpos.ty;
-							++newpos.by;
-							--maxmoved;
+							/* calc # pixels to skip down to clear this label */
+							movedist=(lrow->m_label.m_c.by-newpos.ty)+1;
+							maxmoved-=movedist;
 							if(maxmoved<=0)
 								break;
+							newpos.ty+=movedist;
+							newpos.by+=movedist;
 						}
 						++o;
 					}
@@ -6560,14 +6675,16 @@ void GPX::LoadPrefs(kGUIXML *xml,bool xmlstatus)
 
 			Get(root,"centerlon",&m_clon);
 			Get(root,"centerlat",&m_clat);
-//			m_clon.SetString(root->Locate("centerlon")->GetValue());
-//			m_clat.SetString(root->Locate("centerlat")->GetValue());
 			m_center.Set(m_clat.GetString(),m_clon.GetString());
 
 			Get(root,"printgrid",&m_printgrid);
 			Get(root,"printmap",&m_printmap);
 			Get(root,"printbrowser",&m_printbrowser);
 			Get(root,"defpath",&m_defpath);
+#ifdef INCLUDEWIG
+			Get(root,"luapath",&m_luapath);
+			Get(root,"wigpath",&m_wigpath);
+#endif
 			Get(root,"realtimegps",&m_realtimegps);
 			Get(root,"basic",&m_basicsource);
 
@@ -6700,6 +6817,10 @@ void GPX::SavePrefs(bool showbusy)
 	root->AddChild("printgrid",m_printgrid.GetString());
 	root->AddChild("printbrowser",m_printbrowser.GetString());
 	root->AddChild("defpath",m_defpath.GetString());
+#ifdef INCLUDEWIG
+	root->AddChild("luapath",m_luapath.GetString());
+	root->AddChild("wigpath",m_wigpath.GetString());
+#endif
 	root->AddChild("distancetype",m_disttype.GetSelectionString());
 	root->AddChild("neardistance",m_neardist.GetString());
 	root->AddChild("realtimegps",m_realtimegps.GetSelectionString());
@@ -7083,15 +7204,29 @@ void AppInit(void)
 
 	kGUIXMLCODES::Init();
 
-	if(kGUI::GetFullScreenWidth()>1024)
+#if 0
+	//testing smaller resolutions
+	g_fullw=640;
+	g_fullh=480;
+#else
+	g_fullw=kGUI::GetFullScreenWidth();
+	g_fullh=kGUI::GetFullScreenHeight();
+#endif
+
+	if(g_fullw>1024)
 	{
 		kGUI::SetDefFontSize(11);
 		GPX::SetAdjust(1.0f);
 	}
-	else
+	else if(g_fullw>=800)
 	{
 		kGUI::SetDefFontSize(9);
 		GPX::SetAdjust(0.85f);
+	}
+	else
+	{
+		kGUI::SetDefFontSize(8);
+		GPX::SetAdjust(0.75f);
 	}
 	kGUI::SetDefReportFontSize(11);
 	assert((sizeof(shapenames)/sizeof(char *))==SHAPE_NUMSHAPES,"Shapes table and defines list not sync'd!");
@@ -7265,6 +7400,125 @@ void GPX::Browse(int mode,kGUIString *s)
 	break;
 	}
 }
+
+#ifdef INCLUDEWIG
+void GPX::ClickLoadLua(kGUIEvent *event)
+{
+	if(event->GetEvent()==EVENT_PRESSED)
+	{
+		kGUIFileReq *req;
+
+		req=new kGUIFileReq(FILEREQ_OPEN,m_luapath.GetString(),".lua",this,CALLBACKNAME(DoLoadLua));
+	}
+}
+
+void GPX::DoLoadLua(kGUIFileReq *result,int pressed)
+{
+	if(pressed==MSGBOX_OK)
+	{
+		DataHandle dh;
+
+		/* load the cart */
+		dh.SetFilename(result->GetFilename());
+		if(dh.Open())
+		{
+			dh.Read(&m_luasource,dh.GetSize());
+			dh.Close();
+			/* save default path for next time */
+			m_luapath.SetString(result->GetPath());
+		}
+		else
+		{
+			/* error not a valid cart */
+		}
+	}
+}
+
+void GPX::ClickLoadWig(kGUIEvent *event)
+{
+	if(event->GetEvent()==EVENT_PRESSED)
+	{
+		kGUIFileReq *req;
+
+		req=new kGUIFileReq(FILEREQ_OPEN,m_wigpath.GetString(),".gwc",this,CALLBACKNAME(DoLoadWig));
+	}
+}
+
+void GPX::DoLoadWig(kGUIFileReq *result,int pressed)
+{
+	if(pressed==MSGBOX_OK)
+	{
+		DataHandle dh;
+
+		/* load the cart */
+		dh.SetFilename(result->GetFilename());
+		if(m_wigcart.Load(&dh,&m_wiginfo))
+		{
+			/* save default path for next time */
+			m_wigpath.SetString(result->GetPath());
+		}
+		else
+		{
+			/* error not a valid cart */
+		}
+	}
+}
+
+void GPX::ClickPlayWig(kGUIEvent *event)
+{
+	if(event->GetEvent()==EVENT_PRESSED)
+	{
+		m_wigcart.Play();
+	}
+}
+
+void GPX::MoveLuaDivider(kGUIEvent *event)
+{
+	if(event->GetEvent()==EVENT_AFTERUPDATE)
+	{
+		int move=event->m_value[0].i;
+		int currenty=m_luadivider.GetZoneY();
+		int newy;
+
+		newy=currenty+move;
+		if(newy<100)
+			newy=100;
+		else if(newy>(m_tabs.GetChildZoneH()-100))
+			newy=m_tabs.GetChildZoneH()-100;
+
+		if(newy!=currenty)
+		{
+			int changey=currenty-newy;
+
+			/* adjust size of top box */
+			m_luasource.SetZoneH(m_luasource.GetZoneH()-changey);
+			/* adjust position of divider */
+			m_luadivider.SetZoneY(m_luadivider.GetZoneY()-changey);
+			/* adjust position and size of bottom box */
+			m_luaoutput.SetZoneY(m_luaoutput.GetZoneY()-changey);
+			m_luaoutput.SetZoneH(m_luaoutput.GetZoneH()+changey);
+		}
+	}
+}
+
+void GPX::StartLua(kGUIEvent *event)
+{
+	if(event->GetEvent()==EVENT_PRESSED)
+	{
+		m_luaoutput.Clear();
+		m_lua.Start(m_luasource.GetString(),m_luasource.GetLen());
+	}
+}
+
+void GPX::LuaCancel(kGUIEvent *event)
+{
+	if(event->GetEvent()==EVENT_PRESSED)
+	{
+
+	}
+}
+
+#endif
 
 void MacroButton::Load(kGUIXMLItem *xml)
 {
