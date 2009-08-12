@@ -2467,7 +2467,7 @@ void GPX::Init(int language)
 #else
 	ptab=&m_tabs;
 #endif
-	tw=ptab->GetChildZoneW();
+	tw=ptab->GetChildZoneW()-(m_basiccontrol.GetBorderGap()<<1);
 	m_basiccontrol.SetPos(0,0);
 	m_basiccontrol.SetSize(tw,20);
 
