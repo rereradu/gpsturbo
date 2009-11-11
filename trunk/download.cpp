@@ -283,7 +283,7 @@ DownloadWindow::DownloadWindow(int item,kGUIString *path)
 	m_window.SetTop(true);
 	kGUI::AddWindow(&m_window);
 
-	kGUI::AddEvent(this,CALLBACKNAME(Update));
+	kGUI::AddUpdateTask(this,CALLBACKNAME(Update));
 	m_window.SetEventHandler(this,CALLBACKNAME(WindowEvent));
 	m_stop.SetEventHandler(this,CALLBACKNAME(StopEvent));
 
@@ -628,7 +628,7 @@ DownloadWindow::~DownloadWindow()
 	m_abort=true;
 	while(m_thread.GetActive());
 
-	kGUI::DelEvent(this,CALLBACKNAME(Update));
+	kGUI::DelUpdateTask(this,CALLBACKNAME(Update));
 
 	/* delete any dangling strings */
 	while(m_comm.GetIsEmpty()!=true)

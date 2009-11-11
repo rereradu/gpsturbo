@@ -1092,7 +1092,7 @@ AutoOrderWindow::AutoOrderWindow(kGUITableObj *t)
 	m_window.SetTop(true);
 	kGUI::AddWindow(&m_window);
 
-	kGUI::AddEvent(this,CALLBACKNAME(Update));
+	kGUI::AddUpdateTask(this,CALLBACKNAME(Update));
 	m_window.SetEventHandler(this,CALLBACKNAME(WindowEvent));
 	m_done.SetEventHandler(this,CALLBACKNAME(DoneEvent));
 }
@@ -1174,7 +1174,7 @@ AutoOrderWindow::~AutoOrderWindow()
 	m_tsp.Stop();
 	while(m_tsp.GetActive());
 
-	kGUI::DelEvent(this,CALLBACKNAME(Update));
+	kGUI::DelUpdateTask(this,CALLBACKNAME(Update));
 	m_t->DeleteChildren();
 
 	/* find position of starting point */

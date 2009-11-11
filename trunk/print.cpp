@@ -609,14 +609,14 @@ public:
 private:
 	kGUIReportObj *m_objectlist[GPXCOL_NUMCOLUMNS];
 	kGUIReportObj *m_xobjectlist[GPXCOL_NUMCOLUMNS];
-	kGUIReportTickboxObj m_na;
-	kGUIReportTickboxObj m_found;
+	kGUIReportTickBoxObj m_na;
+	kGUIReportTickBoxObj m_found;
 	kGUIReportImageRefObj m_typeshape;
-	kGUIReportTickboxObj m_user[MAXUSERTICKS];
+	kGUIReportTickBoxObj m_user[MAXUSERTICKS];
 	kGUIReportTextObj m_name;
 	kGUIReportTextObj m_url;
 	kGUIReportTextObj m_wptname;
-	kGUIReportTickboxObj m_corrected;
+	kGUIReportTickBoxObj m_corrected;
 
 	kGUIReportTextObj m_shortname;
 	kGUIReportTextObj m_container;
