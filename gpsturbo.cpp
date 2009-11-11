@@ -1514,6 +1514,7 @@ MAINMENU_VIEWGENERATED,
 MAINMENU_PRINTTABLE,
 MAINMENU_PRINTMAP,
 MAINMENU_SAVEMAPBITMAP,
+MAINMENU_SAVEMAPKML,
 MAINMENU_VIEWPAGES,
 MAINMENU_CREDITS,
 MAINMENU_HELP,
@@ -1531,6 +1532,7 @@ STRING_REMOVESTALEWAYPOINTS,
 STRING_PRINTTABLE,
 STRING_PRINTMAP,
 STRING_SAVESELECTEDSHAPE,
+STRING_SAVESELECTEDSHAPEKML,
 STRING_VIEWFILTEREDCACHEPAGES,
 STRING_CREDITS,
 STRING_VIEWHELP,
@@ -1547,6 +1549,7 @@ static const char *menuicon[]={
 	"micon_print.gif",			//print map
 	"micon_print.gif",			//print table
 	"micon_save.gif",			//save map as jpg
+	"micon_save.gif",			//save map as kml
 	"micon_page.gif",			//view cache pages in browser
 	"micon_credits.gif",		//credits
 	"micon_help.gif",			//help
@@ -1566,6 +1569,7 @@ int filemenu[]={
 	MAINMENU_RENAMEDATABASE,
 	MAINMENU_VIEWGENERATED,
 	MAINMENU_SAVEMAPBITMAP,
+	MAINMENU_SAVEMAPKML,
 	MAINMENU_VIEWPAGES,
 	MAINMENU_QUIT};
 
@@ -1966,7 +1970,7 @@ void GPX::PreInit(void)
 
 void GPX::AddMaps(const char *path)
 {
-	int e;
+	unsigned int e;
 	GPXMAPInfo *mi;
 	kGUIDir dir;
 	kGUIString iname;
@@ -2974,6 +2978,7 @@ void GPX::ShowFileMenu(kGUIEvent *event)
 
 		/* are both corners set? */
 		m_filemenu.SetEntryEnable(MAINMENU_SAVEMAPBITMAP,m_mapsel==3);
+		m_filemenu.SetEntryEnable(MAINMENU_SAVEMAPKML,m_mapsel==3);
 
 		/* if numfiltered < 100 then enable show */
 		if(m_tabs.CurrentGroup()==TAB_ROUTE)
@@ -3197,8 +3202,15 @@ void GPX::DoMenu(int selection)
 	case MAINMENU_SAVEMAPBITMAP:
 	{
 		kGUIFileReq *req;
-		
+
 		req=new kGUIFileReq(FILEREQ_SAVE,m_defpath.GetString(),".jpg",this,CALLBACKNAME(DoSaveMapShape));
+	}
+	break;
+	case MAINMENU_SAVEMAPKML:
+	{
+		kGUIFileReq *req;
+
+		req=new kGUIFileReq(FILEREQ_SAVE,m_defpath.GetString(),".kml",this,CALLBACKNAME(DoSaveMapKML));
 	}
 	break;
 	case MAINMENU_VIEWPAGES:
@@ -4462,6 +4474,169 @@ void GPX::SaveXML(const char *fn)
 	if(xml.Save(fn)==false)
 		box=new kGUIMsgBoxReq(MSGBOX_OK,false,"Error saving file!");
 
+}
+
+/* save selected area of the map as a KML/JPG */
+
+void GPX::DoSaveMapKML(kGUIFileReq *result,int pressed)
+{
+	int x1,x2,y1,y2,temp,shapew,shapeh,centerx,centery;
+	int lx,ty;
+	int shapenum;
+	kGUIDrawSurface tempsurface;
+	kGUIDrawSurface *savesurface;
+	kGUIImage image;
+	kGUIMsgBoxReq *box;
+	DataHandle outdh;
+	kGUIXML xml;
+	kGUIXMLItem *root;
+	kGUIXMLItem *gitem;
+	kGUIXMLItem *xitem;
+	kGUIString tempstring;
+	kGUIString fn;
+	kGUIString path;
+	kGUIString shortfn;
+	GPXCoord tl;
+	GPXCoord br;
+
+#if 0
+<kml xmlns=....>
+<GroundOverlay>
+	<Icon>
+		<href>files/CentralParkRunningMap.jpg</href>
+		<DrawOrder>0</DrawOrder>
+	</Icon>
+	<LatLonBox>
+		<north>40.80531332719471</north>
+		<south>40.7601597052842</south>
+		<east>-73.95274155944784</east>
+		<west>-73.97364085195952</west>
+		<rotation>-28.77996170942711</rotation>
+	</LatLonBox>
+</GroundOverlay>
+</kml>
+	
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Folder>
+    <name>Ground Overlays</name>
+    <description>Examples of ground overlays</description>
+    <GroundOverlay>
+      <name>Large-scale overlay on terrain</name>
+      <description>Overlay shows Mount Etna erupting 
+          on July 13th, 2001.</description>
+      <Icon>
+        <href>http://code.google.com/apis/kml/documentation/etna.jpg</href>
+      </Icon>
+      <LatLonBox>
+        <north>37.91904192681665</north>
+        <south>37.46543388598137</south>
+        <east>15.35832653742206</east>
+        <west>14.60128369746704</west>
+        <rotation>-0.1556640799496235</rotation>
+      </LatLonBox>
+    </GroundOverlay>
+  </Folder>
+</kml>
+#endif
+
+	if(pressed==MSGBOX_OK)
+	{
+		if(strlen(result->GetFilename()))
+		{
+			m_curmap->ToMap(&m_mapselul,&x1,&y1);
+			m_curmap->ToMap(&m_mapsellr,&x2,&y2);
+
+			/* force x1<x2, y1<y2 */
+			if(x1>x2)
+			{
+				temp=x1;
+				x1=x2;
+				x2=temp;
+			}
+			if(y1>y2)
+			{
+				temp=y1;
+				y1=y2;
+				y2=temp;
+			}
+
+			/* max 1024 x 1024 */
+			shapenum=0;
+			root=xml.GetRootItem();
+			root=root->AddChild("kml");
+			root->AddParm("xmlns","http://www.opengis.net/kml/2.2");
+
+			for(lx=x1;lx<x2;lx+=1024)
+			{
+				for(ty=y1;ty<y2;ty+=1024)
+				{
+					shapew=abs(x2-x1);
+					shapeh=abs(y2-y1);
+
+					shapew=MIN(x2-lx,1024);
+					shapeh=MIN(y2-ty,1024);
+
+					centerx=lx+(shapew/2);
+					centery=ty+(shapeh/2);
+
+					tempsurface.Init(shapew,shapeh);
+
+					kGUI::PushClip();
+					savesurface=kGUI::GetCurrentSurface();
+					kGUI::SetCurrentSurface(&tempsurface);
+					kGUI::PushClip();
+					kGUI::ResetClip();	/* set clip to full surface on stack */
+
+					kGUI::SetCurrentSurface(&tempsurface);
+					
+					DrawGrid(shapew,shapeh,centerx,centery,0,(double)1.0f,1);
+
+					kGUI::PopClip();
+					/* put surface back */
+					kGUI::SetCurrentSurface(savesurface);
+
+					/* make image point to the temp surface we drew the map info */
+					image.SetMemImage(0,GUISHAPE_SURFACE,shapew,shapeh,tempsurface.GetBPP(),(const unsigned char *)tempsurface.GetSurfacePtr(0,0));
+
+					/* save the image */
+					tempstring.SetString(result->GetFilename());
+					tempstring.Clip(".");
+					fn.Sprintf("%s%d.jpg",tempstring.GetString(),shapenum);
+					outdh.SetFilename(fn.GetString());
+					if(image.SaveJPGImage(&outdh,100)==false)
+					{
+						box=new kGUIMsgBoxReq(MSGBOX_OK,false,"Error saving file!");
+						return;
+					}
+					kGUI::SplitFilename(&fn,&path,&shortfn);
+					gitem=root->AddChild("GroundOverlay");
+					xitem=gitem->AddChild("Icon");
+					xitem->AddChild("href",shortfn.GetString());
+					xitem->AddChild("draworder","0");
+
+					m_curmap->FromMap(lx,ty,&tl);
+					m_curmap->FromMap(lx+shapew,ty+shapeh,&br);
+
+					xitem=gitem->AddChild("LatLonBox");
+					xitem->AddChild("north",tl.GetLat());
+					xitem->AddChild("south",br.GetLat());
+					xitem->AddChild("east",br.GetLon());
+					xitem->AddChild("west",tl.GetLon());
+					xitem->AddChild("rotation",0.0f);
+					++shapenum;
+				}
+			}
+
+			/* save default path for next time */
+			m_defpath.SetString(result->GetPath());
+		}
+	}
+	tempstring.SetString(result->GetFilename());
+	tempstring.Clip(".");
+	fn.Sprintf("%s.kml",tempstring.GetString());
+	xml.Save(fn.GetString());
+//	box=new kGUIMsgBoxReq(MSGBOX_OK,true,"Jpeg file: width=%d, height=%d '%s' saved!",shapew,shapeh,result->GetFilename());
 }
 
 /* save selected area of the map as a JPG */

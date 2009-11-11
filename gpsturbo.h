@@ -766,6 +766,7 @@ private:
 	void SaveXML(const char *fn);
 	void DoLoadOther(kGUIFileReq *result,int pressed);
 	void DoSaveMapShape(kGUIFileReq *result,int pressed);
+	void DoSaveMapKML(kGUIFileReq *result,int pressed);
 	void NewMapPathEntry(kGUIEvent *event);
 	void GPSConnectChanged(kGUIEvent *event);
 	void DoPrintMap(void);
@@ -1086,6 +1087,7 @@ private:
 	CALLBACKGLUEPTRVAL(GPX,DoSaveAs,kGUIFileReq,int)
 	CALLBACKGLUEVAL(GPX,DoSaveAs3,int)
 	CALLBACKGLUEPTRVAL(GPX,DoSaveMapShape,kGUIFileReq,int)
+	CALLBACKGLUEPTRVAL(GPX,DoSaveMapKML,kGUIFileReq,int)
 	CALLBACKGLUEPTRVAL(GPX,DoLoadOther,kGUIFileReq,int)
 	CALLBACKGLUEPTR(GPX,UpdateWPRenderEvent,kGUIEvent)
 	CALLBACKGLUEPTR(GPX,WPTableEvent,kGUIEvent)
