@@ -457,7 +457,9 @@ TAB_LINES,
 TAB_FILTERS,
 TAB_SETTINGS,
 TAB_GPSES,
+#if 0
 TAB_DOWNLOAD,
+#endif
 TAB_SOLVER,
 TAB_STICKERS,
 TAB_NOTES,
@@ -807,7 +809,9 @@ private:
 	StickersPage m_stickers;
 	GPSrPage m_gpsr;
 	NotesPage m_notes;
+#if 0
 	DownloadPage m_download;
+#endif
 
 	kGUIScrollContainerObj m_drawsettingsarea;
 	kGUIControlBoxObj m_drawsettingcontrols;

@@ -1,3 +1,4 @@
+#if 0
 /*********************************************************************************/
 /* GPSTurbo                                                                      */
 /*                                                                               */
@@ -643,5 +644,4 @@ DownloadWindow::~DownloadWindow()
 	//to be re-loaded
 	gpx->ChangeMapType();
 }
-
-
+#endif
