@@ -39,20 +39,14 @@ kGUIString GGPXMap::m_overlayver;
 kGUIString GGPXMap::m_terver;
 kGUIThread GGPXMap::m_checkthread;
 
-#define MAPVER "%d"
-#define SATMAPVER "%d"
-#define OVERLAYVER "%d"
-#define TERVER "w2p.%d"
-
 void GGPXMap::InitVersions(void)
 {
-	m_mapver.SetString("110");
-	m_satmapver.SetString("46");
-	m_overlayver.SetString("110");
-	m_terver.SetString("110");
+	m_mapver.SetString("m@113");
+	m_satmapver.SetString("48");
+	m_overlayver.SetString("h@113");
+	m_terver.SetString("w2p.113");
 }
 
-#if 0
 void GGPXMap::LoadVersions(kGUIXMLItem *root)
 {
 	kGUIXMLItem *gmaproot;
@@ -92,6 +86,7 @@ void GGPXMap::SaveVersions(kGUIXMLItem *root)
 }
 
 /* this is called to see if the tile versions have changed */
+
 void GGPXMap::CheckVersions(void)
 {
 	m_checkthread.Start(0,GGPXMap::CheckVersionsThread);
@@ -100,127 +95,63 @@ void GGPXMap::CheckVersions(void)
 /* this runs in it's own thread and checks to see if any tile versions are updated to newer ones */
 void GGPXMap::CheckVersionsThread(void *unused)
 {
-	int ts;
-	int ver;
-	int bestver;
-	int numbad;
-	int numgood;
-	int tryver;
-	kGUIString *vp=0;
 	kGUIString url;
-	kGUIString hstr;
-	kGUIString lastmod;
-	int serverid;
-	kGUIDownloadEntry dl;
-	long lastcrc;
-	long curcrc;
-	unsigned long long curlen;
-	unsigned long long lastlen;
-	bool diff;
+	kGUIDownloadEntry dle;
+	DataHandle dh;
+	int result;
+	unsigned int i;
+	unsigned char c;
+	kGUIString s;
 
-	dl.SetAllowCookies(false);
-	for(ts=0;ts<TILESOURCE_NUM;++ts)
+	url.SetString("http://maps.google.com");
+	dh.SetMemory();
+	result=dle.DownLoad(&dh,&url);
+
+	if(result==DOWNLOAD_OK)
 	{
-		switch(ts)
+		/* scan html file and look inside Javascript for map tile versions */
+		dh.Open();
+		if(dh.Seek("pageArgs"))
 		{
-		case TILESOURCE_SAT:
-			vp=&m_satmapver;
-		break;
-		case TILESOURCE_OVERLAY:
-			vp=&m_overlayver;
-		break;
-		case TILESOURCE_MAP:
-			vp=&m_mapver;
-		break;
-		case TILESOURCE_TERRAIN:
-			vp=&m_terver;
-		break;
+			for(i=0;i<4;++i)
+			{
+				s.Clear();
+				if(dh.Seek("http://")==false)
+					break;
+				if(dh.Seek("\\x3d")==false)
+					break;
+				c=dh.ReadChar();
+				while(c!='\\' && dh.Eof()==false)
+				{
+					s.Append(c);
+					c=dh.ReadChar();
+				}
+				if(dh.Seek("http://")==false)
+					break;
+				switch(i)
+				{
+				case 0:
+					m_mapver.SetString(&s);
+				break;
+				case 1:
+					m_satmapver.SetString(&s);
+				break;
+				case 2:
+					m_overlayver.SetString(&s);
+				break;
+				case 3:
+					m_terver.SetString(&s);
+				break;
+				}
+				kGUI::Trace("Map version string='%s'\n",s.GetString());
+			}
 		}
-
-		ver=vp->GetInt();	/* this is the current version we are using */
-		bestver=-1;			/* last verion downloaded sucessfully */
-
-		tryver=0;
-		numbad=0;
-		numgood=0;
-		lastmod.Clear();
-		lastcrc=0;
-		lastlen=0;
-		do
-		{
-			kGUIImage *i;
-
-			diff=false;
-			i=new kGUIImage();
-			i->SetMemory();
-			/* tryver is relative to the current setting! */
-			GenerateURL(ts,&url,&hstr,&serverid,0,1,3,tryver);
-			if(dl.DownLoad(i,&url)==DOWNLOAD_OK)
-			{
-				/* need to make sure it is a valid image since we might get a redirect or error page */
-				i->LoadPixels();
-				if(i->IsValid()==false)
-					goto wasbad;
-
-				/* should we make sure that it is a valid image? */
-				curcrc=i->CRC();
-				curlen=i->GetSize();
-				delete i;
-
-				if(lastlen)
-				{
-					if(lastlen!=curlen)
-						diff=true;
-					else if(lastcrc!=curcrc)
-						diff=true;
-					else if(strcmp(lastmod.GetString(),dl.GetLastModified()->GetString()))
-						diff=true;
-				}
-				else
-				{
-					bestver=ver+tryver;
-					numbad=0;
-				}
-
-				lastmod.SetString(dl.GetLastModified());
-				lastcrc=curcrc;
-				lastlen=curlen;
-				if(diff==true)
-				{
-					bestver=ver+tryver;
-					numbad=0;
-				}
-				else if(numgood>5)
-					break;
-				++numgood;
-			}
-			else
-			{
-wasbad:			delete i;
-				if(bestver>=0)	/* if we got a "good" one then stop here */
-					break;
-				++numbad;
-				if(numbad==10)	/* try a few more times if we never got a valid version */
-					break;
-			}
-			++tryver;
-		}while(1);
-
-		/* if we got a valid version then update */
-		if(bestver!=vp->GetInt() && bestver!=-1)
-			vp->Sprintf("%d",bestver);
-	}
-	/* incase any tiles were waiting for download let's trigger a redraw of the map */
-	if(kGUI::TryAccess()==true)
-	{
-		gpx->MapRedraw();
-		kGUI::ReleaseAccess();
+		dh.Close();
 	}
 	m_checkthread.Close(true);
 }
-#endif
 
-void GGPXMap::GenerateURL(unsigned int type,kGUIString *url,kGUIString *hstr,int *serverid,int tx,int ty,int zoom,int tryver)
+void GGPXMap::GenerateURL(unsigned int type,kGUIString *url,kGUIString *hstr,int *serverid,int tx,int ty,int zoom)
 {
 	*serverid=(tx+ty)&3;
 
@@ -248,17 +179,17 @@ void GGPXMap::GenerateURL(unsigned int type,kGUIString *url,kGUIString *hstr,int
 			bit>>=1;
 		}
 
-		url->Sprintf("http://khm%d.google.com/kh/v=" SATMAPVER "&hl=en&t=%s",*serverid,m_satmapver.GetInt()+tryver,hstr->GetString());
+		url->Sprintf("http://khm%d.google.com/kh/v=%s&hl=en&t=%s",*serverid,m_satmapver.GetString(),hstr->GetString());
 	}
 	break;
 	case TILESOURCE_OVERLAY:
-		url->Sprintf("http://mt%d.google.com/vt/lyrs=h@" OVERLAYVER "&hl=en&x=%d&y=%d&zoom=%d",*serverid,m_overlayver.GetInt()+tryver,tx,ty,17-zoom);
+		url->Sprintf("http://mt%d.google.com/vt/lyrs=%s&hl=en&x=%d&y=%d&zoom=%d",*serverid,m_overlayver.GetString(),tx,ty,17-zoom);
 	break;
 	case TILESOURCE_MAP:
-		url->Sprintf("http://mt%d.google.com/vt/lyrs=m@" MAPVER "&hl=en&x=%d&y=%d&zoom=%d",*serverid,m_mapver.GetInt()+tryver,tx,ty,17-zoom);
+		url->Sprintf("http://mt%d.google.com/vt/lyrs=%s&hl=en&x=%d&y=%d&zoom=%d",*serverid,m_mapver.GetString(),tx,ty,17-zoom);
 	break;
 	case TILESOURCE_TERRAIN:
-		url->Sprintf("http://mt%d.google.com/vt/v=" TERVER "&hl=en&x=%d&y=%d&zoom=%d",*serverid,m_terver.GetInt()+tryver,tx,ty,17-zoom);
+		url->Sprintf("http://mt%d.google.com/vt/v=%s&hl=en&x=%d&y=%d&zoom=%d",*serverid,m_terver.GetString(),tx,ty,17-zoom);
 	break;
 	}
 }
@@ -306,6 +237,10 @@ GGPXMap::~GGPXMap()
 {
 	int i;
 	bool busy;
+
+	/* kill the check thread if it is still active */
+	if(m_checkthread.GetActive()==true)
+		m_checkthread.Close(true);
 
 	for(i=0;i<MAXDLS;++i)
 		m_dles[i].Abort();	/* cancel any pending downloads */
@@ -558,8 +493,11 @@ bool GGPXMap::LoadTile(kGUIString *url,kGUIString *fn,int x,int y,int serverid)
 	int numactive;
 
 	/* if the checkupdate is still running then wait for it to finish */
+#if 0
+#else
 	if(m_checkthread.GetActive()==true)
 		return(false);
+#endif
 
 	/* count total active downloads pending */
 	numactive=0;

@@ -67,13 +67,11 @@ public:
 
 	/* these are the static classes used to handle the versioning of the tiles */
 	static void InitVersions(void);
-#if 0
-	static void LoadVersions(kGUIXMLItem *root);
-	static void SaveVersions(kGUIXMLItem *root);
 	static void CheckVersions(void);
 	static void CheckVersionsThread(void *unused);
-#endif
-	static void GenerateURL(unsigned int type,kGUIString *url,kGUIString *hstr,int *serverid,int tx,int ty,int zoom,int tryver=0);
+	static void LoadVersions(kGUIXMLItem *root);
+	static void SaveVersions(kGUIXMLItem *root);
+	static void GenerateURL(unsigned int type,kGUIString *url,kGUIString *hstr,int *serverid,int tx,int ty,int zoom);
 
 	int DrawTile(int tx,int ty);	/* draw the tile to the current display */
 	void ResetOnline(void);

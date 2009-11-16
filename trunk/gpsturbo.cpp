@@ -1495,7 +1495,9 @@ STRING_LINES,
 STRING_FILTERS,
 STRING_DRAWSETTINGS,
 STRING_GPSRS,
+#if 0
 STRING_MAPDOWNLOAD,
+#endif
 STRING_SOLVER,
 STRING_STICKERS,
 STRING_NOTES,
@@ -1881,10 +1883,8 @@ void GPX::PreInit(void)
 
 	//set default versions for google map tiles
 	GGPXMap::InitVersions();
-#if 0
 	if(xmlstatus==true)
 		GGPXMap::LoadVersions(xml.GetRootItem()->Locate("gtp"));
-#endif
 
 	/* traverse the map directory and add all maps found as well */
 
@@ -1957,10 +1957,8 @@ void GPX::PreInit(void)
 	endtime.SetToday();
 	m_debug.ASprintf("Start seconds=%d\n",m_starttime.GetDiffSeconds(&endtime));
 
-#if 0
 	//trigger async thread
 	GGPXMap::CheckVersions();
-#endif
 
 	/* call this shutdown func if a fatal error occurs */
 	kGUI::SetPanic(this,CALLBACKNAME(Panic));
@@ -2443,9 +2441,10 @@ void GPX::Init(int language)
 	m_tabs.SetCurrentTab(TAB_NOTES);
 	m_notes.Init(&m_tabs);
 
+#if 0
 	m_tabs.SetCurrentTab(TAB_DOWNLOAD);
 	m_download.Init(&m_tabs);
-
+#endif
 	/***************************************************************/
 	m_tabs.SetCurrentTab(TAB_SCRIPTS);
 
@@ -4752,8 +4751,9 @@ GPX::~GPX()
 	m_filters.Purge();
 	m_gpsr.Purge();
 	m_stickers.Purge();
+#if 0
 	m_download.Purge();
-
+#endif
 	for(x=0;x<m_numwpts;++x)
 		delete m_wptlist.GetEntry(x);
 	m_numwpts=0;
@@ -6811,9 +6811,10 @@ void GPX::LoadPrefs(kGUIXML *xml,bool xmlstatus)
 			/* get notes */
 			m_notes.LoadPrefs(root);
 
+#if 0
 			/* get downloads */
 			m_download.LoadPrefs(root);
-
+#endif
 			endtime.SetToday();
 			m_debug.ASprintf("LoadPrefs 7(notes) seconds=%d\n",m_starttime.GetDiffSeconds(&endtime));
 
@@ -6979,9 +6980,7 @@ void GPX::SavePrefs(bool showbusy)
 	root->AddChild("zoom",m_zoom);
 	m_grid.GetScrollCorner(&sx,&sy);
 	m_curmap->FromMap(sx,sy,&c);
-#if 0
 	GGPXMap::SaveVersions(root);
-#endif
 	root->AddChild("scrolllat",c.GetLat());
 	root->AddChild("scrolllon",c.GetLon());
 	root->AddChild("centerlon",m_clon.GetString());
@@ -7073,8 +7072,9 @@ void GPX::SavePrefs(bool showbusy)
 	if(busy)
 		busy->SetCur(40);
 	m_notes.SavePrefs(root);
+#if 0
 	m_download.SavePrefs(root);
-
+#endif
 	/* save default sort for filtered results table */
 	{
 		kGUIXMLItem *sort=root->AddChild("wptsort");
