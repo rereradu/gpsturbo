@@ -234,7 +234,8 @@ bool UploadXML::Save(const char *fn)
 	bounds->AddParm("maxlat",m_bounds.GetMaxLat());
 	bounds->AddParm("maxlon",m_bounds.GetMaxLon());
 
-	return(m_xml->Save(fn));
+	m_xml->SetFilename(fn);
+	return(m_xml->Save());
 }
 
 void UploadXML::Found(const char *name,double lat,double lon)

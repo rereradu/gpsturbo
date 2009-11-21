@@ -1537,7 +1537,8 @@ void TracksPage::ClickSimplify2(kGUIString *result,int closebutton)
 
 			xml=new kGUIXML();
 			xml->SetNameCache(&gpx->m_xmlnamecache);
-			if(xml->Load("babel2.gpx")==true)
+			xml->SetFilename("babel2.gpx");
+			if(xml->Load()==true)
 			{
 				kGUIXMLItem *xroot;
 				kGUIXMLItem *x1;
@@ -1725,7 +1726,8 @@ void TracksPage::Verify(const char *filename,Hash *hash,kGUIString *results)
 	tracks.Init(64,32);
 
 	vxml.SetNameCache(&gpx->m_xmlnamecache);
-	if(vxml.Load("babel.gpx")==true)
+	vxml.SetFilename("babel.gpx");
+	if(vxml.Load()==true)
 	{
 		/* Load tracks temporarily into memory */
 		xroot=vxml.GetRootItem()->Locate("gpx");

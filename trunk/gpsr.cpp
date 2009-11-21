@@ -321,7 +321,8 @@ void GPSrPage::ClickUploadWptsToGPSr(kGUIEvent *event)
 			if(DownloadWptsFromGPSr()==true)
 			{
 				vxml.SetNameCache(&gpx->m_xmlnamecache);
-				if(vxml.Load("babel.gpx")==true)
+				vxml.SetFilename("babel.gpx");
+				if(vxml.Load()==true)
 				{
 					xmlitem=vxml.GetRootItem()->Locate("gpx");
 					if(xmlitem)
@@ -419,7 +420,8 @@ void GPSrPage::DownloadWP(int mode)
 	if(DownloadWptsFromGPSr()==true)
 	{
 		xml.SetNameCache(&gpx->m_xmlnamecache);
-		if(xml.Load("babel.gpx")==true)
+		xml.SetFilename("babel.gpx");
+		if(xml.Load()==true)
 		{
 			xmlitem=xml.GetRootItem()->Locate("gpx");
 			if(xmlitem)
@@ -945,7 +947,8 @@ void GPSrPage::ClickDownloadTracksFromGPSr(kGUIEvent *event)
 		xml->SetNameCache(&gpx->m_xmlnamecache);
 		xml->SetLoadingCallback(this,CALLBACKNAME(PreLoadXML));
 
-		if(xml->Load("babel.gpx")==false)
+		xml->SetFilename("babel.gpx");
+		if(xml->Load()==false)
 		{
 			box=new kGUIMsgBoxReq(MSGBOX_OK,true,"Error: cannot opening file '%s'!","babel.gpx");
 			delete xml;
