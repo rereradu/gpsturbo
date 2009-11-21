@@ -172,6 +172,9 @@ setupapi.lib"
 				RelativePath=".\help.cpp">
 			</File>
 			<File
+				RelativePath=".\kmap.cpp">
+			</File>
+			<File
 				RelativePath=".\lines.cpp">
 			</File>
 			<File
@@ -246,6 +249,9 @@ setupapi.lib"
 				RelativePath=".\gpsturbo.h">
 			</File>
 			<File
+				RelativePath=".\kmap.h">
+			</File>
+			<File
 				RelativePath=".\lines.h">
 			</File>
 			<File
@@ -302,9 +308,6 @@ setupapi.lib"
 				RelativePath=".\small.ico">
 			</File>
 		</Filter>
-		<File
-			RelativePath=".\ReadMe.txt">
-		</File>
 	</Files>
 	<Globals>
 	</Globals>

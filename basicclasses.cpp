@@ -379,7 +379,8 @@ int GPXRecordSet::Function(int fieldid,kGUIBasicVarObj *result,CallParms *p)
 
 		xml=new kGUIXML();
 		xml->SetNameCache(&gpx->m_xmlnamecache);
-		if(xml->Load(p->GetParm(0)->GetStringObj()->GetString()))
+		xml->SetFilename(p->GetParm(0)->GetStringObj()->GetString());
+		if(xml->Load())
 		{
 			xmlitem=xml->GetRootItem()->Locate("gpx");
 			if(xmlitem)
@@ -437,7 +438,8 @@ int GPXRecordSet::Function(int fieldid,kGUIBasicVarObj *result,CallParms *p)
 			row->Save(root->AddChild("wpt"),true);
 		}
 
-		if(xml.Save(p1->GetStringObj()->GetString())==false)
+		xml.SetFilename(p1->GetStringObj()->GetString());
+		if(xml.Save()==false)
 		{
 //			kGUIMsgBoxReq *box=new kGUIMsgBoxReq(MSGBOX_OK,"Error saving file!");
 			return(ERROR_SYNTAX);

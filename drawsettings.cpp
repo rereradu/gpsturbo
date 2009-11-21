@@ -85,6 +85,37 @@ void GPX::InitSettings(void)
 	m_drawsettingcontrols.AddObject(&m_mapdirstable);
 	m_drawsettingcontrols.NextLine();
 
+	m_molabelup.SetFontSize(BUTTONFONTSIZE);
+	m_molabelup.SetString(gpx->GetString(STRING_UP));
+	m_molabelup.Contain();
+	m_molabelup.SetEventHandler(this,CALLBACKNAME(MapOverlayLabelUp));
+	m_drawsettingcontrols.AddObject(&m_molabelup);
+
+	m_molabeldown.SetFontSize(BUTTONFONTSIZE);
+	m_molabeldown.SetString(gpx->GetString(STRING_DOWN));
+	m_molabeldown.Contain();
+	m_molabeldown.SetEventHandler(this,CALLBACKNAME(MapOverlayLabelDown));
+	m_drawsettingcontrols.AddObject(&m_molabeldown);
+	m_drawsettingcontrols.NextLine();
+
+	/* map overlay table */
+	m_mapoverlaystable.SetSize(625,100);
+	m_mapoverlaystable.SetNumCols(4);
+	m_mapoverlaystable.SetColTitle(0,"Enable");
+	m_mapoverlaystable.SetColWidth(0,40);
+	m_mapoverlaystable.SetColTitle(1,"Opacity");
+	m_mapoverlaystable.SetColWidth(1,60);
+	m_mapoverlaystable.SetColTitle(2,"Map Overlay");
+	m_mapoverlaystable.SetColWidth(2,420);
+	m_mapoverlaystable.SetColTitle(3,"Browse");
+	m_mapoverlaystable.SetColWidth(3,50);
+
+	m_mapoverlaystable.SetAllowAddNewRow(true);
+	m_mapoverlaystable.SetEventHandler(this,CALLBACKNAME(NewMapOverlayEntry));
+	//leave out until I get it working
+	m_drawsettingcontrols.AddObject(&m_mapoverlaystable);
+	m_drawsettingcontrols.NextLine();
+
 	m_language.SetNumEntries(m_locstrings.GetNumLanguages());
 	for(i=0;i<m_locstrings.GetNumLanguages();++i)
 		m_language.SetEntry(i,kGUI::GetString(KGUISTRING_ENGLISH+i),i);
@@ -253,7 +284,6 @@ void GPXWPRenderRow::Save(class kGUIXMLItem *wpr)
 	wpr->AddParm("boxcolour",m_colourcombo.GetSelectionString());
 }
 
-
 GPXMapPathRow::GPXMapPathRow()
 {
 	m_objectlist[0]=&m_path;
@@ -307,7 +337,8 @@ void GPXMapPathRow::Browse(kGUIEvent *event)
 	{
 		kGUIFileReq *req;
 	
-		req=new kGUIFileReq(FILEREQ_OPEN,m_path.GetString(),".img;.map",this,CALLBACKNAME(BrowseDone));
+		req=new kGUIFileReq(FILEREQ_OPEN,m_path.GetString(),".img;.map;.osb",this,CALLBACKNAME(BrowseDone));
+		req->GetTitle()->SetString("Select Map .img,.map,.osb");
 	}
 }
 
@@ -319,6 +350,94 @@ void GPXMapPathRow::BrowseDone(kGUIFileReq *result,int pressed)
 		PathChanged();
 	}
 }
+
+/******************************/
+
+GPXMapOverlayRow::GPXMapOverlayRow()
+{
+	m_objectlist[0]=&m_enabled;
+	m_objectlist[1]=&m_alpha;
+	m_objectlist[2]=&m_filename;
+	m_objectlist[3]=&m_browse;
+	m_browse.SetFontID(1);		/* bold */
+	m_browse.SetFontSize(20);	/* big! */
+	m_browse.SetString("...");
+	m_browse.SetEventHandler(this,CALLBACKNAME(Browse));
+	m_enabled.SetEventHandler(this,CALLBACKNAME(Changed));
+	m_alpha.SetEventHandler(this,CALLBACKNAME(Changed));
+	m_filename.SetEventHandler(this,CALLBACKNAME(NameChanged));
+
+	gpx->InitAlphaCombo(&m_alpha);
+
+	SetRowHeight(20);
+	m_overlay=0;
+}
+
+GPXMapOverlayRow::~GPXMapOverlayRow()
+{
+	if(m_overlay)
+	{
+		delete m_overlay;
+		m_overlay=0;
+	}
+}
+
+/* load from prefs file */
+void GPXMapOverlayRow::Load(class kGUIXMLItem *mpr)
+{
+	m_enabled.SetSelected(mpr->Locate("enabled")->GetValueInt()!=0);
+	m_alpha.SetSelection(mpr->Locate("alpha")->GetValueInt());
+	m_filename.SetString(mpr->Locate("filename")->GetValue());
+}
+
+/* save to prefs file */
+void GPXMapOverlayRow::Save(class kGUIXMLItem *mpr)
+{
+	mpr->AddParm("enabled",m_enabled.GetSelected()==true?1:0);
+	mpr->AddParm("alpha",m_alpha.GetSelection());
+	mpr->AddParm("filename",m_filename.GetString());
+}
+
+void GPXMapOverlayRow::Browse(kGUIEvent *event)
+{
+	if(event->GetEvent()==EVENT_PRESSED)
+	{
+		kGUIFileReq *req;
+	
+		req=new kGUIFileReq(FILEREQ_OPEN,m_filename.GetString(),".kml;.kmz",this,CALLBACKNAME(BrowseDone));
+		req->GetTitle()->SetString("Select Map .kml or .kmz");
+	}
+}
+
+void GPXMapOverlayRow::BrowseDone(kGUIFileReq *result,int pressed)
+{
+	if(pressed==MSGBOX_OK)
+	{
+		m_filename.SetString(result->GetFilename());
+		m_enabled.SetSelected(m_filename.GetLen()>0);
+		InitOverlay();
+		gpx->MapDirty();
+	}
+}
+
+void GPXMapOverlayRow::NameChanged(kGUIEvent *event)
+{
+	if(event->GetEvent()==EVENT_AFTERUPDATE)
+	{
+		InitOverlay();
+		gpx->MapDirty();
+	}
+}
+
+/* enabled or alpha changed */
+void GPXMapOverlayRow::Changed(kGUIEvent *event)
+{
+	if(event->GetEvent()==EVENT_AFTERUPDATE)
+	{
+		gpx->MapDirty();
+	}
+}
+
 
 void GPX::LabelUp(kGUIEvent *event)
 {
@@ -351,6 +470,39 @@ void GPX::LabelDown(kGUIEvent *event)
 		}
 	}
 }
+
+void GPX::MapOverlayLabelUp(kGUIEvent *event)
+{
+	if(event->GetEvent()==EVENT_PRESSED)
+	{
+		unsigned int line;
+
+		line=m_mapoverlaystable.GetCursorRow();
+		if(line>0 && line<m_mapoverlaystable.GetNumChildren(0))
+		{
+			m_mapoverlaystable.SwapRow(-1);
+			m_mapoverlaystable.MoveRow(-1);
+			MapDirty();
+		}
+	}
+}
+
+void GPX::MapOverlayLabelDown(kGUIEvent *event)
+{
+	if(event->GetEvent()==EVENT_PRESSED)
+	{
+		int line;
+
+		line=(int)m_mapoverlaystable.GetCursorRow();
+		if(line<((int)m_mapoverlaystable.GetNumChildren(0)-1))
+		{
+			m_mapoverlaystable.SwapRow(1);
+			m_mapoverlaystable.MoveRow(1);
+			MapDirty();
+		}
+	}
+}
+
 
 void GPX::MapConvert(kGUIEvent *event)
 {
@@ -409,6 +561,15 @@ void GPX::NewMapPathEntry(kGUIEvent *event)
 	{
 		GPXMapPathRow *mpr=new GPXMapPathRow();
 		m_mapdirstable.AddRow(mpr);
+	}
+}
+
+void GPX::NewMapOverlayEntry(kGUIEvent *event)
+{
+	if(event->GetEvent()==EVENT_ADDROW)
+	{
+		GPXMapOverlayRow *mpr=new GPXMapOverlayRow();
+		m_mapoverlaystable.AddRow(mpr);
 	}
 }
 

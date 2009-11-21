@@ -2308,7 +2308,8 @@ void OSMConvert::ConvertThread(void)
 	m_nodeptrs=new Array<vheap_offset>;
 	m_nodeptrs->Init(65536,-1);
 #endif
-	StreamLoad(m_filename.GetString());
+	SetFilename(m_filename.GetString());
+	StreamLoad();
 
 	/* free the node lookup hash table as we don't need it anymore */
 	delete m_nodehash;

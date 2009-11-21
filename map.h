@@ -110,6 +110,12 @@ public:
 	kGUICorners m_lcbounds;
 };
 
-
+/* all overlayed maps have this as their baseclass */
+class GPXMapOverlay		//: DataHandle
+{
+public:
+	virtual ~GPXMapOverlay() {}
+	virtual void Draw(kGUICorners *c,double alpha)=0;
+};
 
 #endif

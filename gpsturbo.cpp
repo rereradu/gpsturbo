@@ -28,6 +28,9 @@
 #include "kguitsp.h"
 #include "babelglue.h"
 
+//used to save kmz
+#include "zip.h"
+
 /*! @todo load gpx files from inside zip file automatically */
 /*! @todo view tracks based on distance from a point, right click on map, view tracks ??? */
 
@@ -1506,6 +1509,29 @@ STRING_DEBUG};
 
 enum
 {
+SAVEMAP_KMZ,
+SAVEMAP_KML,
+SAVEMAP_JPG,
+//SAVEMAP_GIF,
+SAVEMAP_PNG,
+SAVEMAP_NUMFORMATS};
+
+const char *g_mapformats[]={
+	"KMZ File",
+	"KML File",
+	"Jpeg Image",
+//	"Gif Image",
+	"PNG Image"};
+
+const char *g_mapext[]={
+	".kmz",
+	".kml",
+	".jpg",
+//	".gif",
+	".png"};
+
+enum
+{
 MAINMENU_LOAD,
 MAINMENU_SAVE,
 MAINMENU_LOADOTHER,
@@ -1515,8 +1541,7 @@ MAINMENU_RENAMEDATABASE,
 MAINMENU_VIEWGENERATED,
 MAINMENU_PRINTTABLE,
 MAINMENU_PRINTMAP,
-MAINMENU_SAVEMAPBITMAP,
-MAINMENU_SAVEMAPKML,
+MAINMENU_SAVEMAP,
 MAINMENU_VIEWPAGES,
 MAINMENU_CREDITS,
 MAINMENU_HELP,
@@ -1534,7 +1559,6 @@ STRING_REMOVESTALEWAYPOINTS,
 STRING_PRINTTABLE,
 STRING_PRINTMAP,
 STRING_SAVESELECTEDSHAPE,
-STRING_SAVESELECTEDSHAPEKML,
 STRING_VIEWFILTEREDCACHEPAGES,
 STRING_CREDITS,
 STRING_VIEWHELP,
@@ -1550,8 +1574,7 @@ static const char *menuicon[]={
 	"micon_delete.gif",			//remove stale waypoints
 	"micon_print.gif",			//print map
 	"micon_print.gif",			//print table
-	"micon_save.gif",			//save map as jpg
-	"micon_save.gif",			//save map as kml
+	"micon_save.gif",			//save map as ...
 	"micon_page.gif",			//view cache pages in browser
 	"micon_credits.gif",		//credits
 	"micon_help.gif",			//help
@@ -1570,8 +1593,7 @@ int filemenu[]={
 	-1,
 	MAINMENU_RENAMEDATABASE,
 	MAINMENU_VIEWGENERATED,
-	MAINMENU_SAVEMAPBITMAP,
-	MAINMENU_SAVEMAPKML,
+	MAINMENU_SAVEMAP,
 	MAINMENU_VIEWPAGES,
 	MAINMENU_QUIT};
 
@@ -1862,7 +1884,8 @@ void GPX::PreInit(void)
 	SetClipFoundLogs(-1);
 	SetClipNotFoundLogs(-1);
 
-	xmlstatus=xml.StreamLoad(PROFILEFILE);
+	xml.SetFilename(PROFILEFILE);
+	xmlstatus=xml.StreamLoad();
 	endtime.SetToday();
 	m_debug.ASprintf("Start-XML Loaded seconds=%d\n",m_starttime.GetDiffSeconds(&endtime));
 
@@ -2099,6 +2122,8 @@ void GPX::Init(int language)
 	m_rebuildbsp=true;
 	m_mapsel=0;
 	m_mapasync=true;
+	m_dopostdraw=true;
+	m_dodrawlabels=true;
 
 	m_curmap=new GGPXMap(MAPTYPE_GOOGLEHYBRID);
 
@@ -2976,8 +3001,7 @@ void GPX::ShowFileMenu(kGUIEvent *event)
 		kGUITableObj *table;
 
 		/* are both corners set? */
-		m_filemenu.SetEntryEnable(MAINMENU_SAVEMAPBITMAP,m_mapsel==3);
-		m_filemenu.SetEntryEnable(MAINMENU_SAVEMAPKML,m_mapsel==3);
+		m_filemenu.SetEntryEnable(MAINMENU_SAVEMAP,m_mapsel==3);
 
 		/* if numfiltered < 100 then enable show */
 		if(m_tabs.CurrentGroup()==TAB_ROUTE)
@@ -3022,7 +3046,7 @@ Credits::Credits()
 	m_window.SetSize(600,100);
 	m_name.SetPos(0,0);
 	m_name.SetFontSize(20);
-	m_name.SetString("GPSTurbo v0.98");
+	m_name.SetString("GPSTurbo v0.99");
 	m_name.SetColor(DrawColor(255,0,0));
 	m_window.AddObject(&m_name);
 	
@@ -3113,7 +3137,7 @@ void GPX::DoMainMenu(kGUIEvent *event)
 		kGUITableObj *table;
 
 		/* are both corners set? */
-		m_filemenu.SetEntryEnable(MAINMENU_SAVEMAPBITMAP,m_mapsel==3);
+		m_filemenu.SetEntryEnable(MAINMENU_SAVEMAP,m_mapsel==3);
 
 		/* if numfiltered < 100 then enable show */
 		if(m_tabs.CurrentGroup()==TAB_ROUTE)
@@ -3198,18 +3222,11 @@ void GPX::DoMenu(int selection)
 	case MAINMENU_PRINTMAP:
 		DoPrintMap();
 	break;
-	case MAINMENU_SAVEMAPBITMAP:
+	case MAINMENU_SAVEMAP:
 	{
-		kGUIFileReq *req;
-
-		req=new kGUIFileReq(FILEREQ_SAVE,m_defpath.GetString(),".jpg",this,CALLBACKNAME(DoSaveMapShape));
-	}
-	break;
-	case MAINMENU_SAVEMAPKML:
-	{
-		kGUIFileReq *req;
-
-		req=new kGUIFileReq(FILEREQ_SAVE,m_defpath.GetString(),".kml",this,CALLBACKNAME(DoSaveMapKML));
+		kGUISaveMapReq *req;
+		
+		req=new kGUISaveMapReq();
 	}
 	break;
 	case MAINMENU_VIEWPAGES:
@@ -4097,7 +4114,8 @@ void GPX::OpenLoadSettings(const char *fn,const char *defdb)
 	xml->SetNameCache(&m_xmlnamecache);
 	xml->SetLoadingCallback(this,CALLBACKNAME(PreLoadXML));
 
-	if(xml->Load(fn)==false)
+	xml->SetFilename(fn);
+	if(xml->Load()==false)
 	{
 		box=new kGUIMsgBoxReq(MSGBOX_OK,true,"Error: cannot opening file '%s'!",fn);
 		delete xml;
@@ -4324,7 +4342,8 @@ void GPX::DoLoad(kGUIXML *xml,const char *dbname,const char *filename)
 		fn.SetString(filename);
 		fn.Replace(".gpx","-wpts.gpx");
 
-		if(xml2.Load(fn.GetString())==true)
+		xml2.SetFilename(fn.GetString());
+		if(xml2.Load()==true)
 		{
 			xmlitem=xml2.GetRootItem()->Locate("gpx");
 			if(xmlitem)
@@ -4470,14 +4489,51 @@ void GPX::SaveXML(const char *fn)
 	/* only save tracks that are in the hash table */
 	m_tracks.SavePrefs(root,&m_temphash);
 
-	if(xml.Save(fn)==false)
+	xml.SetFilename(fn);
+	if(xml.Save()==false)
 		box=new kGUIMsgBoxReq(MSGBOX_OK,false,"Error saving file!");
 
 }
 
 /* save selected area of the map as a KML/JPG */
 
-void GPX::DoSaveMapKML(kGUIFileReq *result,int pressed)
+void GPX::DoSaveMap(kGUIFileReq *result,int pressed)
+{
+	if(pressed==MSGBOX_OK)
+	{
+		if(strlen(result->GetFilename()))
+		{
+			kGUIString fn;
+
+			fn.SetString(result->GetFilename());
+			if(!strstri(fn.GetString(),g_mapext[m_savemapformat]))
+				fn.Append(g_mapext[m_savemapformat]);
+
+			if(m_savemapdrawlabels==false)
+				MapDirty();
+
+			switch(m_savemapformat)
+			{
+			case SAVEMAP_JPG:
+			case SAVEMAP_PNG:
+				DoSaveMapShape(&fn,m_savemapformat,m_savemapdrawlabels);
+			break;
+			case SAVEMAP_KMZ:
+			case SAVEMAP_KML:
+				DoSaveMapKM(&fn,m_savemapformat,m_savemapdrawlabels);
+			break;
+			}
+			if(m_savemapdrawlabels==false)
+				MapDirty();
+
+			/* save default path for next time */
+			m_defpath.SetString(result->GetPath());
+		}
+	}
+}
+
+
+void GPX::DoSaveMapKM(kGUIString *fullfn,unsigned int format,bool drawlabels)
 {
 	int x1,x2,y1,y2,temp,shapew,shapeh,centerx,centery;
 	int lx,ty;
@@ -4497,169 +4553,51 @@ void GPX::DoSaveMapKML(kGUIFileReq *result,int pressed)
 	kGUIString shortfn;
 	GPXCoord tl;
 	GPXCoord br;
+	ZipFile zf;
 
-#if 0
-<kml xmlns=....>
-<GroundOverlay>
-	<Icon>
-		<href>files/CentralParkRunningMap.jpg</href>
-		<DrawOrder>0</DrawOrder>
-	</Icon>
-	<LatLonBox>
-		<north>40.80531332719471</north>
-		<south>40.7601597052842</south>
-		<east>-73.95274155944784</east>
-		<west>-73.97364085195952</west>
-		<rotation>-28.77996170942711</rotation>
-	</LatLonBox>
-</GroundOverlay>
-</kml>
-	
-<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2">
-  <Folder>
-    <name>Ground Overlays</name>
-    <description>Examples of ground overlays</description>
-    <GroundOverlay>
-      <name>Large-scale overlay on terrain</name>
-      <description>Overlay shows Mount Etna erupting 
-          on July 13th, 2001.</description>
-      <Icon>
-        <href>http://code.google.com/apis/kml/documentation/etna.jpg</href>
-      </Icon>
-      <LatLonBox>
-        <north>37.91904192681665</north>
-        <south>37.46543388598137</south>
-        <east>15.35832653742206</east>
-        <west>14.60128369746704</west>
-        <rotation>-0.1556640799496235</rotation>
-      </LatLonBox>
-    </GroundOverlay>
-  </Folder>
-</kml>
-#endif
+	m_curmap->ToMap(&m_mapselul,&x1,&y1);
+	m_curmap->ToMap(&m_mapsellr,&x2,&y2);
 
-	if(pressed==MSGBOX_OK)
+	/* force x1<x2, y1<y2 */
+	if(x1>x2)
 	{
-		if(strlen(result->GetFilename()))
-		{
-			m_curmap->ToMap(&m_mapselul,&x1,&y1);
-			m_curmap->ToMap(&m_mapsellr,&x2,&y2);
-
-			/* force x1<x2, y1<y2 */
-			if(x1>x2)
-			{
-				temp=x1;
-				x1=x2;
-				x2=temp;
-			}
-			if(y1>y2)
-			{
-				temp=y1;
-				y1=y2;
-				y2=temp;
-			}
-
-			/* max 1024 x 1024 */
-			shapenum=0;
-			root=xml.GetRootItem();
-			root=root->AddChild("kml");
-			root->AddParm("xmlns","http://www.opengis.net/kml/2.2");
-
-			for(lx=x1;lx<x2;lx+=1024)
-			{
-				for(ty=y1;ty<y2;ty+=1024)
-				{
-					shapew=abs(x2-x1);
-					shapeh=abs(y2-y1);
-
-					shapew=MIN(x2-lx,1024);
-					shapeh=MIN(y2-ty,1024);
-
-					centerx=lx+(shapew/2);
-					centery=ty+(shapeh/2);
-
-					tempsurface.Init(shapew,shapeh);
-
-					kGUI::PushClip();
-					savesurface=kGUI::GetCurrentSurface();
-					kGUI::SetCurrentSurface(&tempsurface);
-					kGUI::PushClip();
-					kGUI::ResetClip();	/* set clip to full surface on stack */
-
-					kGUI::SetCurrentSurface(&tempsurface);
-					
-					DrawGrid(shapew,shapeh,centerx,centery,0,(double)1.0f,1);
-
-					kGUI::PopClip();
-					/* put surface back */
-					kGUI::SetCurrentSurface(savesurface);
-
-					/* make image point to the temp surface we drew the map info */
-					image.SetMemImage(0,GUISHAPE_SURFACE,shapew,shapeh,tempsurface.GetBPP(),(const unsigned char *)tempsurface.GetSurfacePtr(0,0));
-
-					/* save the image */
-					tempstring.SetString(result->GetFilename());
-					tempstring.Clip(".");
-					fn.Sprintf("%s%d.jpg",tempstring.GetString(),shapenum);
-					outdh.SetFilename(fn.GetString());
-					if(image.SaveJPGImage(&outdh,100)==false)
-					{
-						box=new kGUIMsgBoxReq(MSGBOX_OK,false,"Error saving file!");
-						return;
-					}
-					kGUI::SplitFilename(&fn,&path,&shortfn);
-					gitem=root->AddChild("GroundOverlay");
-					xitem=gitem->AddChild("Icon");
-					xitem->AddChild("href",shortfn.GetString());
-					xitem->AddChild("draworder","0");
-
-					m_curmap->FromMap(lx,ty,&tl);
-					m_curmap->FromMap(lx+shapew,ty+shapeh,&br);
-
-					xitem=gitem->AddChild("LatLonBox");
-					xitem->AddChild("north",tl.GetLat());
-					xitem->AddChild("south",br.GetLat());
-					xitem->AddChild("east",br.GetLon());
-					xitem->AddChild("west",tl.GetLon());
-					xitem->AddChild("rotation",0.0f);
-					++shapenum;
-				}
-			}
-
-			/* save default path for next time */
-			m_defpath.SetString(result->GetPath());
-		}
+		temp=x1;
+		x1=x2;
+		x2=temp;
 	}
-	tempstring.SetString(result->GetFilename());
-	tempstring.Clip(".");
-	fn.Sprintf("%s.kml",tempstring.GetString());
-	xml.Save(fn.GetString());
-//	box=new kGUIMsgBoxReq(MSGBOX_OK,true,"Jpeg file: width=%d, height=%d '%s' saved!",shapew,shapeh,result->GetFilename());
-}
-
-/* save selected area of the map as a JPG */
-
-void GPX::DoSaveMapShape(kGUIFileReq *result,int pressed)
-{
-	int x1,x2,y1,y2,shapew,shapeh,centerx,centery;
-	kGUIDrawSurface tempsurface;
-	kGUIDrawSurface *savesurface;
-	kGUIImage image;
-	kGUIMsgBoxReq *box;
-	DataHandle outdh;
-
-	if(pressed==MSGBOX_OK)
+	if(y1>y2)
 	{
-		if(strlen(result->GetFilename()))
-		{
-			m_curmap->ToMap(&m_mapselul,&x1,&y1);
-			m_curmap->ToMap(&m_mapsellr,&x2,&y2);
+		temp=y1;
+		y1=y2;
+		y2=temp;
+	}
 
+	tempstring.SetString(fullfn->GetString());
+	tempstring.Clip(".");
+	fn.Sprintf("%s.kmz",tempstring.GetString());
+
+	if(format==SAVEMAP_KMZ)
+		zf.OpenSave(fn.GetString(),true);
+
+	/* max 1024 x 1024 */
+	shapenum=0;
+	root=xml.GetRootItem();
+	root=root->AddChild("kml");
+	root->AddParm("xmlns","http://www.opengis.net/kml/2.2");
+	root=root->AddChild("Folder");
+
+	for(lx=x1;lx<x2;lx+=1024)
+	{
+		for(ty=y1;ty<y2;ty+=1024)
+		{
 			shapew=abs(x2-x1);
 			shapeh=abs(y2-y1);
-			centerx=(x1+x2)/2;
-			centery=(y1+y2)/2;
+
+			shapew=MIN(x2-lx,1024);
+			shapeh=MIN(y2-ty,1024);
+
+			centerx=lx+(shapew/2);
+			centery=ty+(shapeh/2);
 
 			tempsurface.Init(shapew,shapeh);
 
@@ -4671,7 +4609,11 @@ void GPX::DoSaveMapShape(kGUIFileReq *result,int pressed)
 
 			kGUI::SetCurrentSurface(&tempsurface);
 			
+			m_dopostdraw=false;
+			m_dodrawlabels=drawlabels;
 			DrawGrid(shapew,shapeh,centerx,centery,0,(double)1.0f,1);
+			m_dodrawlabels=true;
+			m_dopostdraw=true;
 
 			kGUI::PopClip();
 			/* put surface back */
@@ -4681,16 +4623,130 @@ void GPX::DoSaveMapShape(kGUIFileReq *result,int pressed)
 			image.SetMemImage(0,GUISHAPE_SURFACE,shapew,shapeh,tempsurface.GetBPP(),(const unsigned char *)tempsurface.GetSurfacePtr(0,0));
 
 			/* save the image */
-			outdh.SetFilename(result->GetFilename());
-			if(image.SaveJPGImage(&outdh,100)==false)
-				box=new kGUIMsgBoxReq(MSGBOX_OK,false,"Error saving file!");
+			if(format==SAVEMAP_KML)
+			{
+				/* save to full name with number and jpg extension */
+				tempstring.SetString(fullfn);
+				tempstring.Clip(".");
+				fn.Sprintf("%s%d.jpg",tempstring.GetString(),shapenum);
+				outdh.SetFilename(fn.GetString());
+			}
 			else
-				box=new kGUIMsgBoxReq(MSGBOX_OK,true,"Jpeg file: width=%d, height=%d '%s' saved!",shapew,shapeh,result->GetFilename());
+			{
+				/* save to memory */
+				tempstring.SetString(&shortfn);
+				tempstring.Clip(".");
+				fn.Sprintf("%s%d.jpg",tempstring.GetString(),shapenum);
+				outdh.SetMemory();
+			}
+			if(image.SaveJPGImage(&outdh,100)==false)
+			{
+				box=new kGUIMsgBoxReq(MSGBOX_OK,false,"Error saving file!");
+				return;
+			}
+			if(format==SAVEMAP_KMZ)
+				zf.AddFile(fn.GetString(),&outdh);
 
-			/* save default path for next time */
-			m_defpath.SetString(result->GetPath());
+			kGUI::SplitFilename(&fn,&path,&shortfn);
+			gitem=root->AddChild("GroundOverlay");
+			xitem=gitem->AddChild("Icon");
+			xitem->AddChild("href",shortfn.GetString());
+			xitem->AddChild("draworder","0");
+
+			m_curmap->FromMap(lx,ty,&tl);
+			m_curmap->FromMap(lx+shapew,ty+shapeh,&br);
+
+			xitem=gitem->AddChild("LatLonBox");
+			xitem->AddChild("north",tl.GetLat());
+			xitem->AddChild("south",br.GetLat());
+			xitem->AddChild("east",br.GetLon());
+			xitem->AddChild("west",tl.GetLon());
+			xitem->AddChild("rotation",0.0f);
+			++shapenum;
 		}
 	}
+
+	if(format==SAVEMAP_KML)
+		xml.SetFilename(fullfn);
+	else
+		xml.SetMemory();	
+	xml.Save();
+
+	if(format==SAVEMAP_KMZ)
+	{
+		tempstring.SetString(&shortfn);
+		tempstring.Clip(".");
+		fn.Sprintf("%s.kml",tempstring.GetString());
+		zf.AddFile(fn.GetString(),&xml);
+		zf.CloseSave();
+	}
+
+	box=new kGUIMsgBoxReq(MSGBOX_OK,true,"Finished: width=%d, height=%d '%s' saved!",x2-x1,y2-y1,fullfn->GetString());
+}
+
+/* save selected area of the map as a JPG */
+
+void GPX::DoSaveMapShape(kGUIString *fullfn,unsigned int format,bool drawlabels)
+{
+	int x1,x2,y1,y2,shapew,shapeh,centerx,centery;
+	kGUIDrawSurface tempsurface;
+	kGUIDrawSurface *savesurface;
+	kGUIImage image;
+	kGUIMsgBoxReq *box;
+	DataHandle outdh;
+	bool ok=false;
+
+	m_curmap->ToMap(&m_mapselul,&x1,&y1);
+	m_curmap->ToMap(&m_mapsellr,&x2,&y2);
+
+	shapew=abs(x2-x1);
+	shapeh=abs(y2-y1);
+	centerx=(x1+x2)/2;
+	centery=(y1+y2)/2;
+
+	tempsurface.Init(shapew,shapeh);
+
+	kGUI::PushClip();
+	savesurface=kGUI::GetCurrentSurface();
+	kGUI::SetCurrentSurface(&tempsurface);
+	kGUI::PushClip();
+	kGUI::ResetClip();	/* set clip to full surface on stack */
+
+	kGUI::SetCurrentSurface(&tempsurface);
+	
+	m_dopostdraw=false;
+	m_dodrawlabels=drawlabels;
+	DrawGrid(shapew,shapeh,centerx,centery,0,(double)1.0f,1);
+	m_dodrawlabels=true;
+	m_dopostdraw=true;
+
+	kGUI::PopClip();
+	/* put surface back */
+	kGUI::SetCurrentSurface(savesurface);
+
+	/* make image point to the temp surface we drew the map info */
+	image.SetMemImage(0,GUISHAPE_SURFACE,shapew,shapeh,tempsurface.GetBPP(),(const unsigned char *)tempsurface.GetSurfacePtr(0,0));
+
+	/* save the image */
+	outdh.SetFilename(fullfn->GetString());
+
+	switch(m_savemapformat)
+	{
+	case SAVEMAP_JPG:
+		ok=image.SaveJPGImage(&outdh,100);
+	break;
+//			case SAVEMAP_GIF:
+//				ok=image.SaveGifImage
+//			break;
+	case SAVEMAP_PNG:
+		ok=image.SavePNGImage(&outdh);
+	break;
+	}
+	if(ok==false)
+		box=new kGUIMsgBoxReq(MSGBOX_OK,false,"Error saving file!");
+	else
+		box=new kGUIMsgBoxReq(MSGBOX_OK,true,"Image: width=%d, height=%d '%s' saved!",shapew,shapeh,fullfn->GetString());
+
 }
 
 GPXRow *GPX::Locate(kGUIString *wptname)
@@ -4742,6 +4798,7 @@ GPX::~GPX()
 
 	m_labelcolourtable.DeleteChildren();
 	m_mapdirstable.DeleteChildren();
+	m_mapoverlaystable.DeleteChildren();
 	m_macrocontrols.DeleteChildren();
 
 	m_routes.Purge();
@@ -6376,6 +6433,9 @@ void GPX::PostDrawMap(void)
 	int h,w;
 	int l,nc,y;
 
+	if(m_dopostdraw==false)
+		return;
+
 	m_grid.GetCorners(&c);
 
 	if(m_realtime->IsTracking())
@@ -6496,6 +6556,7 @@ void GPX::PostDrawMap(void)
 
 void GPX::DrawMapCell(kGUICellObj *cell)
 {
+	unsigned int i;
 	int cx,cy;
 	int drawn;
 	int cxpix,cypix;
@@ -6534,33 +6595,49 @@ void GPX::DrawMapCell(kGUICellObj *cell)
 	break;
 	}
 
-	m_routes.DrawMap(&c);
-	if(m_zoom>=m_labelzoomsize.GetInt())
+	/* draw all overlays in order top to bottom */
+	for(i=0;i<m_mapoverlaystable.GetNumChildren(0);++i)
 	{
-		kGUIText t;
-		m_bsp.Select(&c);
-		++m_wasdrawn;
+		GPXMapOverlayRow *rrow;
+		kGUIObj *obj;
 
-		m_onmap=true;
-
-		DrawBSPMapCellPoints(cxpix,cypix);
-	}
-	else
-		m_onmap=false;
-
-	m_tracks.DrawMap(&c);
-
-	/* draw the current position as a marker */
-	{
-		int px,py;
-		m_curmap->ToMap(&m_center,&px,&py);
-		px-=cxpix;
-		py-=cypix;
-		m_shapes[SHAPE_MARKER].Draw(0,px-(m_shapes[SHAPE_MARKER].GetImageWidth()>>1),py-m_shapes[SHAPE_MARKER].GetImageHeight());
+		obj=m_mapoverlaystable.GetChild(i);
+		rrow=static_cast<GPXMapOverlayRow *>(obj);
+		if(rrow->GetEnabled())
+		{
+			rrow->DrawOverlay(&c,rrow->GetAlpha());
+		}
 	}
 
-	m_lines.DrawMap(&c);
+	if(m_dodrawlabels)
+	{
+		m_routes.DrawMap(&c);
+		if(m_zoom>=m_labelzoomsize.GetInt())
+		{
+			kGUIText t;
+			m_bsp.Select(&c);
+			++m_wasdrawn;
 
+			m_onmap=true;
+
+			DrawBSPMapCellPoints(cxpix,cypix);
+		}
+		else
+			m_onmap=false;
+
+		m_tracks.DrawMap(&c);
+
+		/* draw the current position as a marker */
+		{
+			int px,py;
+			m_curmap->ToMap(&m_center,&px,&py);
+			px-=cxpix;
+			py-=cypix;
+			m_shapes[SHAPE_MARKER].Draw(0,px-(m_shapes[SHAPE_MARKER].GetImageWidth()>>1),py-m_shapes[SHAPE_MARKER].GetImageHeight());
+		}
+
+		m_lines.DrawMap(&c);
+	}
 	kGUI::SetMouseCursor(MOUSECURSOR_DEFAULT);
 }
 
@@ -6709,6 +6786,20 @@ void GPX::LoadMapPaths(kGUIXML *xml,bool xmlstatus)
 				row=new GPXMapPathRow();
 				row->Load(item);
 				m_mapdirstable.AddRow(row);
+			}
+		}
+
+		/* get map overlays */
+		for(i=0;i<root->GetNumChildren();++i)
+		{
+			item=root->GetChild(i);
+			if(!strcmp(item->GetName(),"mapoverlay"))
+			{
+				GPXMapOverlayRow *row;
+				row=new GPXMapOverlayRow();
+				row->Load(item);
+				m_mapoverlaystable.AddRow(row);
+				row->InitOverlay();
 			}
 		}
 	}
@@ -7049,7 +7140,7 @@ void GPX::SavePrefs(bool showbusy)
 		rrow->Save(root->AddChild("wptrender"));
 	}
 
-	/* mappaths table */
+	/* map paths table */
 	for(i=0;i<m_mapdirstable.GetNumChildren(0);++i)
 	{
 		GPXMapPathRow *rrow;
@@ -7060,6 +7151,19 @@ void GPX::SavePrefs(bool showbusy)
 		if(rrow->GetPath()->GetLen())
 			rrow->Save(root->AddChild("mappath"));
 	}
+
+	/* map overlays table */
+	for(i=0;i<m_mapoverlaystable.GetNumChildren(0);++i)
+	{
+		GPXMapOverlayRow *rrow;
+		obj=m_mapoverlaystable.GetChild(i);
+		rrow=static_cast<GPXMapOverlayRow *>(obj);
+	
+		/* don't save empty paths */
+		if(rrow->GetFilename()->GetLen())
+			rrow->Save(root->AddChild("mapoverlay"));
+	}
+
 	if(busy)
 		busy->SetCur(20);
 
@@ -7121,7 +7225,8 @@ void GPX::SavePrefs(bool showbusy)
 	if(busy)
 		busy->SetCur(90);
 
-	if(xml.Save(PROFILEFILETEMP)==false)
+	xml.SetFilename(PROFILEFILETEMP);
+	if(xml.Save()==false)
 	{
 		if(busy)
 			delete busy;
@@ -7368,6 +7473,89 @@ void kGUIRenameDBReq::DoRename(void)
 
 
 kGUIRenameDBReq::~kGUIRenameDBReq()
+{
+}
+
+/*********************************************************************/
+
+kGUISaveMapReq::kGUISaveMapReq()
+{
+	unsigned int i;
+
+	m_window.SetAllowButtons(WINDOWBUTTON_CLOSE);
+	m_window.SetTitle("Save Selected Map Area as");
+	m_window.SetPos(kGUI::GetMouseX(),kGUI::GetMouseY());
+	m_window.SetSize(800,200);
+	kGUI::AddWindow(&m_window);
+	m_window.SetEventHandler(this,CALLBACKNAME(WindowEvent));
+
+	m_controls.SetPos(0,0);
+
+	m_savecaption.SetPos(0,0);
+	m_savecaption.SetFontSize(SMALLCAPTIONFONTSIZE);
+	m_savecaption.SetFontID(SMALLCAPTIONFONT);
+	m_savecaption.SetString("Format");
+
+	m_saveformat.SetPos(0,15);
+	m_saveformat.SetSize(250,20);
+	m_saveformat.SetHint("Select Format");
+
+	m_saveformat.SetNumEntries(SAVEMAP_NUMFORMATS);
+	for(i=0;i<SAVEMAP_NUMFORMATS;++i)
+		m_saveformat.SetEntry(i,g_mapformats[i],i);
+
+	m_controls.AddObjects(2,&m_savecaption,&m_saveformat);
+	m_controls.NextLine();
+
+	m_drawlabels.SetPos(0,0);
+
+	m_drawlabelscaption.SetPos(30,0);
+	m_drawlabelscaption.SetFontSize(SMALLCAPTIONFONTSIZE);
+	m_drawlabelscaption.SetFontID(SMALLCAPTIONFONT);
+	m_drawlabelscaption.SetString("Draw Labels on Map");
+
+	m_controls.AddObjects(2,&m_drawlabels,&m_drawlabelscaption);
+	m_controls.NextLine();
+
+	m_cancel.SetFontSize(11);
+	m_cancel.SetPos(0,15);
+	m_cancel.SetSize(70,20);
+	m_cancel.SetString("Cancel");
+	m_cancel.SetEventHandler(this,CALLBACKNAME(Cancel));
+	m_controls.AddObjects(1,&m_cancel);
+
+	m_save.SetFontSize(11);
+	m_save.SetPos(0,15);
+	m_save.SetSize(70,20);
+	m_save.SetString("Save");
+	m_save.SetEventHandler(this,CALLBACKNAME(Save));
+	m_controls.AddObjects(1,&m_save);
+
+	m_window.AddObject(&m_controls);
+	m_window.Shrink();
+}
+
+void kGUISaveMapReq::WindowEvent(kGUIEvent *event)
+{
+	switch(event->GetEvent())
+	{
+	case EVENT_CLOSE:
+		delete this;
+	break;
+	}
+}
+
+void kGUISaveMapReq::DoSave(void)
+{
+	kGUIFileReq *req;
+	
+	gpx->m_savemapformat=m_saveformat.GetSelection();
+	gpx->m_savemapdrawlabels=m_drawlabels.GetSelected();
+
+	req=new kGUIFileReq(FILEREQ_SAVE,gpx->m_defpath.GetString(),g_mapext[gpx->m_savemapformat],gpx,CALLBACKCLASSNAME(GPX,DoSaveMap));
+}
+
+kGUISaveMapReq::~kGUISaveMapReq()
 {
 }
 
@@ -7970,3 +8158,34 @@ void EditButtonWindowObj::PressSave(kGUIEvent *event)
 	}
 }
 
+void GPXMapOverlayRow::InitOverlay(void)
+{
+	if(m_overlay)
+	{
+		delete m_overlay;
+		m_overlay=0;
+	}
+	if(strstr(m_filename.GetString(),".kml"))
+	{
+		KMLGPXMapOverlay *overlay;
+
+		overlay=new KMLGPXMapOverlay();
+		overlay->SetFilename(m_filename.GetString());
+		m_overlay=overlay;
+	}
+	else if(strstr(m_filename.GetString(),".kmz"))
+	{
+		KMZGPXMapOverlay *overlay;
+
+		overlay=new KMZGPXMapOverlay();
+		overlay->SetFilename(m_filename.GetString());
+		m_overlay=overlay;
+	}
+}
+
+void GPXMapOverlayRow::DrawOverlay(kGUICorners *c,double alpha)
+{
+	/* draw overlay */
+	if(m_overlay)
+		m_overlay->Draw(c,alpha);
+}

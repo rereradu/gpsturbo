@@ -49,6 +49,8 @@
 #include "msmap.h"
 #include "tsmap.h"
 #include "osmap.h"
+/* overlay map classes */
+#include "kmap.h"
 
 enum
 {
@@ -509,6 +511,8 @@ public:
 	void ReCalcNear(void);
 	void UpdateWPRender(void);
 	void GetColour(GPXRow *row);
+	bool m_dopostdraw;
+	bool m_dodrawlabels;
 	void DrawGrid(int w,int h,int cx,int cy,int gridtype,double gridstep,int gridfontsize);
 
 	void Browse(int mode,kGUIString *s);
@@ -692,6 +696,12 @@ public:
 	kGUIString *GetString(int word) {return m_locstrings.GetString(word);}
 	//this is public since if a new map data is downloaded then this is called to flush
 	void ChangeMapType(void);
+
+	unsigned int m_savemapformat;
+	bool m_savemapdrawlabels;
+	kGUIString m_defpath;
+	CALLBACKGLUEPTRVAL(GPX,DoSaveMap,kGUIFileReq,int)
+
 private:
 	CALLBACKGLUEPTR(GPX,Panic,kGUIString)
 	void Panic(kGUIString *error);
@@ -767,9 +777,13 @@ private:
 	void DoSaveAs3(int pressed);
 	void SaveXML(const char *fn);
 	void DoLoadOther(kGUIFileReq *result,int pressed);
-	void DoSaveMapShape(kGUIFileReq *result,int pressed);
-	void DoSaveMapKML(kGUIFileReq *result,int pressed);
+
+	void DoSaveMap(kGUIFileReq *result,int pressed);
+	void DoSaveMapShape(kGUIString *fullfn,unsigned int format,bool drawlabels);
+	void DoSaveMapKM(kGUIString *fullfn,unsigned int format,bool drawlabels);
+
 	void NewMapPathEntry(kGUIEvent *event);
+	void NewMapOverlayEntry(kGUIEvent *event);
 	void GPSConnectChanged(kGUIEvent *event);
 	void DoPrintMap(void);
 	void DoPrintTable(kGUITableObj *table);
@@ -792,6 +806,8 @@ private:
 
 	void LabelUp(kGUIEvent *event);
 	void LabelDown(kGUIEvent *event);
+	void MapOverlayLabelUp(kGUIEvent *event);
+	void MapOverlayLabelDown(kGUIEvent *event);
 	void MapConvert(kGUIEvent *event);
 	void DoMapConvert(kGUIFileReq *result,int pressed);
 
@@ -823,7 +839,11 @@ private:
 
 	kGUIButtonObj m_mapconvert;
 
-	kGUITableObj m_mapdirstable;
+	kGUITableObj m_mapdirstable;		/* base maps */
+
+	kGUIButtonObj m_molabelup;
+	kGUIButtonObj m_molabeldown;
+	kGUITableObj m_mapoverlaystable;	/* overlay maps */
 
 	kGUIInputBoxObj m_wptname;
 	kGUITextObj m_wptnamelabel;
@@ -1049,8 +1069,6 @@ private:
 	unsigned int m_nummaps;
 	Array<GPXMAPInfo *>m_mapinfo;
 
-	kGUIString m_defpath;
-
 	int m_ucol;
 	Array<kGUIString *>m_userhints;
 
@@ -1090,12 +1108,11 @@ private:
 	CALLBACKGLUEVAL(GPX,DoSave2,int)
 	CALLBACKGLUEPTRVAL(GPX,DoSaveAs,kGUIFileReq,int)
 	CALLBACKGLUEVAL(GPX,DoSaveAs3,int)
-	CALLBACKGLUEPTRVAL(GPX,DoSaveMapShape,kGUIFileReq,int)
-	CALLBACKGLUEPTRVAL(GPX,DoSaveMapKML,kGUIFileReq,int)
 	CALLBACKGLUEPTRVAL(GPX,DoLoadOther,kGUIFileReq,int)
 	CALLBACKGLUEPTR(GPX,UpdateWPRenderEvent,kGUIEvent)
 	CALLBACKGLUEPTR(GPX,WPTableEvent,kGUIEvent)
 	CALLBACKGLUEPTR(GPX,NewMapPathEntry,kGUIEvent)
+	CALLBACKGLUEPTR(GPX,NewMapOverlayEntry,kGUIEvent)
 	CALLBACKGLUEPTR(GPX,GPSConnectChanged,kGUIEvent)
 	CALLBACKGLUE(GPX,SelectLoadTracks)
 	CALLBACKGLUEPTR(GPX,LabelFontSizeChangedEvent,kGUIEvent)
@@ -1126,6 +1143,8 @@ private:
 	CALLBACKGLUE(GPX,MapDirty);
 	CALLBACKGLUEPTR(GPX,LabelUp,kGUIEvent)
 	CALLBACKGLUEPTR(GPX,LabelDown,kGUIEvent)
+	CALLBACKGLUEPTR(GPX,MapOverlayLabelUp,kGUIEvent)
+	CALLBACKGLUEPTR(GPX,MapOverlayLabelDown,kGUIEvent)
 	CALLBACKGLUEPTR(GPX,MapConvert,kGUIEvent)
 	CALLBACKGLUEPTRVAL(GPX,DoMapConvert,kGUIFileReq,int)
 };
@@ -1182,7 +1201,40 @@ private:
 
 	kGUIInputBoxObj m_path;
 	kGUIButtonObj m_browse;
+};
 
+class GPXMapOverlayRow : public kGUITableRowObj
+{
+public:
+	GPXMapOverlayRow();
+	~GPXMapOverlayRow();
+	void Load(class kGUIXMLItem *mpr);					/* load from prefs file */
+	void Save(class kGUIXMLItem *mpr);					/* save to prefs file */
+	int GetNumObjects(void) {return 4;}
+	bool GetEnabled(void) {return m_enabled.GetSelected();}
+	double GetAlpha(void) {return (m_alpha.GetSelection()/100.0f);}
+	kGUIString *GetFilename(void){return &m_filename;}
+
+	void InitOverlay(void);
+	void DrawOverlay(kGUICorners *c,double alpha);
+protected:
+	kGUIObj **GetObjectList(void) {return m_objectlist;} 
+private:
+	kGUIObj *m_objectlist[4];
+	CALLBACKGLUEPTR(GPXMapOverlayRow,Browse,kGUIEvent);
+	CALLBACKGLUEPTR(GPXMapOverlayRow,NameChanged,kGUIEvent);
+	CALLBACKGLUEPTR(GPXMapOverlayRow,Changed,kGUIEvent);
+	CALLBACKGLUEPTRVAL(GPXMapOverlayRow,BrowseDone,kGUIFileReq,int);
+	void Browse(kGUIEvent *event);
+	void BrowseDone(kGUIFileReq *result,int pressed);
+	void NameChanged(kGUIEvent *event);
+	void Changed(kGUIEvent *event);
+
+	kGUITickBoxObj m_enabled;
+	kGUIComboBoxObj m_alpha;
+	kGUIInputBoxObj m_filename;
+	kGUIButtonObj m_browse;
+	GPXMapOverlay *m_overlay;
 };
 
 class kGUIRenameDBReq
@@ -1206,6 +1258,31 @@ private:
 	kGUITextObj m_tocaption;
 	kGUIInputBoxObj m_todb;
 	kGUIButtonObj m_rename;
+	kGUIButtonObj m_cancel;
+};
+
+class kGUISaveMapReq
+{
+public:
+	kGUISaveMapReq();
+	~kGUISaveMapReq();
+private:
+	CALLBACKGLUEPTR(kGUISaveMapReq,WindowEvent,kGUIEvent)
+	CALLBACKGLUEPTR(kGUISaveMapReq,Cancel,kGUIEvent)
+	CALLBACKGLUEPTR(kGUISaveMapReq,Save,kGUIEvent)
+	void WindowEvent(kGUIEvent *event);
+	void Cancel(kGUIEvent *event) {if(event->GetEvent()==EVENT_PRESSED)m_window.Close();}
+	void Save(kGUIEvent *event) {if(event->GetEvent()==EVENT_PRESSED){DoSave();m_window.Close();}}
+	void DoSave(void);
+	kGUIWindowObj m_window;
+	kGUIControlBoxObj m_controls;
+
+	kGUITextObj m_savecaption;
+	kGUIComboBoxObj m_saveformat;
+	kGUITickBoxObj m_drawlabels;
+	kGUITextObj m_drawlabelscaption;
+
+	kGUIButtonObj m_save;
 	kGUIButtonObj m_cancel;
 };
 
