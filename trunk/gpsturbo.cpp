@@ -7563,8 +7563,11 @@ kGUISaveMapReq::~kGUISaveMapReq()
 
 void AppInit(void)
 {
+#ifdef WIN32
+	_umask(0);
+#else
 	umask(0);
-
+#endif
 	kGUIXMLCODES::Init();
 
 #if 0
