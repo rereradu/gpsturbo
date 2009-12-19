@@ -213,9 +213,6 @@ setupapi.lib"
 			<File
 				RelativePath=".\uploadxml.cpp">
 			</File>
-			<File
-				RelativePath=".\wig.cpp">
-			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
