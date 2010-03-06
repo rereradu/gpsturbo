@@ -3162,7 +3162,7 @@ void GPX::DoMenu(int selection)
 	{
 		kGUIFileReq *req;
 		
-		req=new kGUIFileReq(FILEREQ_OPEN,m_defpath.GetString(),".gpx",this,CALLBACKNAME(GetLoadSettings));
+		req=new kGUIFileReq(FILEREQ_OPEN,m_defpath.GetString(),".gpx;.zip",this,CALLBACKNAME(GetLoadSettings));
 	}
 	break;
 	case MAINMENU_SAVE:
@@ -3381,8 +3381,8 @@ extern char xcolend[];
 class LoadWPTSettings
 {
 public:
-	LoadWPTSettings(kGUIXML *xml,const char *fn,const char *defdb);
-	void SetDoneCallBack(void *codeobj,void (*code)(void *)) {m_donecallback.Set(codeobj,code);}
+	LoadWPTSettings(kGUIXML *xml,kGUIString *fn,kGUIString *defdb);
+	void SetDoneCallBack(void *codeobj,void (*code)(void *,int )) {m_donecallback.Set(codeobj,code);}
 	void SetLoadTracksToo(void) {m_loadtrackstoo=true;}
 private:
 	CALLBACKGLUEPTR(LoadWPTSettings,WindowEvent,kGUIEvent)
@@ -3419,10 +3419,10 @@ private:
 	kGUIButtonObj m_cancel;
 	kGUIXML *m_xml;
 	kGUIString m_filename;
-	kGUICallBack m_donecallback;
+	kGUICallBackInt m_donecallback;
 };
 
-LoadWPTSettings::LoadWPTSettings(kGUIXML *xml,const char *fn,const char *defdb)
+LoadWPTSettings::LoadWPTSettings(kGUIXML *xml,kGUIString *fn,kGUIString *defdb)
 {
 	int i;
 	int w=320,h=200;
@@ -3557,7 +3557,7 @@ void LoadWPTSettings::WindowEvent(kGUIEvent *event)
 	{
 	case EVENT_CLOSE:
 		if(m_donecallback.IsValid())
-			m_donecallback.Call();
+			m_donecallback.Call(0);
 		else
 			delete m_xml;
 		delete this;
@@ -3856,7 +3856,8 @@ void LoadAs::PressOK(kGUIEvent *event)
 			else
 			{
 				/* ok, now load file */
-				gpx->OpenLoadSettings("babel.gpx",m_filename.GetString());
+				GPXLoad *l=new GPXLoad(false);
+				l->OpenLoadSettings("babel.gpx",m_filename.GetString());
 				m_window.Close();
 			}
 		}
@@ -4094,107 +4095,213 @@ void GPX::GetLoadSettings(kGUIFileReq *result,int pressed)
 {
 	if(pressed==MSGBOX_OK)
 	{
+		GPXLoad *l=new GPXLoad(false);
+
 		/* save default path for next time */
 		m_defpath.SetString(result->GetPath());
 
-		OpenLoadSettings(result->GetFilename(),result->GetFilename());
+		/* is this a zip file? */
+		l->OpenLoadSettings(result->GetFilename(),result->GetFilename());
 	}
 }
 
-void GPX::OpenLoadSettings(const char *fn,const char *defdb)
+GPXLoad::GPXLoad(bool tracksonly)
 {
-	kGUIXML *xml;
+	m_tracksonly=tracksonly;
+	m_trackhash.Init(12,0);
+	m_loadzip=0;
+	m_loadfn.Init(4,4);
+}
+
+/* this can be called on a zip file or an gpx file */
+void GPXLoad::OpenLoadSettings(const char *fn,const char *defdb)
+{
+	unsigned int i;
+	ContainerEntry *ce;
+	kGUIString *zfn;
+	kGUIMsgBoxReq *box;
+
+	m_loaddb.SetString(defdb);
+	m_loadindex=0;
+	m_loadnum=0;
+	m_loadstate=LOADSTATE_LOAD;
+
+	/* build a list of filenames to process */
+	m_loadzip=new ZipFile();
+	m_loadzip->SetFilename(fn);
+	m_loadzip->LoadDirectory();
+	if(m_loadzip->GetNumEntries())
+	{
+		/* yes this is a zipfile */
+		for(i=0;i<m_loadzip->GetNumEntries();++i)
+		{
+			ce=m_loadzip->GetEntry(i);
+			zfn=ce->GetName();
+			if(strstr(zfn->GetString(),".gpx"))
+			{
+				/* got a gpx, ignore -wpts */
+				if(!strstr(zfn->GetString(),"-wpts"))
+				{
+					m_loadfn.GetEntryPtr(m_loadnum++)->SetString(zfn);
+				}
+			}
+		}
+		if(!m_loadnum)
+		{
+			box=new kGUIMsgBoxReq(MSGBOX_OK,true,"Error: no gpx files found!");
+		}
+		else
+		{
+			DataHandle::AddContainer(m_loadzip);
+			DoLoad(0);
+		}
+	}
+	else
+	{
+		/* not a zipfile */
+		delete m_loadzip;
+		m_loadzip=0;
+		m_loadfn.GetEntryPtr(m_loadnum++)->SetString(fn);
+		DoLoad(0);
+	}
+}
+
+void GPXLoad::DoLoad(int unused)
+{
 	kGUIXMLItem *xroot;
 	kGUIXMLItem *xi;
 	kGUIMsgBoxReq *box;
 	int numwp,numtrk;
+	bool again;
 
-	m_busy=0;
-	xml=new kGUIXML();
-	xml->SetNameCache(&m_xmlnamecache);
-	xml->SetLoadingCallback(this,CALLBACKNAME(PreLoadXML));
+	do{
+		again=false;
 
-	xml->SetFilename(fn);
-	if(xml->Load()==false)
-	{
-		box=new kGUIMsgBoxReq(MSGBOX_OK,true,"Error: cannot opening file '%s'!",fn);
-		delete xml;
-		delete m_busy;
-		return;
-	}
-	delete m_busy;
+		switch(m_loadstate)
+		{
+		case LOADSTATE_LOAD:
+			gpx->m_busy=0;
+			m_loadxml=new kGUIXML();
+			m_loadxml->SetNameCache(&gpx->m_xmlnamecache);
+			m_loadxml->SetLoadingCallback(gpx,CALLBACKCLASSNAME(GPX,PreLoadXML));
 
-	/* is this a waypoint gpx file or a tracklog gpx file */
+			m_loadxml->SetFilename(m_loadfn.GetEntryPtr(m_loadindex));
+			if(m_loadxml->Load()==false)
+			{
+				box=new kGUIMsgBoxReq(MSGBOX_OK,this,CALLBACKNAME(DoLoad),true,"Error: cannot open file '%s'!",m_loadfn.GetEntryPtr(m_loadindex)->GetString());
+				delete gpx->m_busy;
+				m_loadstate=LOADSTATE_NEXT;
+			}
+			else
+			{
+				delete gpx->m_busy;
 
-	numwp=0;
-	numtrk=0;
+				/* is this a waypoint gpx file or a tracklog gpx file */
+
+				numwp=0;
+				numtrk=0;
+				xroot=m_loadxml->GetRootItem()->Locate("gpx");
+				if(xroot)
+				{
+					unsigned int i;
+
+					for(i=0;i<xroot->GetNumChildren();++i)
+					{
+						xi=xroot->GetChild(i);
+						if(!strcmp(xi->GetName(),"wpt"))
+							++numwp;
+						else if(!strcmp(xi->GetName(),"trk"))
+							++numtrk;
+					}
+				}
+
+				if(m_tracksonly)
+					numwp=0;	/* ignore waypoints */
+
+				if(numwp)
+				{
+					LoadWPTSettings *ls;
+
+					ls=new LoadWPTSettings(m_loadxml,m_loadfn.GetEntryPtr(m_loadindex),&m_loaddb);
+					m_loadstate=numtrk?LOADSTATE_SELECTTRACKS:LOADSTATE_NEXT;
+					ls->SetDoneCallBack(this,CALLBACKNAME(DoLoad));
+				}
+				else if(numtrk)
+				{
+					m_loadstate=LOADSTATE_SELECTTRACKS;
+					again=true;
+				}
+				else
+				{
+					m_loadstate=LOADSTATE_NEXT;
+
+					/* display a error if no tracks were found */
+					if(m_tracksonly)
+						box=new kGUIMsgBoxReq(MSGBOX_OK,this,CALLBACKNAME(DoLoad),false,"Error: No tracks were downloaded!");
+					else
+						box=new kGUIMsgBoxReq(MSGBOX_OK,this,CALLBACKNAME(DoLoad),false,"Error: GPX file doesn't contain any waypoints or tracks!");
+				}
+			}
+		break;
+		case LOADSTATE_SELECTTRACKS:
+		{
+			/* load track settings */
+			SelectTracks *st;
+
+			m_loadstate=LOADSTATE_LOADTRACKS;
+			st=new SelectTracks(&m_trackhash,this,CALLBACKNAME(DoLoad),m_loadxml);
+		}
+		break;
+		case LOADSTATE_LOADTRACKS:
+			if(unused==MSGBOX_OK)
+				gpx->LoadTracks(m_loadxml,&m_trackhash);
+			/* fall through */
+		case LOADSTATE_NEXT:
+			if(m_loadxml)
+			{
+				delete m_loadxml;
+				m_loadxml=0;
+			}
+
+			if(++m_loadindex<m_loadnum)
+			{
+				m_loadstate=LOADSTATE_LOAD;
+				again=true;
+			}
+			else
+			{
+				if(m_loadzip)
+				{
+					DataHandle::RemoveContainer(m_loadzip);
+					delete m_loadzip;
+					m_loadzip=0;
+				}
+				/* load sequence is complete so we can delete ourselves now */
+				delete this;
+				return;
+			}
+		}
+	}while(again);
+}
+
+void GPX::LoadTracks(kGUIXML *xml,Hash *names)
+{
+	kGUIXMLItem *xroot;
+	HashEntry *he;
+	unsigned int i,num;
+
 	xroot=xml->GetRootItem()->Locate("gpx");
 	if(xroot)
 	{
-		unsigned int i;
-
-		for(i=0;i<xroot->GetNumChildren();++i)
+		/* iterate through the hash table and load all the selected tracks */
+		num=names->GetNum();
+		he=names->GetFirst();
+		for(i=0;i<num;++i)
 		{
-			xi=xroot->GetChild(i);
-			if(!strcmp(xi->GetName(),"wpt"))
-				++numwp;
-			else if(!strcmp(xi->GetName(),"trk"))
-				++numtrk;
+			m_tracks.LoadTrack(he->m_string,*((kGUIXMLItem **)(he->m_data)));
+			he=he->GetNext();
 		}
 	}
-
-	m_tempxml=xml;
-	if(numwp)
-	{
-		LoadWPTSettings *ls;
-		ls=new LoadWPTSettings(xml,fn,defdb);
-		if(numtrk)
-			ls->SetDoneCallBack(this,CALLBACKNAME(SelectLoadTracks));
-	}
-	else if(numtrk)
-	{
-		/* load track settings */
-		SelectTracks *st;
-
-		st=new SelectTracks(&m_temphash,this,CALLBACKNAME(LoadTracks),xml);
-	}
-	else
-	{
-		box=new kGUIMsgBoxReq(MSGBOX_OK,false,"Error: GPX file doesn't contain any waypoints or tracks!");
-		delete xml;
-	}
-}
-
-void GPX::SelectLoadTracks(void)
-{
-	SelectTracks *st;
-
-	st=new SelectTracks(&m_temphash,this,CALLBACKNAME(LoadTracks),m_tempxml);
-}
-
-void GPX::LoadTracks(int pressed)
-{
-	if(pressed==MSGBOX_OK)
-	{
-		kGUIXMLItem *xroot;
-		HashEntry *he;
-		unsigned int i,num;
-
-		xroot=m_tempxml->GetRootItem()->Locate("gpx");
-		if(xroot)
-		{
-			/* iterate through the hash table and load all the selected tracks */
-			num=m_temphash.GetNum();
-			he=m_temphash.GetFirst();
-			for(i=0;i<num;++i)
-			{
-				m_tracks.LoadTrack(he->m_string,*((kGUIXMLItem **)(he->m_data)));
-				he=he->GetNext();
-			}
-		}
-	}
-	delete m_tempxml;
-	m_tempxml=0;
 }
 
 /* only set user flag */

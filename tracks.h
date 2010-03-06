@@ -45,7 +45,6 @@ public:
 	const char *GetCurrentName(void) {return m_edittracklist.GetSelectionString();}
 	void PostDraw(int cx,int cy);
 	void GotoTrackPosition(double lat,double lon);
-	void LoadTracks(int pressed);
 	void Verify(const char *filename,Hash *hash,kGUIString *results);
 	bool IsPointInside(const char *trackname,double lat,double lon);
 
@@ -119,7 +118,6 @@ private:
 	CALLBACKGLUEPTRVAL(TracksPage,ClickSave2,kGUIString,int)
 	CALLBACKGLUEPTR(TracksPage,ClickSimplify,kGUIEvent)
 	CALLBACKGLUEPTRVAL(TracksPage,ClickSimplify2,kGUIString,int)
-	CALLBACKGLUEVAL(TracksPage,LoadTracks,int)
 };
 
 #endif
