@@ -55,7 +55,6 @@ private:
 	void DownloadWP(int mode);
 	bool UploadToGPS(int what,class GPXGPSRow *gpsrow,const char *filename,const char *title);
 	void GenerateWptName(int format,unsigned int maxlen,kGUIString *name,Hash *names);
-	void PreLoadXML(int current,int size);
 	void LoadWaypoints(void);
 
 	/* gui items */
@@ -68,8 +67,6 @@ private:
 	kGUIButtonObj m_downloadfindsfromgps;
 	kGUITableObj m_gpstable;
 
-	kGUIBusy *m_busy;
-
 	/* static callbacks */
 	CALLBACKGLUEPTR(GPSrPage,TableEvent,kGUIEvent)
 	CALLBACKGLUEPTR(GPSrPage,ClickUploadWptsToGPSr,kGUIEvent)
@@ -77,7 +74,6 @@ private:
 	CALLBACKGLUEPTR(GPSrPage,ClickUploadTracksToGPSr,kGUIEvent)
 	CALLBACKGLUEVAL(GPSrPage,ClickUploadTracksToGPSr2,int)
 	CALLBACKGLUEPTR(GPSrPage,ClickDownloadTracksFromGPSr,kGUIEvent)
-	CALLBACKGLUEVALVAL(GPSrPage,PreLoadXML,int,int)
 	CALLBACKGLUE(GPSrPage,LoadWaypoints)
 	CALLBACKGLUEPTR(GPSrPage,ClickDownloadFindsFromGPSr,kGUIEvent)
 };

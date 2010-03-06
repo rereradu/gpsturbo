@@ -914,83 +914,22 @@ bool GPSrPage::DownloadTracksFromGPSr(void)
 	return(babel.Call(true,busy));
 }
 
-void GPSrPage::PreLoadXML(int current,int size)
-{
-	if(!m_busy)
-	{
-		m_busy=new kGUIBusy(kGUI::GetScreenWidth()>>1);
-		m_busy->GetTitle()->SetString("Loading GPX File");
-		m_busy->SetMax(size);
-	}
-	m_busy->SetCur(current);
-}
-
 void GPSrPage::ClickDownloadTracksFromGPSr(kGUIEvent *event)
 {
 	if(event->GetEvent()==EVENT_PRESSED)
 	{
 		/* 1. download from gps to babel.gpx */
 		/* 2. show list of tracks and let user decide which ones to import */
-		kGUIXML *xml;
-		kGUIXMLItem *xroot;
-		kGUIXMLItem *xi;
-		kGUIMsgBoxReq *box;
-		int numtrk;
+		GPXLoad *l;
 
+		/* saved to babel.gpx */
 		if(DownloadTracksFromGPSr()==false)
 			return;
 
-		/* load and verify that file contains tracks */
-
-		m_busy=0;
-		xml=new kGUIXML();
-		xml->SetNameCache(&gpx->m_xmlnamecache);
-		xml->SetLoadingCallback(this,CALLBACKNAME(PreLoadXML));
-
-		xml->SetFilename("babel.gpx");
-		if(xml->Load()==false)
-		{
-			box=new kGUIMsgBoxReq(MSGBOX_OK,true,"Error: cannot opening file '%s'!","babel.gpx");
-			delete xml;
-			delete m_busy;
-			return;
-		}
-		delete m_busy;
-
-		/* check to make sure file contains tracks */
-
-		numtrk=0;
-		xroot=xml->GetRootItem()->Locate("gpx");
-		if(xroot)
-		{
-			unsigned int i;
-
-			for(i=0;i<xroot->GetNumChildren();++i)
-			{
-				xi=xroot->GetChild(i);
-				if(!strcmp(xi->GetName(),"trk"))
-					++numtrk;
-			}
-		}
-
-		/* 2. Step 2, bring up load track select requestor */
-
-		if(numtrk)
-		{
-			/* load track settings */
-			SelectTracks *lt;
-
-			gpx->m_tempxml=xml;
-			lt=new SelectTracks(&gpx->m_temphash,gpx,CALLBACKCLASSNAME(GPX,LoadTracks),xml);
-		}
-		else
-		{
-			box=new kGUIMsgBoxReq(MSGBOX_OK,false,"Error: No tracks were downloaded!");
-			delete xml;
-		}
+		l=new GPXLoad(true);	/* true means only load tracks not waypoints */
+		l->OpenLoadSettings("babel.gpx","unused");
 	}
 }
-
 
 /********************************************************************************************/
 

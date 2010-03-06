@@ -483,6 +483,7 @@ class GPX
 	friend class LoadAs;
 	friend class PrintMap;
 	friend class AutoOrderWindow;
+	friend class GPXLoad;
 public:
 	GPX();
 	~GPX();
@@ -648,13 +649,11 @@ public:
 
 	/* pointer to filtered results table that lives in m_filters */
 	kGUITableObj *m_fwt;
-	/* these are temporary variables used for save/load etc */
+
 	Hash m_temphash;
 	kGUIString m_tempfilename;
 	kGUIString m_tempfiletype;
-	kGUIXML *m_tempxml;
-	CALLBACKGLUEVAL(GPX,LoadTracks,int)
-	void LoadTracks(int pressed);
+	void LoadTracks(kGUIXML *xml,Hash *names);
 	void BSPDirty(void) {m_rebuildbsp=true;MapDirty();}
 
 	/* if an unknown type was loaded then this gets set to true */
@@ -739,8 +738,6 @@ private:
 	void InitSettings(void);
 	unsigned int GetNumMapPaths(void) {return m_mapdirstable.GetNumChildren();}
 	kGUIString *GetMapPath(unsigned int index);
-
-	void SelectLoadTracks(void);
 
 	int MapEntryUnderMouse(int mx,int my);
 	void OverMap(int mx,int my);
@@ -1114,7 +1111,6 @@ private:
 	CALLBACKGLUEPTR(GPX,NewMapPathEntry,kGUIEvent)
 	CALLBACKGLUEPTR(GPX,NewMapOverlayEntry,kGUIEvent)
 	CALLBACKGLUEPTR(GPX,GPSConnectChanged,kGUIEvent)
-	CALLBACKGLUE(GPX,SelectLoadTracks)
 	CALLBACKGLUEPTR(GPX,LabelFontSizeChangedEvent,kGUIEvent)
 	CALLBACKGLUEPTR(GPX,TableFontSizeChangedEvent,kGUIEvent)
 	CALLBACKGLUEPTR(GPX,LabelNamesChangedEvent,kGUIEvent)
@@ -1147,6 +1143,37 @@ private:
 	CALLBACKGLUEPTR(GPX,MapOverlayLabelDown,kGUIEvent)
 	CALLBACKGLUEPTR(GPX,MapConvert,kGUIEvent)
 	CALLBACKGLUEPTRVAL(GPX,DoMapConvert,kGUIFileReq,int)
+};
+
+enum
+{
+LOADSTATE_LOAD,
+LOADSTATE_SELECTTRACKS,
+LOADSTATE_LOADTRACKS,
+LOADSTATE_NEXT,
+};
+
+class GPXLoad
+{
+public:
+	GPXLoad(bool tracksonly);
+	void OpenLoadSettings(const char *fn,const char *defdb);
+	void DoLoad(int unused);
+private:
+	CALLBACKGLUEVAL(GPXLoad,DoLoad,int)
+
+	/* since a zipfile can contain many gpx files we might need the load process */
+	/* to iteratr though them and ask the user for input on each one so we need */
+	/* all these varaibles process them */
+	bool m_tracksonly;
+	ZipFile *m_loadzip;
+	kGUIXML *m_loadxml;
+	kGUIString m_loaddb;
+	Hash m_trackhash;
+	ClassArray<kGUIString> m_loadfn;
+	unsigned int m_loadstate;
+	unsigned int m_loadindex;
+	unsigned int m_loadnum;
 };
 
 enum
