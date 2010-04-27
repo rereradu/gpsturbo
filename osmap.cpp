@@ -716,19 +716,19 @@ void OSMMap::Translate(unsigned int numpoints,kGUIFPoint2 *in,kGUIFPoint2 *out,f
 
 	p1=in;
 	p2=in+1;
-	oldheading=atan2f(p2->y-p1->y,p2->x-p1->x);
+	avgheading=newheading=oldheading=atan2f(p2->y-p1->y,p2->x-p1->x);
 	for(i=0;i<numpoints;++i)
 	{
-		if(!i)
-			avgheading=newheading=oldheading;
-		else if(i==(numpoints-1))
-			avgheading=newheading;
-		else
+		if(i)
 		{
-			newheading=atan2f(p2->y-p1->y,p2->x-p1->x);
-			avgheading=atan2(sin(oldheading)+sin(newheading),cos(oldheading)+cos(newheading));
+			if(i==(numpoints-1))
+				avgheading=newheading;
+			else
+			{
+				newheading=atan2f(p2->y-p1->y,p2->x-p1->x);
+				avgheading=atan2(sin(oldheading)+sin(newheading),cos(oldheading)+cos(newheading));
+			}
 		}
-
 		out->x=p1->x-(cos(avgheading+angle)*length);
 		out->y=p1->y-(sin(avgheading+angle)*length);
 		++p1;
@@ -738,7 +738,7 @@ void OSMMap::Translate(unsigned int numpoints,kGUIFPoint2 *in,kGUIFPoint2 *out,f
 	}
 }
 
-	static int mlevels[MAXMSZOOM]={
+static const int mlevels[MAXMSZOOM]={
 		0,0,0,0,0,
 		0,0,0,1,1,
 		1,2,2,2,2,

@@ -203,7 +203,7 @@ public:
 	void Copy(GPXRow *copy,bool copyall=false);
 	void Init(void);
 	void Load(kGUIString *ld,kGUIXMLItem *wp);
-	void Save(kGUIXMLItem *wp, bool gpx=false);
+	void Save(kGUIXML *xroot,kGUIXMLItem *wp, bool gpx=false);
 	void AddChild(kGUIString *wptname,kGUIString *type,kGUIString *name,double lon,double lat);
 	GPXRow *GetCopiedFrom(void) {return m_copiedfrom;}
 	int GetNumObjects(void) {return GPXCOL_NUMCOLUMNS;}
@@ -1347,9 +1347,11 @@ public:
 	~SelectTracks() {m_list.DeleteChildren();}
 private:
 	CALLBACKGLUEPTR(SelectTracks,WindowEvent,kGUIEvent)
-	CALLBACKGLUEPTR(SelectTracks,PressDone,kGUIEvent)
+	CALLBACKGLUEPTR(SelectTracks,PressToggle,kGUIEvent)
 	CALLBACKGLUEPTR(SelectTracks,PressCancel,kGUIEvent)
+	CALLBACKGLUEPTR(SelectTracks,PressDone,kGUIEvent)
 	void WindowEvent(kGUIEvent *event);
+	void PressToggle(kGUIEvent *event);
 	void PressCancel(kGUIEvent *event);
 	void PressDone(kGUIEvent *event);
 	Hash *m_hash;
@@ -1359,6 +1361,7 @@ private:
 
 	kGUITableObj m_list;
 
+	kGUIButtonObj m_toggle;
 	kGUIButtonObj m_ok;
 	kGUIButtonObj m_cancel;
 	

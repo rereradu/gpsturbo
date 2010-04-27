@@ -22,6 +22,17 @@
 /*                                                                               */
 /*********************************************************************************/
 
+/* building gpsbabel (use mingw on win) 
+1) cd source/expat 
+2) ./configure -enable-static -disable-shared
+3) make
+4) make install
+5) cd source/gpsbabel 
+6) ./configure -enable-static -disable-shared
+7) make
+*/
+
+
 #include "gpsturbo.h"
 #include "defskin.h"
 #include "kguibrowse.h"
@@ -908,7 +919,7 @@ void GPX::SearchMap(void)
 
 }
 
-void GPXRow::Save(kGUIXMLItem *wp,bool gpx)
+void GPXRow::Save(kGUIXML *xroot,kGUIXMLItem *wp,bool gpx)
 {
 	unsigned int i;
 	kGUIXMLItem *gc;
@@ -948,7 +959,7 @@ void GPXRow::Save(kGUIXMLItem *wp,bool gpx)
 		if(m_user[i].GetSelected())
 		{
 			u.Sprintf("user%d",i+1);
-			wp->AddChild(u.GetString(),"1");
+			wp->AddChild(xroot->CacheName(u.GetString()),"1");
 		}
 	}
 
@@ -3801,6 +3812,7 @@ void LoadAs::ShowTypes(void)
 		{
 			m_showall.SetSelected(true);
 			m_showsuggested.SetSelected(false);
+			break;
 		}
 	}while(!numshow);
 
@@ -3813,7 +3825,8 @@ void LoadAs::ShowTypes(void)
 			m_filetype.SetEntry(numshow++,bt.desc,bt.name);
 	}
 	/* select the first one in the list */
-	m_filetype.SetSelection(0);
+	if(numshow)
+		m_filetype.SetSelection(0);
 	//if(numshow>1)
 	//	m_filetype.Activate();
 }
@@ -4590,7 +4603,7 @@ void GPX::SaveXML(const char *fn)
 		GPXRow *row;
 
 		row=static_cast<GPXRow *>(m_fwt->GetChild(i));
-		row->Save(root->AddChild("wpt"),true);
+		row->Save(&xml,root->AddChild("wpt"),true);
 	}
 
 	/* only save tracks that are in the hash table */
@@ -7319,7 +7332,7 @@ void GPX::SavePrefs(bool showbusy)
 	{
 		if(busy)
 			busy->SetCur(40+((i*40)/m_numwpts));
-		m_wptlist.GetEntry(i)->Save(root->AddChild("wpt"));
+		m_wptlist.GetEntry(i)->Save(&xml,root->AddChild("wpt"));
 	}
 
 	m_browsersettings.Save(root);

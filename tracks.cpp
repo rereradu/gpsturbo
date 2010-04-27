@@ -1033,7 +1033,7 @@ void TracksPage::DrawMap(kGUICorners *c)
 			}
 			p=TracksPage::m_polypoints.GetArrayPtr();
 
-			if(draw==TRACKDRAW_LINE)
+			if((draw==TRACKDRAW_LINE) || (ne<3))
 			{
 				/* draw points */
 				for(e=0;e<ne;++e)
@@ -1281,6 +1281,7 @@ public:
 	kGUIObj **GetObjectList(void) {return m_objectlist;} 
 	kGUIObj *m_objectlist[LOADTRACK_NUMCOLUMNS];
 	bool GetSelected(void) {return m_selected.GetSelected();}
+	void SetSelected(bool s) {m_selected.SetSelected(s);}
 	const char *GetName(void) {return m_name.GetString();}
 	kGUIXMLItem *GetXI(void) {return m_xi;}
 private:
@@ -1353,17 +1354,22 @@ SelectTracks::SelectTracks(Hash *hash,void *codeobj,void (*code)(void *,int),kGU
 	m_controls.AddObjects(1,&m_list);
 	m_controls.NextLine();
 
-	m_cancel.SetPos(0,0);
+	m_toggle.SetPos(0,0);
+	m_toggle.SetSize(100,20);
+	m_toggle.SetString("Toggle");
+	m_toggle.SetEventHandler(this,CALLBACKNAME(PressToggle));
+
+	m_cancel.SetPos(125,0);
 	m_cancel.SetSize(100,20);
 	m_cancel.SetString("Cancel");
 	m_cancel.SetEventHandler(this,CALLBACKNAME(PressCancel));
 
-	m_ok.SetPos(125,0);
+	m_ok.SetPos(250,0);
 	m_ok.SetSize(100,20);
 	m_ok.SetString("Done");
 	m_ok.SetEventHandler(this,CALLBACKNAME(PressDone));
 
-	m_controls.AddObjects(2,&m_cancel,&m_ok);
+	m_controls.AddObjects(3,&m_toggle,&m_cancel,&m_ok);
 	m_controls.NextLine();
 
 	m_window.AddObject(&m_controls);
@@ -1427,6 +1433,23 @@ void SelectTracks::WindowEvent(kGUIEvent *event)
 		m_donecallback.Call(m_pressed);
 		delete this;
 	break;
+	}
+}
+
+//toggle all entries
+void SelectTracks::PressToggle(kGUIEvent *event)
+{
+	if(event->GetEvent()==EVENT_PRESSED)
+	{
+		unsigned int i;
+		SelectTracksRow *rsr;
+
+		/* toggle all entries */
+		for(i=0;i<m_list.GetNumChildren();++i)
+		{
+			rsr=static_cast<SelectTracksRow *>(m_list.GetChild(i));
+			rsr->SetSelected(!rsr->GetSelected());
+		}
 	}
 }
 

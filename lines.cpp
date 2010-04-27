@@ -1292,7 +1292,7 @@ void LinesPage::ProcessLine(kGUICorners *c,GPXBounds *bounds,int type,kGUIString
 	case LINEPRIM_CIRCLE:
 	{
 		int i;
-		kGUIPoint2 points[360+1];
+		kGUIFPoint2 points[360+1];
 		GPXCoord edgepos;
 		int x1,y1;
 
@@ -1304,8 +1304,8 @@ void LinesPage::ProcessLine(kGUICorners *c,GPXBounds *bounds,int type,kGUIString
 			if(c)
 			{
 				gpx->m_curmap->ToMap(&edgepos,&x1,&y1);
-				points[i].x=x1-c->lx;
-				points[i].y=y1-c->ty;
+				points[i].x=(float)(x1-c->lx);
+				points[i].y=(float)(y1-c->ty);
 			}
 		}
 		
@@ -1314,7 +1314,7 @@ void LinesPage::ProcessLine(kGUICorners *c,GPXBounds *bounds,int type,kGUIString
 			if(m_thickness<=1)
 				kGUI::DrawPolyLine(360+1,points,m_col);
 			else
-				kGUI::DrawFatPolyLine(3,360+1,points,m_col,m_thickness);
+				kGUI::DrawFatPolyLine(0,360+1,points,m_col,(float)m_thickness);
 		}
 	}
 	break;
