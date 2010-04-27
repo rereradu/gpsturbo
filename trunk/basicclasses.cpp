@@ -435,7 +435,7 @@ int GPXRecordSet::Function(int fieldid,kGUIBasicVarObj *result,CallParms *p)
 		for(i=0;i<m_numwpts;++i)
 		{
 			row=gpx->m_wptlist.GetEntry(i);
-			row->Save(root->AddChild("wpt"),true);
+			row->Save(&xml,root->AddChild("wpt"),true);
 		}
 
 		xml.SetFilename(p1->GetStringObj()->GetString());
