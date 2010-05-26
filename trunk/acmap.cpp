@@ -37,7 +37,7 @@
 enum
 {
 MAPLEVEL_1,
-MAPLEVEL_2,
+MAPLEVEL_2
 };
 
 typedef struct
