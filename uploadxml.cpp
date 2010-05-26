@@ -59,10 +59,10 @@ UploadXML::~UploadXML()
 
 void UploadXML::Init(int maxpoints,int maxnamelen,bool addchildren,int nameformat)
 {
-//	SetMaxPoints(gpsrow->m_maxwpts.GetInt());
-//	SetMaxLen(gpsrow->m_maxwptlen.GetInt());
-//	SetAddChildren(gpsrow->m_children.GetSelected());
-//	SetNameFormat(gpsrow->m_nameformat.GetSelection());
+	SetMaxPoints(maxpoints);
+	SetMaxLen(maxnamelen);
+	SetAddChildren(addchildren);
+	SetNameFormat(nameformat);
 }
 
 void UploadXML::GenName(kGUIString *name)
