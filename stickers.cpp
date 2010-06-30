@@ -931,7 +931,7 @@ void PrintStickers::Setup(void)
 					t=new kGUIReportTextObj();
 					t->SetString(row->m_text.GetString());
 					t->SetFontSize(row->m_size.GetInt());
-					t->SetColor(row->m_color.GetSelection());
+					t->SetColor(GPX::GetTableColor(row->m_color.GetSelection()));
 					t->SetPos(row->m_x.GetInt()+offx,row->m_y.GetInt()+offy);
 					t->SetClip(offx,offy,offx2,offy2);
 					t->SetPage(1);
@@ -970,7 +970,7 @@ void PrintStickers::Setup(void)
 					r=new kGUIReportRectObj();
 					r->SetZone(row->m_x.GetInt()+offx,row->m_y.GetInt()+offy,row->m_w.GetInt(),row->m_h.GetInt());
 					r->SetClip(offx,offy,offx2,offy2);
-					r->SetColor(row->m_color.GetSelection());
+					r->SetColor(GPX::GetTableColor(row->m_color.GetSelection()));
 					r->SetPage(1);
 					AddObjToSection(REPORTSECTION_BODY,r,true);
 				}
